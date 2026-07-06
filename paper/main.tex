@@ -1,0 +1,380 @@
+\documentclass[manuscript,screen,nonacm]{acmart}
+
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\setcopyright{none}
+\settopmatter{printacmref=false}
+\acmConference[CHI '27]{Proceedings of the CHI Conference on Human Factors in Computing Systems}{April 2027}{TBD}
+\acmYear{2027}
+\copyrightyear{2027}
+\acmDOI{xx.xxxx/xxxxxxx.xxxxxxx}
+\acmISBN{978-x-xxxx-xxxx-x/27/04}
+
+\title{DriftSense: Intention-Aware Session-Level Prediction of Browser-Based Digital Drift}
+\author{[Author Name]}
+\affiliation{%
+  \institution{[Department / University]}
+  \city{[City]}
+  \country{[Country]}
+}
+\email{[Email]}
+
+\begin{document}
+
+\begin{abstract}
+Digital wellbeing tools commonly rely on domain blocking, screen-time limits, and usage dashboards. These approaches can misclassify purposeful browsing as problematic because the same website may support information seeking, intentional breaks, passive consumption, or avoidance. We introduce DriftSense, a privacy-preserving Chrome extension and local machine-learning pipeline for studying browser-based digital drift, defined as a mismatch between a user's declared browsing intention and their post-session reflection. DriftSense asks users why they are opening a monitored domain, records lightweight session metadata and activity-window counts, asks a post-session reflection question, and exports locally stored data for session-level modeling. We propose an evaluation that compares time-threshold and domain-category baselines against intention-only, activity-only, intention-plus-activity, and sequence-based models. The planned evaluation reports classification performance using accuracy, precision, recall, F1-score, ROC-AUC, calibration, and early prediction at 1, 3, and 5 minutes. Because empirical data collection is not yet complete, this draft does not report results; all performance values are left as placeholders for later study data. The contribution is a narrow implementation and evaluation framework for intention-aware browser-session drift prediction, not a claim to detect attention, emotion, addiction, or mental health status.
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10003120.10003121.10003124.10010866</concept_id>
+       <concept_desc>Human-centered computing~Empirical studies in HCI</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003120.10003123.10011760</concept_id>
+       <concept_desc>Human-centered computing~Ubiquitous and mobile computing systems and tools</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010147.10010257.10010293</concept_id>
+       <concept_desc>Computing methodologies~Machine learning approaches</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Human-centered computing~Empirical studies in HCI}
+\ccsdesc[300]{Human-centered computing~Ubiquitous and mobile computing systems and tools}
+\ccsdesc[300]{Computing methodologies~Machine learning approaches}
+
+\keywords{digital wellbeing, browser extension, intention alignment, digital drift, self-report, privacy-preserving sensing, session-level prediction}
+
+\maketitle
+
+\section{Introduction}
+People often open distracting websites for legitimate reasons. A user may visit YouTube to find a tutorial, Reddit to answer a technical question, LinkedIn to check a message, or a news site to follow a specific event. The same sites can also support unplanned passive consumption or avoidance. This ambiguity creates a problem for common digital wellbeing tools: a domain category or elapsed time alone cannot reliably distinguish purposeful use from digital drift.
+
+Existing tools often operationalize undesirable use through screen time, app or website category, or fixed blocking rules \citep{roffarello2023digital,plackett2023socialmedia,biedermann2021digital,lyngs2019selfcontrol}. Such mechanisms can be useful for self-control, but they can also generate false positives when a user has a valid reason to visit a monitored website. They may also generate false negatives when a short session is clearly misaligned with intention. Recent work has therefore shifted toward user agency, reflection, friction, and intention alignment. For example, self-nudging systems such as \textit{one sec} introduce a short pause before app access \citep{gruning2023onesec}; Purpose Mode reduces distracting interface patterns while preserving access to social media websites \citep{lee2025purpose}; and PauseNow frames digital wellbeing as alignment between intentions and behavior \citep{zhao2024pausenow}.
+
+We use the term \textit{browser-based digital drift} to describe a session-level intention-behavior mismatch: the user begins with one declared purpose but later reports that the visit did not match that intention. This framing is deliberately narrower than addiction, attention detection, or productivity optimization. DriftSense does not infer clinical status or inner mental state. Instead, it collects explicit intention and explicit post-session reflection, then evaluates whether those self-reported labels can be predicted from lightweight browser-session signals.
+
+DriftSense is designed around a local-first Chrome Manifest V3 extension and a reproducible machine-learning pipeline. Before accessing a configured domain, the user declares an intention, such as \textit{specific information}, \textit{intentional break}, \textit{boredom}, \textit{avoiding work}, or \textit{accidental click}. During the session, the extension records metadata and aggregate interaction counts, such as duration, click count, scroll count, idle time, tab focus changes, and activity-window summaries. It does not collect page text, screenshots, passwords, private messages, full browsing history, source code, webcam data, or keystroke values. After a configured duration or session boundary, the extension asks whether the visit matched the original intention. This response provides the primary drift label.
+
+The central research question is:
+
+\begin{quote}
+\textit{Can declared browsing intention combined with lightweight browser activity signals predict session-level digital drift better than time-based or domain-based approaches?}
+\end{quote}
+
+The expected contribution is an implementation and evaluation framework for intention-aware drift prediction in browser sessions. The contribution is not that DriftSense tracks activity, displays a dashboard, or blocks websites. Rather, the contribution is the combination of declared intention, privacy-preserving activity signals, post-session reflection labels, and baseline comparisons that make the modeling claim testable.
+
+\section{Related Work}
+\subsection{Digital Wellbeing and Digital Self-Control Tools}
+Digital wellbeing research has documented a broad ecosystem of tools that help users manage technology use through blocking, friction, monitoring, goal setting, reminders, interface changes, and reflection \citep{roffarello2023digital,lyngs2019selfcontrol,biedermann2021digital,plackett2023socialmedia}. Roffarello and De Russis' systematic review and meta-analysis shows that digital self-control tools vary widely in intervention strategy and evaluation quality, and that many tools emphasize reducing overuse rather than supporting more contextual judgments about why use occurs \citep{roffarello2023digital}. Plackett et al.'s journal review of social media use interventions similarly found mixed evidence for limiting-use and abstinence interventions, reinforcing the need to evaluate more contextual approaches rather than assuming that less use is always the appropriate target \citep{plackett2023socialmedia}. Biedermann et al. review digital self-control interventions for distracting media multitasking and identify a mixture of blockers, goal-setting tools, visualizations, and awareness mechanisms \citep{biedermann2021digital}.
+
+This body of work motivates DriftSense in two ways. First, it shows that time and blocking are common operational levers. Second, it reveals an opportunity for session-level interpretation that treats user intention as a first-class input rather than a background assumption. DriftSense therefore evaluates time and domain baselines, but it does not treat either as sufficient.
+
+\subsection{Browser and Social Media Distraction Interventions}
+Prior HCI systems have explored interventions that change access conditions or interface affordances. Lyngs et al. reviewed digital self-control tools through dual-systems theory and described mechanisms such as commitment, blocking, reminders, and self-monitoring \citep{lyngs2019selfcontrol}. Later design interventions for social media explored ways to help users maintain self-control without simply removing access \citep{lyngs2020facebook}.
+
+Recent work has focused more directly on platform design patterns. Purpose Mode lets users toggle attention-capturing patterns on social media websites and reports reduced perceived distraction in a field deployment \citep{lee2025purpose}. Research on attention-capture deceptive designs also argues that interface patterns such as infinite scroll and autoplay can shape attentional harms \citep{monge2023acdp}. DriftSense differs from such interface-modification work because it does not remove or alter social media features in the MVP. Instead, it studies whether session-level drift can be predicted from declared intention and lightweight activity signals.
+
+\subsection{Intention-Aware and Reflective Interventions}
+Intention-aware systems directly ask users to articulate goals or create moments of reflection before use. The \textit{one sec} app, evaluated in PNAS, inserts a short breathing pause before opening selected apps and reports reduced target-app opening over time \citep{gruning2023onesec}. PauseNow proposes intention-aware recommendations that guide users back to their original goals when they become lost during social media use \citep{zhao2024pausenow}. StayFocused studies reflective prompts and chatbot support for compulsive smartphone use, finding that reflection can help participants focus longer and resist distractions \citep{li2024stayfocused}. MindShift uses large language models to adapt intervention content to reported mental states and contexts in problematic smartphone use interventions \citep{wu2024mindshift}.
+
+DriftSense borrows the idea that intentions matter, but it uses that idea for measurement and prediction rather than intervention personalization. The pre-session prompt is not meant to block access. The post-session reflection supplies a self-reported session label. This allows DriftSense to evaluate whether intention adds predictive value beyond domain and time.
+
+\subsection{Personal Informatics and Activity Tracking}
+Personal informatics systems help users collect and reflect on data about their behavior. In digital wellbeing, activity summaries and dashboards can make technology use visible, but reflection can be more useful when the data is connected to meaningful goals rather than abstract totals. WellScreen, for example, scaffolds daily reflection by asking people to estimate and report smartphone use, emphasizing self-awareness beyond raw screen time \citep{bhat2026wellscreen}. Work on multi-device digital wellbeing also shows that users' experiences span devices and contexts, complicating simplistic time-based interpretations \citep{roffarello2021multidevice}.
+
+DriftSense uses dashboarding and export features only as supporting infrastructure. The dashboard summarizes configured-domain sessions, drift sessions, non-drift sessions, top drift domains, intention distributions, duration, activity patterns, and trends. These summaries help participants and researchers inspect the data, but the paper's central object of evaluation is the drift classifier.
+
+\subsection{Regret, Intention Mismatch, and Session-Level Modeling}
+Regretful or meaningless technology use is closely related to digital drift. Cho et al. studied regretful smartphone use at the app-feature level and showed that regret depends on the kind of activity, not merely the amount of time spent \citep{cho2021reflect}. Guo et al. analyzed a large corpus of smartphone screenshots with multimodal LLMs and found that regret varies by user intention and type of social media use \citep{guo2025regret}. A recent preprint on regretful social media sessions reports that the gap between intended and actual use predicts regret more strongly than session duration, further supporting intention mismatch as an important unit of analysis \citep{ahmed2026scroll}.
+
+These studies motivate DriftSense's label definition. A drift label is not assigned because a session is long or because the domain is social media. A drift label is assigned when the user explicitly reports that the visit did not match the original intention. This choice accepts that labels are subjective and potentially noisy, but it makes the target construct closer to the experience of drift than a generic time threshold.
+
+\subsection{Privacy and Ethical Concerns in Behavioral Tracking}
+Behavioral tracking creates privacy risks, especially when systems collect fine-grained content, messages, screenshots, or inferred mental states. Digital wellbeing scholarship has argued that tools should respect user agency and avoid framing all technology use as harmful \citep{burr2020ethics,buchi2021digital,zhao2024pausenow}. Digital phenotyping reviews also highlight the need to distinguish behavioral measurement from clinical inference and to avoid overclaiming from sensor data \citep{schroeder2026phenotyping}.
+
+DriftSense responds by minimizing data collection. The MVP records only monitored domains and metadata needed for session-level modeling. It does not collect page text, passwords, screenshots, messages, full history, source code, keystroke content, webcam data, face identity, or emotion data. The extension stores data locally first and provides export and delete-all-data controls. These constraints reduce model expressiveness, but they keep the prototype aligned with the paper's narrow claim.
+
+\section{System Design}
+\subsection{Design Goals}
+DriftSense is designed for a research setting where participants voluntarily install a browser extension, configure monitored domains, and export a local dataset for analysis. The system has four design goals:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Intention-first measurement.} The system should ask why a monitored site is being opened before making any session-level judgment.
+  \item \textbf{Lightweight behavioral sensing.} The system should collect aggregate interaction signals that are plausible predictors of drift without collecting page content or sensitive input.
+  \item \textbf{Local-first privacy.} Data should be stored locally, be exportable by the user, and be deletable through the interface.
+  \item \textbf{Model-comparable outputs.} The exported schema should support weak baselines, tabular models, sequence models, and early prediction analyses.
+\end{enumerate}
+
+\subsection{Chrome Extension Architecture}
+The planned implementation uses Chrome Manifest V3 with React and TypeScript for the user interface. The extension contains a background service worker for tab/session monitoring, content scripts for aggregate activity counting on monitored domains, a popup for quick status, an options page for domain configuration and privacy controls, and a dashboard for summaries and export.
+
+Figure~\ref{fig:architecture} summarizes the planned DriftSense extension and local machine-learning pipeline.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/figure1.png}
+  \caption{Planned DriftSense architecture. The extension captures intention, lightweight activity windows, and post-session reflection on monitored domains, stores data locally, and exports CSV/JSON files for local modeling.}
+  \Description{A system architecture diagram showing DriftSense stages from monitored browser access to intention prompting, lightweight activity logging, post-session reflection, local storage, export, and local machine-learning evaluation.}
+  \label{fig:architecture}
+\end{figure}
+
+\subsection{Monitored Domains and Pre-Session Prompt}
+Users configure domains that they consider drift-prone or worth studying. Default examples include \texttt{youtube.com}, \texttt{facebook.com}, \texttt{reddit.com}, \texttt{instagram.com}, \texttt{x.com}, \texttt{linkedin.com}, news websites, and custom domains. DriftSense only tracks configured domains.
+
+When the user opens a monitored domain, the extension displays a pre-session intention prompt:
+
+\begin{quote}
+\textit{Why are you opening this?}
+\end{quote}
+
+The MVP options are:
+
+\begin{itemize}[leftmargin=*]
+  \item Specific information
+  \item Intentional break
+  \item Boredom
+  \item Avoiding work
+  \item Accidental click
+\end{itemize}
+
+After selection, the site remains accessible. The prompt is a labeling and reflection mechanism, not a blocker.
+
+\subsection{Session Tracking}
+A session begins when the user opens or focuses a monitored domain and completes the intention prompt. A session ends when the tab is closed, the monitored domain is left, a timeout condition is met, or the user completes the post-session reflection. The system records the following session-level fields:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{session\_id}
+  \item \texttt{anonymous\_user\_id}
+  \item \texttt{domain}
+  \item \texttt{domain\_category}
+  \item \texttt{declared\_intention}
+  \item \texttt{start\_time} and \texttt{end\_time}
+  \item \texttt{duration\_seconds}
+  \item \texttt{click\_count}
+  \item \texttt{scroll\_count}
+  \item \texttt{keyboard\_activity\_count}, without key values
+  \item \texttt{idle\_seconds}
+  \item \texttt{active\_seconds}
+  \item \texttt{tab\_focus\_loss\_count}
+  \item \texttt{tab\_switch\_count}
+  \item \texttt{video\_playing\_seconds}, if detectable
+  \item \texttt{checkin\_count}
+  \item \texttt{post\_session\_answer}
+  \item \texttt{drift\_label}
+  \item \texttt{intended\_duration\_minutes}, if provided
+  \item \texttt{actual\_duration\_seconds}
+\end{itemize}
+
+\subsection{Activity Windows}
+Every 5 or 10 seconds, the content script records an activity-window summary. Each window contains:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{session\_id}
+  \item \texttt{timestamp\_offset\_seconds}
+  \item \texttt{clicks\_in\_window}
+  \item \texttt{scroll\_events\_in\_window}
+  \item \texttt{keyboard\_activity\_in\_window}, without key values
+  \item \texttt{idle\_in\_window}
+  \item \texttt{tab\_focused}
+  \item \texttt{video\_playing}
+  \item \texttt{url\_domain\_only}
+\end{itemize}
+
+These windows support sequence models and early prediction. They also preserve the privacy boundary: no page text, screenshot pixels, input content, private messages, full browsing history, or source code are collected.
+
+\subsection{Post-Session Reflection and Labeling}
+After a configurable duration or session boundary, DriftSense asks:
+
+\begin{quote}
+\textit{Did this visit match your original intention?}
+\end{quote}
+
+The MVP response options are:
+
+\begin{itemize}[leftmargin=*]
+  \item Yes
+  \item No, I drifted
+  \item Continue intentionally
+  \item Save for later
+\end{itemize}
+
+The primary binary labels are:
+
+\begin{equation}
+y =
+\begin{cases}
+0, & \text{if answer is \textit{Yes}}\\
+1, & \text{if answer is \textit{No, I drifted}}
+\end{cases}
+\end{equation}
+
+\textit{Continue intentionally} and \textit{Save for later} are retained as non-binary outcomes. Depending on the analysis, they may be excluded from binary classification or modeled as separate classes.
+
+Figure~\ref{fig:labeling-flow} illustrates the session-labeling flow from monitored-domain access through intention declaration, activity-window logging, and post-session reflection.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/figure2.png}
+  \caption{DriftSense session-labeling flow. The user declares an intention before a monitored-domain session and later reports whether the visit matched that intention.}
+  \Description{A flow diagram showing a monitored domain opening, an intention prompt with five possible intentions, browsing with activity windows, a post-session reflection prompt, and the mapping from reflection answers to non-drift, drift, or separate non-binary outcomes.}
+  \label{fig:labeling-flow}
+\end{figure}
+
+\subsection{Dashboard and Export}
+The dashboard reports aggregate summaries for the participant and researcher: total monitored-domain sessions, drift sessions, non-drift sessions, top drift domains, intention distribution, average duration, active/passive session indicators, daily or weekly trends, and export/delete controls. Export creates:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{sessions.csv}
+  \item \texttt{activity\_windows.csv}
+  \item \texttt{sessions.json}
+  \item a schema README
+\end{itemize}
+
+The dashboard is included to support transparency and data inspection. It is not treated as the paper's novelty claim.
+
+\section{Drift Classification Model}
+\subsection{Prediction Task}
+The main task is binary session-level prediction:
+
+\begin{quote}
+Given declared intention, domain metadata, and lightweight activity signals from a browser session, predict whether the user will later report that the session was drift.
+\end{quote}
+
+The positive class is the self-reported \textit{No, I drifted} label. The negative class is the self-reported \textit{Yes} label. Sessions labeled \textit{Continue intentionally} or \textit{Save for later} are analyzed separately or excluded from the binary task.
+
+\subsection{Feature Groups}
+The tabular feature set includes:
+
+\begin{itemize}[leftmargin=*]
+  \item declared intention
+  \item domain category
+  \item time of day
+  \item day of week
+  \item duration so far
+  \item total clicks
+  \item total scrolls
+  \item total keyboard activity count
+  \item idle ratio
+  \item active ratio
+  \item video ratio
+  \item focus loss count
+  \item tab switch count
+  \item average activity per minute
+  \item first-1-minute, first-3-minute, and first-5-minute activity summaries
+\end{itemize}
+
+The sequence feature set uses activity windows ordered by \texttt{timestamp\_offset\_seconds}. Static features such as declared intention, domain category, and time of day are concatenated with learned or one-hot representations, depending on the model.
+
+Figure~\ref{fig:model-pipeline} shows the planned preprocessing, modeling, and evaluation pipeline for tabular and sequence-based drift prediction.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/figure3.png}
+  \caption{Planned DriftSense modeling and evaluation pipeline. Exported session and activity-window data are cleaned, split, transformed into tabular and sequence features, and evaluated across baselines and intention-aware models.}
+  \Description{A machine-learning pipeline diagram showing sessions and activity windows as inputs, preprocessing and user-wise splitting, aggregate features and sequence tensors, baseline and learned models, and evaluation metrics including early prediction.}
+  \label{fig:model-pipeline}
+\end{figure}
+
+\subsection{Baselines}
+DriftSense evaluates four baselines before the main models:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Time-threshold baseline.} Predict drift if session duration exceeds a threshold tuned on the validation set.
+  \item \textbf{Domain baseline.} Predict drift for configured social/video/news domains marked as drift-prone.
+  \item \textbf{Intention-only logistic regression.} Predict from declared intention and basic context features only.
+  \item \textbf{Activity-only model.} Predict from aggregate activity signals without declared intention.
+\end{enumerate}
+
+These baselines test whether the proposed intention-plus-activity models add value beyond common digital wellbeing heuristics.
+
+\subsection{Main Models}
+The primary tabular model is CatBoost or XGBoost using intention, domain, time, and aggregate activity features \citep{chen2016xgboost,dorogush2018catboost}. These models are appropriate for heterogeneous tabular features and can provide feature importance summaries.
+
+The sequence model is a temporal convolutional network (TCN) or gated recurrent unit (GRU) model. A TCN is preferred because temporal convolutional architectures can provide stable sequence modeling with parallelizable training. The model consumes per-window activity vectors and static features, then outputs a session-level drift probability.
+
+\subsection{Early Prediction}
+Early prediction evaluates whether drift can be estimated before the full session ends. The same model families are trained or evaluated using truncated feature windows:
+
+\begin{itemize}[leftmargin=*]
+  \item first 1 minute
+  \item first 3 minutes
+  \item first 5 minutes
+  \item full session
+\end{itemize}
+
+Early prediction is important because an eventual intervention would need to occur while the session is still active. However, DriftSense does not deploy automatic interventions in the MVP. The paper evaluates early prediction feasibility only.
+
+\section{Methodology}
+\subsection{Study Design}
+The planned study is a field deployment of DriftSense with participants who regularly use browser-based social, video, forum, professional-networking, or news websites. Participants install the extension, configure monitored domains, complete sessions in their ordinary browsing environment, and export the dataset at the end of the study. The recommended deployment length is 1--2 weeks, long enough to collect repeated sessions while limiting participant burden.
+
+Because real data collection has not yet been completed, all sample sizes and results are placeholders:
+
+\begin{itemize}[leftmargin=*]
+  \item Participants: [INSERT PARTICIPANT COUNT]
+  \item Study duration: [INSERT DURATION]
+  \item Total monitored-domain sessions: [INSERT SESSION COUNT]
+  \item Labeled sessions: [INSERT LABELED SESSION COUNT]
+  \item Drift class proportion: [INSERT CLASS DISTRIBUTION]
+\end{itemize}
+
+\subsection{Participants}
+Participants should be adults who use Chrome or Chromium-based browsers and are comfortable installing a research extension. Recruitment may focus on students or knowledge workers because browser-based drift is common in study and work settings. The study should avoid recruiting participants on the basis of mental health status, addiction, ADHD, or other clinical categories because DriftSense is not designed for diagnosis or treatment.
+
+\subsection{Consent and Privacy Procedure}
+Before installation, participants receive a consent form explaining what DriftSense collects and what it does not collect. The consent process should state that the extension records only configured-domain metadata, declared intention, aggregate interaction counts, activity-window summaries, and post-session reflections. It should explicitly state that DriftSense does not collect page text, passwords, screenshots, private messages, full browsing history, source code, keystroke values, webcam data, face identity, or emotion data.
+
+Participants should be able to pause monitoring, remove monitored domains, export their data, and delete all locally stored data. Exported datasets should use anonymous participant IDs. Any real dataset used for publication should be reviewed for accidental sensitive fields before analysis.
+
+\subsection{Procedure}
+The planned procedure has six steps:
+
+\begin{enumerate}[leftmargin=*]
+  \item Participants complete consent and a short onboarding survey about browser use and monitored domains.
+  \item Participants install DriftSense and configure default or custom domains.
+  \item When opening a monitored domain, participants answer the pre-session intention prompt.
+  \item DriftSense records lightweight session metadata and activity windows while the monitored domain is active.
+  \item Participants answer the post-session reflection prompt.
+  \item At the end of the study, participants export the dataset and complete a post-study survey; optional interviews collect qualitative feedback about usefulness, burden, and privacy concerns.
+\end{enumerate}
+
+\subsection{Measures}
+The modeling evaluation reports:
+
+\begin{itemize}[leftmargin=*]
+  \item accuracy
+  \item precision
+  \item recall
+  \item F1-score
+  \item ROC-AUC
+  \item confusion matrix
+  \item calibration curve
+  \item per-domain performance
+  \item per-intention performance
+  \item early prediction performance at 1, 3, and 5 minutes
+\end{itemize}
+
+The user-study evaluation reports perceived usefulness, perceived control, prompt annoyance, privacy concern, and qualitative feedback themes. These measures are descriptive and should not be used to claim clinical benefit.
+
+\subsection{Data Processing}
+The analysis pipeline loads \texttt{sessions.csv} and \texttt{activity\_windows.csv}, removes invalid sessions, removes unlabeled sessions for the binary task, and creates train/validation/test splits. If multiple participants contribute data, the preferred split is user-wise to reduce leakage from the same participant's repeated browsing patterns. When user-wise splitting is not possible because the dataset is too small, the paper should report this limitation clearly.
+
+Categorical variables are encoded using one-hot encoding or model-native categorical handling. Numeric activity features are standardized for models that require scaling. Sequence tensors are padded or truncated to a fixed maximum length, with masks used when supported.
+
+\subsection{Analysis Plan}
+The primary hypothesis is that models using both intention and activity will outperform time-only and domain-only baselines on F1-score and ROC-AUC. Secondary analyses compare intention-only versus activity-only models, examine early prediction performance, and inspect feature importance for the strongest tabular model.
+
+No results should be fabricated. If the dataset is incomplete, tables should use placeholders such as [INSERT RESULT]. If the dataset is small, the paper should emphasize uncertainty, report confidence intervals or bootstrap intervals where possible, and avoid generalizing beyond the study sample.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
