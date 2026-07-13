@@ -189,10 +189,18 @@ Example model output:
 
 ```text
 drift_probability = 0.76
+risk_level = high
+reason_cues = longer_than_intended, high_scrolling
 ```
 
 Example check-in:
 
+> Drift risk looks high for this session.
+>
+> Estimated drift risk: 76%.
+>
+> Possible reasons: longer than intended, high scrolling.
+>
 > Still here for your original reason?
 
 Options:
@@ -207,6 +215,9 @@ Rules:
 - Do not block the website.
 - Do not shame the user.
 - Do not claim the system detects attention.
+- Present the probability as an estimate, not a fact.
+- Show a simple risk label such as low, medium, or high, plus the estimated probability if the pilot shows that users understand it.
+- Show reason cues only from privacy-safe features, such as duration, idle time, scrolling, tab switching, or video playback.
 - Keep check-ins sparse to avoid annoyance.
 
 Suggested threshold:
@@ -238,8 +249,11 @@ Allowed data:
 - tab switch count
 - video playback status if accessible
 - model drift probability, Condition C only
+- model risk level, Condition C only
+- model reason cues, Condition C only
 - whether model check-in was shown, Condition C only
 - check-in response, Condition C only
+- whether drift probability was shown to the user, Condition C only
 - post-session reflection answer
 - drift label
 
@@ -284,8 +298,11 @@ tab_focus_loss_count
 tab_switch_count
 video_playing_seconds
 model_drift_probability
+model_risk_level
+model_reason_cues
 model_checkin_shown
 model_checkin_response
+model_probability_shown_to_user
 post_session_answer
 drift_label
 intended_duration_minutes
@@ -337,7 +354,19 @@ Avoid deep learning in the main study unless the dataset exceeds 1,000+ labeled 
 
 ## 8. Evaluation Plan
 
+The evaluation should look familiar to related digital wellbeing and self-control studies, then add the ML layer as the main extension. In other words, first evaluate whether the intervention changes user-reported behavior and experience, then evaluate whether the model helps trigger the intervention at better moments.
+
+Related studies commonly report:
+
+- usage behavior, such as session count, time spent, and app/site openings
+- self-reported distraction, regret, usefulness, annoyance, and perceived control
+- comparisons between normal use and an intervention condition
+
+DriftSense keeps these standard HCI outcomes, but adds model evaluation and model-assisted timing.
+
 ### Prediction Evaluation
+
+This evaluates whether the ML model is good enough to assist the extension.
 
 Report:
 
@@ -347,6 +376,8 @@ Report:
 - recall
 - accuracy
 - confusion matrix
+- first-3-minute performance
+- expected check-in rate at the selected threshold
 
 Main comparison:
 
@@ -356,7 +387,13 @@ Secondary comparison:
 
 > Does intention + activity outperform activity-only?
 
+Model usability question:
+
+> Does the first-3-minute model identify sessions where a reflective check-in is likely to be useful without creating too many false nudges?
+
 ### UX / Drift-Reduction Evaluation
+
+This follows the style of related digital wellbeing field studies.
 
 Compare the three conditions:
 
@@ -368,21 +405,45 @@ Compare the three conditions:
 | Sessions per participant | | | |
 | Prompt/check-in annoyance | | | |
 | Perceived control | | | |
+| Prompt usefulness | | | |
+| Privacy concern | | | |
 
 Main UX hypothesis:
 
 > Condition C will have lower self-reported drift than Condition B, and Condition B will have lower self-reported drift than Condition A.
+
+### ML-Assisted Prompt Evaluation
+
+This is the supercharged part beyond typical prompt/friction studies.
+
+For Condition C, report:
+
+- number of model check-ins shown
+- percentage of sessions where check-in was shown
+- average model drift probability when check-in was shown
+- model risk level shown to user: low, medium, high
+- most common reason cues shown, such as "longer than intended" or "high scrolling"
+- user response to check-in
+- drift rate after check-in
+- annoyance rating for model-assisted check-ins
+- participant feedback on whether the prompt appeared at the right time
+
+Main ML-assistance question:
+
+> Does model-triggered reflection feel more timely and produce lower self-reported drift than always using the same static intention prompt?
 
 Use cautious language:
 
 - "was associated with lower self-reported drift"
 - "participants reported fewer drift sessions"
 - "model-assisted check-ins may help users reassess intention"
+- "the model helped time reflective check-ins"
 
 Avoid:
 
 - "the model prevented distraction"
 - "the system detected attention loss"
+- "the probability proves the user was drifting"
 
 ---
 
@@ -581,10 +642,14 @@ Paper framing:
 | Outcome | Value |
 |---|---:|
 | Check-ins shown | |
+| Mean drift probability when shown | |
+| High-risk check-ins | |
+| Most common reason cue | |
 | Check-ins accepted | |
 | Remind-later responses | |
 | Save-for-later responses | |
 | Reported annoyance | |
+| Reported timing appropriateness | |
 
 ---
 
@@ -664,4 +729,3 @@ It becomes:
 > Can intention prompts and local drift-risk prediction reduce self-reported browser-session drift compared with passive monitored browsing?
 
 This is more ambitious, but still achievable if the model-assisted check-in remains simple and the paper avoids overclaiming.
-

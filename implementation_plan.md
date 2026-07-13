@@ -230,8 +230,11 @@ tab_focus_loss_count
 tab_switch_count
 video_playing_seconds
 model_drift_probability
+model_risk_level
+model_reason_cues
 model_checkin_shown
 model_checkin_response
+model_probability_shown_to_user
 post_session_answer
 drift_label
 intended_duration_minutes
@@ -336,6 +339,12 @@ Save for later
 Condition C model check-in:
 
 ```text
+Drift risk looks high for this session.
+
+Estimated drift risk: 76%.
+
+Possible reasons: longer than intended, high scrolling.
+
 Still here for your original reason?
 ```
 
@@ -348,12 +357,29 @@ Remind me in 5 minutes
 Save for later
 ```
 
+Display rules:
+
+- Show a simple risk level: low, medium, or high.
+- Show the exact probability only with estimate wording, for example `Estimated drift risk: 76%`.
+- If pilot participants find percentages confusing or stressful, switch the study UI to risk level only and keep the probability in the export.
+- Never write "you are distracted" or "you are drifting" as a factual claim.
+- Use reason cues only from allowed features:
+  - longer than intended
+  - high scrolling
+  - long idle period
+  - many tab switches
+  - video playing longer than intended
+  - low interaction after opening
+- Keep reason cues short and understandable.
+- Store whether the probability was shown so the study can compare risk-label-only vs probability-visible behavior if needed.
+
 Acceptance checks:
 
 - Prompt text is neutral and non-shaming.
 - The website is not blocked after the prompt.
 - User can dismiss or answer according to study design.
 - Check-ins are rate-limited.
+- Probability/risk text is presented as an estimate, not a diagnosis or attention claim.
 
 ---
 
@@ -400,9 +426,35 @@ The extension computes:
 
 ```text
 model_drift_probability
+model_risk_level
+model_reason_cues
 model_checkin_shown
 model_checkin_response
+model_probability_shown_to_user
 ```
+
+Risk-level mapping:
+
+```text
+if probability < 0.40:
+    risk_level = "low"
+elif probability < threshold:
+    risk_level = "medium"
+else:
+    risk_level = "high"
+```
+
+Reason-cue examples:
+
+```text
+duration_seconds > intended_duration_seconds -> longer_than_intended
+scroll_count_first_3_min is high -> high_scrolling
+idle_ratio_first_3_min is high -> long_idle_period
+tab_switch_count_first_3_min is high -> many_tab_switches
+video_playing_seconds_first_3_min is high -> video_playing
+```
+
+Reason cues must be derived from aggregate metadata only. Do not inspect page text, titles, comments, recommendations, messages, or search queries.
 
 Check-in logic:
 
@@ -411,7 +463,8 @@ if condition == "model_assisted_prompt"
 and session_duration >= 180 seconds
 and model_drift_probability >= threshold
 and no check-in was shown recently:
-    show reflective check-in
+    compute risk_level and reason_cues
+    show reflective check-in with risk estimate
 ```
 
 Acceptance checks:
@@ -419,6 +472,8 @@ Acceptance checks:
 - Model output is stored as probability, not a diagnosis.
 - Check-in appears only in Condition C.
 - Check-in is sparse and rate-limited.
+- Risk reason cues are explainable and privacy-safe.
+- The UI makes clear that the estimate may be wrong.
 - If ML integration fails, fallback is disabled instead of collecting extra data.
 
 ---
@@ -857,4 +912,3 @@ The implementation is complete when:
 - Stage 2 data can compare all three conditions.
 - ML scripts produce metrics, tables, and figures.
 - README files explain setup, privacy, export, and analysis.
-
