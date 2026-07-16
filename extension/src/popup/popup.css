@@ -1,0 +1,49 @@
+html, body, #root { width: 380px; min-height: 520px; }
+body { background: #f6f8f7; }
+.popup-shell { width: 380px; min-height: 520px; color: var(--ink); background: #f6f8f7; }
+.popup-header { height: 64px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; background: white; border-bottom: 1px solid var(--line); }
+.popup-loading { margin: 18px; min-height: 480px; }
+.popup-state { margin: 14px 14px 10px; padding: 12px 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #68736e; background: #edf0ee; border-radius: 7px; }
+.popup-state-live { color: var(--green-dark); background: var(--green-soft); }
+.popup-state > div { display: flex; align-items: center; gap: 8px; }
+.popup-state strong { font-size: 12px; }
+.popup-state small { color: inherit; opacity: .78; font-size: 10px; }
+.popup-idle { margin: 0 14px 10px; min-height: 86px; padding: 15px; display: flex; align-items: center; gap: 12px; background: white; border: 1px solid var(--line); border-radius: 8px; }
+.popup-idle-icon { width: 38px; height: 38px; display: grid; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 7px; }
+.popup-idle > div { display: grid; gap: 4px; }
+.popup-idle strong { font-size: 13px; }
+.popup-idle small { color: var(--muted); font-size: 10px; }
+.active-session { margin: 0 14px 10px; padding: 16px; color: white; background: #202a26; border-radius: 8px; box-shadow: var(--shadow); }
+.active-session-top { display: flex; align-items: center; justify-content: space-between; color: #aab7b1; font-size: 10px; font-weight: 750; text-transform: uppercase; }
+.live-label { display: flex; align-items: center; gap: 5px; color: #8cdbbc; }
+.live-label span { width: 6px; height: 6px; background: #51c896; border-radius: 50%; box-shadow: 0 0 0 3px rgba(81,200,150,.12); }
+.active-domain { margin: 15px 0; display: flex; align-items: center; gap: 11px; }
+.active-domain > span { width: 38px; height: 38px; display: grid; place-items: center; color: #202a26; background: #e7f5ef; border-radius: 7px; font-weight: 800; }
+.active-domain > div { display: grid; gap: 3px; }
+.active-domain strong { font-size: 14px; }
+.active-domain small { color: #aebbb5; font-size: 10px; }
+.active-meta { margin-bottom: 13px; display: flex; gap: 16px; color: #bdc8c3; font-size: 10px; }
+.active-meta span { display: flex; align-items: center; gap: 5px; }
+.end-button { width: 100%; color: white; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
+.popup-stats { margin: 0 14px 10px; display: grid; grid-template-columns: repeat(3, 1fr); background: white; border: 1px solid var(--line); border-radius: 8px; }
+.popup-stats > div { min-height: 80px; padding: 12px; display: grid; align-content: center; gap: 2px; }
+.popup-stats > div + div { border-left: 1px solid var(--line); }
+.popup-stats span, .popup-stats small { color: var(--muted); font-size: 9px; }
+.popup-stats strong { font-size: 19px; }
+.popup-links { margin: 0 14px; overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 8px; }
+.popup-links a { min-height: 64px; padding: 10px 12px; display: grid; grid-template-columns: 34px 1fr 17px; align-items: center; gap: 10px; text-decoration: none; }
+.popup-links a + a { border-top: 1px solid var(--line); }
+.popup-links a > span:nth-child(2) { display: grid; gap: 3px; }
+.popup-links strong { font-size: 12px; }
+.popup-links small { color: var(--muted); font-size: 9px; }
+.popup-link-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; }
+.popup-link-icon.green { color: var(--green); background: var(--green-soft); }
+.popup-link-icon.blue { color: var(--blue); background: var(--blue-soft); }
+.popup-links > a > svg { color: #9ba59f; }
+.popup-footer { min-height: 50px; padding: 0 18px; display: flex; align-items: center; gap: 6px; color: #78837e; font-size: 9px; }
+.popup-footer svg { color: var(--green); }
+.popup-footer span { width: 3px; height: 3px; margin: 0 2px; background: #a8b1ad; border-radius: 50%; }
+.popup-setup { margin: 18px; min-height: 390px; padding: 32px 24px; display: grid; place-items: center; align-content: center; text-align: center; background: white; border: 1px solid var(--line); border-radius: 8px; }
+.popup-setup > span { width: 48px; height: 48px; margin-bottom: 14px; display: grid; place-items: center; color: var(--green); background: var(--green-soft); border-radius: 8px; }
+.popup-setup h1 { margin-bottom: 8px; font-size: 20px; }
+.popup-setup p { margin-bottom: 18px; color: var(--muted); font-size: 12px; line-height: 1.55; }

@@ -24,3 +24,12 @@
 
 # Keep final paper PDFs under version control.
 !paper/*.pdf
+
+# Extension build and dependencies
+extension/node_modules/
+extension/dist/
+extension/.vite/
+extension/artifacts/
+extension/*.tsbuildinfo
+extension/vite-dev*.log
+
