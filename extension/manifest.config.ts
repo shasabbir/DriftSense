@@ -42,5 +42,13 @@ export default defineManifest({
       run_at: 'document_idle',
     },
   ],
-  web_accessible_resources: [],
+  web_accessible_resources: [
+    {
+      // CRXJS emits a small loader that imports hashed files from assets/. The
+      // collector still runs only on approved domains; this makes its packaged
+      // module graph loadable after dynamic registration.
+      resources: ['assets/*'],
+      matches: ['http://*/*', 'https://*/*'],
+    },
+  ],
 })

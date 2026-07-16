@@ -126,6 +126,7 @@ export type RuntimeRequest =
   | { type: 'REQUEST_REFLECTION'; sessionId: string }
   | { type: 'END_ACTIVE_SESSION'; tabId?: number }
   | { type: 'SET_MONITORING'; enabled: boolean }
+  | { type: 'SYNC_COLLECTOR' }
   | { type: 'GET_POPUP_STATE' }
 
 export interface PageContextResponse {

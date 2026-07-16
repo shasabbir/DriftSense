@@ -13,21 +13,21 @@ import {
   submitReflection,
 } from './sessionManager'
 
-void initializeStorage().then(syncCollectorRegistration)
+void initializeStorage().then(syncCollectorRegistration).catch(reportCollectorError)
 
 chrome.runtime.onInstalled.addListener((details) => {
   void initializeStorage().then(() => {
-    void syncCollectorRegistration()
+    void syncCollectorRegistration().catch(reportCollectorError)
     if (details.reason === 'install') void chrome.runtime.openOptionsPage()
   })
 })
 
 chrome.runtime.onStartup.addListener(() => {
-  void initializeStorage().then(syncCollectorRegistration)
+  void initializeStorage().then(syncCollectorRegistration).catch(reportCollectorError)
 })
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes.driftsense_settings) void syncCollectorRegistration()
+  if (areaName === 'local' && changes.driftsense_settings) void syncCollectorRegistration().catch(reportCollectorError)
 })
 
 chrome.runtime.onMessage.addListener((request: RuntimeRequest, sender, sendResponse) => {
@@ -141,6 +141,11 @@ async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.Mes
     return { settings }
   }
 
+  if (request.type === 'SYNC_COLLECTOR') {
+    const collectorStatus = await syncCollectorRegistration()
+    return { collectorStatus }
+  }
+
   if (request.type === 'GET_POPUP_STATE') {
     const [settings, sessions, currentTabId] = await Promise.all([getSettings(), getSessions(), getCurrentTabId()])
     const activeSession = currentTabId === null
@@ -157,15 +162,27 @@ async function getCurrentTabId(): Promise<number | null> {
   return tab?.id ?? null
 }
 
-async function syncCollectorRegistration(): Promise<void> {
+type CollectorRegistrationStatus = { registered: boolean; matches: string[] }
+
+let collectorSyncQueue: Promise<CollectorRegistrationStatus> = Promise.resolve({ registered: false, matches: [] })
+
+function syncCollectorRegistration(): Promise<CollectorRegistrationStatus> {
+  const sync = collectorSyncQueue
+    .catch(() => ({ registered: false, matches: [] }))
+    .then(applyCollectorRegistration)
+  collectorSyncQueue = sync
+  return sync
+}
+
+async function applyCollectorRegistration(): Promise<CollectorRegistrationStatus> {
   const registrationId = 'driftsense-domain-collector'
   const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [registrationId] })
   if (existing.length) await chrome.scripting.unregisterContentScripts({ ids: [registrationId] })
 
   const settings = await getSettings()
-  if (!settings.consentAccepted || !settings.monitoringEnabled) return
+  if (!settings.consentAccepted || !settings.monitoringEnabled) return { registered: false, matches: [] }
   const matches = await permittedOrigins(settings.monitoredDomains)
-  if (!matches.length) return
+  if (!matches.length) return { registered: false, matches: [] }
 
   const bundledScripts = chrome.runtime.getManifest().content_scripts?.[0]?.js
   if (!bundledScripts?.length) throw new Error('DriftSense collector bundle was not found.')
@@ -177,4 +194,9 @@ async function syncCollectorRegistration(): Promise<void> {
     runAt: 'document_idle',
     world: 'ISOLATED',
   }])
+  return { registered: true, matches }
+}
+
+function reportCollectorError(error: unknown): void {
+  console.error('DriftSense collector registration failed.', error)
 }

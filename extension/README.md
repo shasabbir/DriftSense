@@ -44,13 +44,15 @@ Then load the production bundle:
 
 After source changes, run `npm run build`, then select **Reload** on the DriftSense card in `chrome://extensions`.
 
+If an enabled domain displays no intention prompt, open DriftSense settings and use **Grant domain access** when shown, then reload the extension and refresh any already-open domain tabs. Chrome does not inject a newly registered collector into pages that were loaded before registration.
+
 ## Development Commands
 
 ```powershell
 npm run dev        # Vite UI development server
 npm run typecheck  # TypeScript validation
 npm test           # privacy, labels, domains, permissions, and synthetic data
-npm run build      # production unpacked extension in dist/
+npm run build      # build dist/ and verify the collector can load on approved domains
 ```
 
 The icon source is deterministic. Regenerate the PNG sizes with:

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,7 +22,8 @@ import {
 } from 'lucide-react'
 import { DOMAIN_CATEGORIES } from '../shared/constants'
 import { normalizeDomain } from '../shared/domainUtils'
-import { removeUnusedDomainPermissions, requestDomainPermissions } from '../shared/permissions'
+import { missingPermissionDomains, removeUnusedDomainPermissions, requestDomainPermissions } from '../shared/permissions'
+import { sendRuntimeMessage } from '../shared/runtime'
 import { clearResearchData, patchSettings, setSettings } from '../shared/storage'
 import type { AppSettings, DomainCategory, MonitoredDomain } from '../shared/types'
 import { AppLogo } from '../ui/AppLogo'
@@ -76,6 +77,7 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
       reflectionAfterMinutes: reflectionMinutes,
       onboardingComplete: true,
     })
+    if (typeof chrome !== 'undefined' && chrome.runtime) await sendRuntimeMessage({ type: 'SYNC_COLLECTOR' })
     await onComplete()
     setSaving(false)
   }
@@ -175,8 +177,22 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
   const [newCategory, setNewCategory] = useState<DomainCategory>('other')
   const [domainError, setDomainError] = useState('')
   const [permissionError, setPermissionError] = useState('')
+  const [missingPermissions, setMissingPermissions] = useState<string[]>([])
 
   const isDirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(settings), [draft, settings])
+  const refreshPermissionStatus = async () => setMissingPermissions(await missingPermissionDomains(draft.monitoredDomains))
+  useEffect(() => { void refreshPermissionStatus() }, [settings])
+
+  const grantDomainAccess = async () => {
+    const granted = await requestDomainPermissions(draft.monitoredDomains)
+    if (!granted) {
+      setPermissionError('Chrome did not grant access to the enabled domains. Approve the request so DriftSense can show prompts there.')
+      return
+    }
+    if (typeof chrome !== 'undefined' && chrome.runtime) await sendRuntimeMessage({ type: 'SYNC_COLLECTOR' })
+    setPermissionError('')
+    await refreshPermissionStatus()
+  }
   const save = async () => {
     const granted = await requestDomainPermissions(draft.monitoredDomains)
     if (!granted) {
@@ -185,6 +201,8 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
     }
     await removeUnusedDomainPermissions(settings.monitoredDomains, draft.monitoredDomains)
     await setSettings(draft)
+    if (typeof chrome !== 'undefined' && chrome.runtime) await sendRuntimeMessage({ type: 'SYNC_COLLECTOR' })
+    await refreshPermissionStatus()
     setPermissionError('')
     setSaved(true)
     window.setTimeout(() => setSaved(false), 1800)
@@ -221,6 +239,7 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
 
         <div className="settings-grid">
           <div className="settings-main">
+            {missingPermissions.length > 0 && <div className="notice permission-recovery"><ShieldCheck size={18} /><span><strong>Chrome access is missing for {missingPermissions.length} enabled {missingPermissions.length === 1 ? 'domain' : 'domains'}.</strong><small>{missingPermissions.slice(0, 3).join(', ')}{missingPermissions.length > 3 ? ` and ${missingPermissions.length - 3} more` : ''}. Grant access, then reload any already-open domain tab.</small></span><button className="button button-green" type="button" onClick={grantDomainAccess}>Grant domain access</button></div>}
             {permissionError && <div className="notice danger-notice"><Info size={17} />{permissionError}</div>}
             <section className="panel panel-pad settings-section">
               <div className="settings-section-head"><div><h2>Collection status</h2><p>Pause immediately without changing your domain list or stored records.</p></div><button aria-label="Toggle monitoring" className={draft.monitoringEnabled ? 'toggle toggle-on' : 'toggle'} type="button" onClick={() => setDraft((current) => ({ ...current, monitoringEnabled: !current.monitoringEnabled }))} /></div>
@@ -237,6 +256,7 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
                   <div className="domain-row" key={item.domain}>
                     <span className="domain-favicon">{item.domain[0].toUpperCase()}</span>
                     <div className="domain-name"><strong>{item.domain}</strong><span>{item.category}</span></div>
+                    <span className="access-warning">{item.enabled && missingPermissions.includes(item.domain) ? 'Needs access' : ''}</span>
                     <button aria-label={`Toggle ${item.domain}`} className={item.enabled ? 'toggle toggle-on' : 'toggle'} type="button" onClick={() => setDraft((current) => ({ ...current, monitoredDomains: current.monitoredDomains.map((domain) => domain.domain === item.domain ? { ...domain, enabled: !domain.enabled } : domain) }))} />
                     <button className="button button-icon button-quiet" aria-label={`Remove ${item.domain}`} type="button" onClick={() => setDraft((current) => ({ ...current, monitoredDomains: current.monitoredDomains.filter((domain) => domain.domain !== item.domain) }))}><Trash2 size={16} /></button>
                   </div>

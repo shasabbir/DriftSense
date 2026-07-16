@@ -3,7 +3,11 @@ import type { MonitoredDomain } from './types'
 export function originsForDomains(domains: MonitoredDomain[]): string[] {
   return domains
     .filter((item) => item.enabled)
-    .flatMap((item) => [`http://${item.domain}/*`, `https://${item.domain}/*`, `http://*.${item.domain}/*`, `https://*.${item.domain}/*`])
+    .flatMap((item) => originsForDomain(item.domain))
+}
+
+export function originsForDomain(domain: string): string[] {
+  return [`http://${domain}/*`, `https://${domain}/*`, `http://*.${domain}/*`, `https://*.${domain}/*`]
 }
 
 export async function requestDomainPermissions(domains: MonitoredDomain[]): Promise<boolean> {
@@ -25,4 +29,14 @@ export async function permittedOrigins(domains: MonitoredDomain[]): Promise<stri
   if (typeof chrome === 'undefined' || !chrome.permissions) return requested
   const checks = await Promise.all(requested.map(async (origin) => ({ origin, allowed: await chrome.permissions.contains({ origins: [origin] }) })))
   return checks.filter((item) => item.allowed).map((item) => item.origin)
+}
+
+export async function missingPermissionDomains(domains: MonitoredDomain[]): Promise<string[]> {
+  const enabled = domains.filter((item) => item.enabled)
+  if (typeof chrome === 'undefined' || !chrome.permissions) return []
+  const checks = await Promise.all(enabled.map(async (item) => ({
+    domain: item.domain,
+    allowed: await chrome.permissions.contains({ origins: originsForDomain(item.domain) }),
+  })))
+  return checks.filter((item) => !item.allowed).map((item) => item.domain)
 }

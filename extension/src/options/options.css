@@ -57,11 +57,17 @@
 .collection-state span { font-size: 11px; }
 .count-label { color: var(--muted); font-size: 11px; font-weight: 750; }
 .domain-list { border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
-.domain-row { min-height: 60px; padding: 9px 10px; display: grid; grid-template-columns: 36px 1fr auto 38px; gap: 10px; align-items: center; background: white; border-bottom: 1px solid var(--line); }
+.domain-row { min-height: 60px; padding: 9px 10px; display: grid; grid-template-columns: 36px 1fr auto auto 38px; gap: 10px; align-items: center; background: white; border-bottom: 1px solid var(--line); }
 .domain-row:last-child { border-bottom: 0; }
 .domain-name { display: grid; gap: 3px; }
 .domain-name strong { font-size: 12px; }
 .domain-name span { color: var(--muted); font-size: 10px; text-transform: capitalize; }
+.access-warning { padding: 4px 7px; color: #8d3d2e; background: var(--coral-soft); border-radius: 999px; font-size: 9px; font-weight: 750; }
+.access-warning:empty { visibility: hidden; }
+.permission-recovery { margin-bottom: 16px; align-items: center; }
+.permission-recovery > span { display: grid; gap: 3px; flex: 1; }
+.permission-recovery strong { font-size: 11px; }
+.permission-recovery small { font-size: 10px; }
 .domain-add-row { margin-top: 14px; display: grid; grid-template-columns: 1fr 180px auto; gap: 9px; align-items: end; }
 .add-domain-button { height: 42px; }
 .field-error { margin: 8px 0 0 !important; color: var(--coral) !important; }
