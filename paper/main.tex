@@ -23,7 +23,7 @@
 \begin{document}
 
 \begin{abstract}
-Digital wellbeing tools commonly rely on domain blocking, screen-time limits, and usage dashboards. These approaches can misclassify purposeful browsing as problematic because the same website may support information seeking, intentional breaks, passive consumption, or avoidance. We introduce DriftSense, a privacy-preserving Chrome extension and local machine-learning pipeline for studying browser-based digital drift, defined as self-reported mismatch between browsing intention and session outcome. DriftSense records lightweight session metadata and activity-window counts on configured domains, asks post-session reflection questions, and can optionally ask pre-session intention prompts. The planned study has two stages. First, we collect prompted sessions to train and evaluate drift-risk models against time-threshold, domain-category, intention-only, and activity-only baselines. Second, we freeze the trained model and compare three field-study conditions: passive monitoring, static intention prompting, and model-assisted reflective check-ins triggered by predicted drift risk. The planned evaluation reports prediction metrics such as F1-score and ROC-AUC, plus user-experience outcomes such as drift-session percentage, prompt annoyance, perceived control, and privacy concern. Because empirical data collection is not yet complete, this draft does not report results; all performance values are left as placeholders for later study data. The contribution is a narrow implementation and evaluation framework for predicting and potentially reducing self-reported browser-session drift, not a claim to detect attention, emotion, addiction, or mental health status.
+Digital wellbeing tools commonly rely on domain blocking, screen-time limits, and usage dashboards. These approaches can misclassify purposeful browsing as problematic because the same website may support information seeking, intentional breaks, passive consumption, or avoidance. We introduce DriftSense, a privacy-preserving Chrome extension and local machine-learning pipeline for studying browser-based digital drift, defined as self-reported mismatch between browsing intention and session outcome. DriftSense records lightweight session metadata and activity-window counts on configured domains, asks post-session reflection questions, and can optionally ask pre-session intention prompts. The planned study has two stages. First, we collect prompted sessions to train and evaluate drift-risk models against time-threshold, domain-category, intention-only, and activity-only baselines. Second, we freeze the trained model and compare three field-study conditions: passive monitoring, static intention prompting, and model-assisted reflective check-ins triggered by predicted drift risk. The evaluation follows common digital wellbeing field-study practice by reporting usage behavior, self-reported drift, annoyance, usefulness, perceived control, and privacy concern, while adding ML-specific measures such as F1-score, ROC-AUC, first-3-minute performance, expected check-in rate, displayed risk level, and check-in timing feedback. Because empirical data collection is not yet complete, this draft does not report results; all performance values are left as placeholders for later study data. The contribution is a narrow implementation and evaluation framework for predicting and potentially reducing self-reported browser-session drift, not a claim to detect attention, emotion, addiction, or mental health status.
 \end{abstract}
 
 \begin{CCSXML}
@@ -61,7 +61,7 @@ Existing tools often operationalize undesirable use through screen time, app or 
 
 We use the term \textit{browser-based digital drift} to describe a session-level intention-behavior mismatch: the user begins with one declared purpose but later reports that the visit did not match that intention. This framing is deliberately narrower than addiction, attention detection, or productivity optimization. DriftSense does not infer clinical status or inner mental state. Instead, it collects explicit intention and explicit post-session reflection, then evaluates whether those self-reported labels can be predicted from lightweight browser-session signals.
 
-DriftSense is designed around a local-first Chrome Manifest V3 extension and a reproducible machine-learning pipeline. In prompted conditions, before accessing a configured domain, the user declares an intention, such as \textit{specific information}, \textit{intentional break}, \textit{boredom}, \textit{avoiding work}, or \textit{accidental click}. During the session, the extension records metadata and aggregate interaction counts, such as duration, click count, scroll count, idle time, tab focus changes, and activity-window summaries. It does not collect page text, screenshots, passwords, private messages, full browsing history, source code, webcam data, or keystroke values. After a configured duration or session boundary, the extension asks whether the visit matched the original intention or became drift. In the model-assisted condition, a locally computed drift-risk probability can trigger a lightweight reflective check-in, but the extension does not block the website.
+DriftSense is designed around a local-first Chrome Manifest V3 extension and a reproducible machine-learning pipeline. In prompted conditions, before accessing a configured domain, the user declares an intention, such as \textit{specific information}, \textit{intentional break}, \textit{boredom}, \textit{avoiding work}, or \textit{accidental click}. During the session, the extension records metadata and aggregate interaction counts, such as duration, click count, scroll count, idle time, tab focus changes, and activity-window summaries. It does not collect page text, screenshots, passwords, private messages, full browsing history, source code, webcam data, or keystroke values. After a configured duration or session boundary, the extension asks whether the visit matched the original intention or became drift. In the model-assisted condition, a locally computed drift-risk probability can trigger a lightweight reflective check-in that displays an estimated risk level and short privacy-safe reason cues, but the extension does not block the website.
 
 The central research questions are:
 
@@ -73,7 +73,7 @@ The central research questions are:
 \textit{RQ3: Does a model-assisted reflective check-in reduce self-reported drift beyond a static intention prompt?}
 \end{quote}
 
-The expected contribution is an implementation and evaluation framework for intention-aware drift prediction and lightweight reflective support in browser sessions. The contribution is not that DriftSense tracks activity, displays a dashboard, or blocks websites. Rather, the contribution is the combination of privacy-preserving activity signals, self-reported drift labels, baseline model comparisons, and a three-condition comparison of passive monitoring, static intention prompting, and model-assisted reflection.
+The expected contribution is an implementation and evaluation framework for intention-aware drift prediction and lightweight reflective support in browser sessions. The contribution is not that DriftSense tracks activity, displays a dashboard, or blocks websites. Rather, the contribution is the combination of privacy-preserving activity signals, self-reported drift labels, baseline model comparisons, a three-condition comparison of passive monitoring, static intention prompting, and model-assisted reflection, and an evaluation of whether ML helps time reflective prompts more appropriately than a static prompt alone.
 
 \section{Related Work}
 \subsection{Digital Wellbeing and Digital Self-Control Tools}
@@ -108,13 +108,14 @@ DriftSense responds by minimizing data collection. The prototype records only mo
 
 \section{System Design}
 \subsection{Design Goals}
-DriftSense is designed for a research setting where participants voluntarily install a browser extension, configure monitored domains, and export a local dataset for analysis. The system has four design goals:
+DriftSense is designed for a research setting where participants voluntarily install a browser extension, configure monitored domains, and export a local dataset for analysis. The system has five design goals:
 
 \begin{enumerate}[leftmargin=*]
   \item \textbf{Condition-aware measurement.} The system should support passive monitoring, static intention prompting, and model-assisted reflective check-ins.
   \item \textbf{Lightweight behavioral sensing.} The system should collect aggregate interaction signals that are plausible predictors of drift without collecting page content or sensitive input.
   \item \textbf{Local-first privacy.} Data should be stored locally, be exportable by the user, and be deletable through the interface.
   \item \textbf{Model-comparable outputs.} The exported schema should support weak baselines, tabular models, first-3-minute prediction, and condition-level drift-rate comparison.
+  \item \textbf{Inspectable feedback.} Participants should be able to review aggregate trends, self-reported labels, and model-assisted events without exposing prohibited content or presenting model estimates as facts.
 \end{enumerate}
 
 \subsection{Chrome Extension Architecture}
@@ -159,13 +160,19 @@ The response options are:
 
 After selection, the site remains accessible. The prompt is a labeling and reflection mechanism, not a blocker.
 
-In the model-assisted condition, if the local model estimates high drift risk after the first three minutes, DriftSense can ask:
+In the model-assisted condition, if the local model estimates high drift risk after the first three minutes, DriftSense can show a reflective check-in such as:
 
 \begin{quote}
+\textit{Drift risk looks high for this session.}
+
+\textit{Estimated drift risk: 76\%.}
+
+\textit{Possible reasons: longer than intended, high scrolling.}
+
 \textit{Still here for your original reason?}
 \end{quote}
 
-Example responses include \textit{Yes, continue}, \textit{I drifted, wrap up}, \textit{Remind me in 5 minutes}, and \textit{Save for later}.
+Example responses include \textit{Yes, continue}, \textit{I drifted, wrap up}, \textit{Remind me in 5 minutes}, and \textit{Save for later}. The displayed probability is phrased as an estimate rather than a fact. Reason cues are derived only from allowed metadata such as duration, scrolling, idle time, tab switching, or video playback status; they do not use page text, titles, comments, messages, recommendations, or search queries. If pilot participants find exact percentages confusing or stressful, the study interface can show only a coarse risk label such as \textit{low}, \textit{medium}, or \textit{high}, while still exporting the numeric probability for analysis.
 
 \subsection{Session Tracking}
 A session begins when the user opens or focuses a monitored domain. In prompted conditions, the pre-session intention answer is associated with the session. A session ends when the tab is closed, the monitored domain is left, a timeout condition is met, or the user completes the post-session reflection. The system records the following session-level fields:
@@ -190,8 +197,11 @@ A session begins when the user opens or focuses a monitored domain. In prompted 
   \item \texttt{video\_playing\_seconds}, if detectable
   \item \texttt{checkin\_count}
   \item \texttt{model\_drift\_probability}, for the model-assisted condition
+  \item \texttt{model\_risk\_level}, for the model-assisted condition
+  \item \texttt{model\_reason\_cues}, for the model-assisted condition
   \item \texttt{model\_checkin\_shown}, for the model-assisted condition
   \item \texttt{model\_checkin\_response}, for the model-assisted condition
+  \item \texttt{model\_probability\_shown\_to\_user}, for the model-assisted condition
   \item \texttt{post\_session\_answer}
   \item \texttt{drift\_label}
   \item \texttt{intended\_duration\_minutes}, if provided
@@ -262,7 +272,11 @@ Figure~\ref{fig:labeling-flow} illustrates the session-labeling flow from monito
 \end{figure}
 
 \subsection{Dashboard and Export}
-The dashboard reports aggregate summaries for the participant and researcher: total monitored-domain sessions, drift sessions, non-drift sessions, top drift domains, intention distribution, average duration, active/passive session indicators, daily or weekly trends, and export/delete controls. Export creates:
+The participant-facing dashboard is a local reflection and transparency interface organized into six views. An \textit{Overview} reports monitored and labeled sessions, self-reported drift rate, average duration, monitoring status, and seven-day and study-to-date summaries. \textit{Trends} visualizes daily and weekly session counts, duration, and drift rate, with optional time-of-day and day-of-week breakdowns. \textit{Intention Alignment} compares intention categories, intended and actual duration where available, domains, and post-session outcomes. These views use descriptive language and do not infer productivity, attention, addiction, or mental state.
+
+The \textit{Model Transparency} view summarizes how many model-assisted check-ins were shown, their estimated probabilities and risk levels, the privacy-safe reason cues displayed, participant responses, and ratings of timing, usefulness, or annoyance. Model estimates are visually separated from self-reported outcomes. The interface states that risk is an estimate used to time reflection, not proof that drift occurred. Exact probabilities can be replaced by low, medium, and high labels if pilot feedback indicates that percentages are confusing or stressful.
+
+The \textit{Session History} view provides a filterable table by date, monitored domain, condition, declared intention, reflection label, and model risk level. A session-detail view shows duration, aggregate activity counts, post-session reflection, and check-in outcome, but never page titles, full URLs, page text, screenshots, messages, or keystroke values. The \textit{Data and Privacy} view allows participants to pause monitoring, configure domains, inspect field definitions, delete an individual session, delete all local data, and export:
 
 \begin{itemize}[leftmargin=*]
   \item \texttt{sessions.csv}
@@ -271,7 +285,7 @@ The dashboard reports aggregate summaries for the participant and researcher: to
   \item a schema README
 \end{itemize}
 
-The dashboard is included to support transparency and data inspection. It is not treated as the paper's novelty claim.
+All dashboard queries run over locally stored records. The dashboard uses the same structure and availability across Stage 2 conditions and updates after a session or at a delayed aggregate interval rather than acting as an additional real-time intervention. Model details are shown only for records where the model-assisted interface generated them. Missing and uncertain labels remain visible as such and are not silently counted as non-drift. Dashboard preferences are stored locally, and dashboard-opening behavior is not logged unless separately consented to and defined as a secondary measure. The dashboard is included to support reflection, transparency, and data inspection; it is not treated as the paper's novelty claim.
 
 \section{Drift Prediction and Model-Assisted Reflection}
 \subsection{Prediction Task}
@@ -378,12 +392,12 @@ The recommended Stage 2 target is 20--25 participants over 7 days, with approxim
 Participants should be adults who use Chrome or Chromium-based browsers and are comfortable installing a research extension. Recruitment may focus on students or knowledge workers because browser-based drift is common in study and work settings. The study should avoid recruiting participants on the basis of mental health status, addiction, ADHD, or other clinical categories because DriftSense is not designed for diagnosis or treatment.
 
 \subsection{Consent and Privacy Procedure}
-Before installation, participants receive a consent form explaining what DriftSense collects and what it does not collect. The consent process should state that the extension records only configured-domain metadata, condition assignment, declared intention where applicable, aggregate interaction counts, activity-window summaries, model drift probability where applicable, check-in response where applicable, and post-session reflections. It should explicitly state that DriftSense does not collect page text, passwords, screenshots, private messages, full browsing history, source code, keystroke values, webcam data, face identity, or emotion data.
+Before installation, participants receive a consent form explaining what DriftSense collects and what it does not collect. The consent process should state that the extension records only configured-domain metadata, condition assignment, declared intention where applicable, aggregate interaction counts, activity-window summaries, model drift probability where applicable, displayed risk level and reason cues where applicable, check-in response where applicable, whether probability was shown, and post-session reflections. It should explicitly state that DriftSense does not collect page text, passwords, screenshots, private messages, full browsing history, source code, keystroke values, webcam data, face identity, or emotion data.
 
 Participants should be able to pause monitoring, remove monitored domains, export their data, and delete all locally stored data. Exported datasets should use anonymous participant IDs. Any real dataset used for publication should be reviewed for accidental sensitive fields before analysis.
 
 \subsection{Procedure}
-The planned procedure has eight steps:
+The planned procedure has nine steps:
 
 \begin{enumerate}[leftmargin=*]
   \item Participants complete consent and a short onboarding survey about browser use and monitored domains.
@@ -393,10 +407,13 @@ The planned procedure has eight steps:
   \item Stage 2 participants browse under passive, static prompt, and model-assisted conditions.
   \item DriftSense records lightweight session metadata and activity windows while monitored domains are active.
   \item Participants answer post-session reflection prompts appropriate to the condition.
-  \item At the end of the study, participants export the dataset and complete a post-study survey; optional short interviews collect qualitative feedback about usefulness, burden, and privacy concerns.
+  \item Participants can inspect delayed aggregate summaries and their own session records through the condition-neutral local dashboard.
+  \item At the end of the study, participants export the dataset and complete a post-study survey; optional short interviews collect qualitative feedback about usefulness, burden, dashboard comprehension, and privacy concerns.
 \end{enumerate}
 
 \subsection{Measures}
+The evaluation is designed to remain comparable to prior digital wellbeing and self-control studies while adding an ML-specific layer. Like related field studies, DriftSense reports usage behavior and self-reported experience: session counts, duration, drift-session percentage, prompt usefulness, annoyance, perceived control, and privacy concern. The additional contribution is to evaluate whether a learned model can time reflective check-ins more appropriately than a static prompt.
+
 The prediction evaluation reports:
 
 \begin{itemize}[leftmargin=*]
@@ -407,22 +424,30 @@ The prediction evaluation reports:
   \item ROC-AUC
   \item confusion matrix
   \item first-3-minute versus full-session performance
+  \item expected check-in rate at the selected threshold
 \end{itemize}
 
 The condition-level evaluation reports:
 
 \begin{itemize}[leftmargin=*]
   \item drift-session percentage by condition
+  \item session count by condition
   \item mean and median session duration by condition
   \item model check-ins shown
+  \item percentage of sessions where a model check-in was shown
+  \item average model drift probability when a check-in was shown
+  \item displayed model risk level
+  \item displayed model reason cues
   \item check-in response distribution
   \item prompt annoyance
   \item perceived control
   \item perceived usefulness
   \item privacy concern
+  \item participant feedback on whether model-assisted check-ins appeared at appropriate times
+  \item dashboard comprehension, perceived usefulness, and trust in the distinction between self-reported labels and model estimates
 \end{itemize}
 
-These user-study measures are descriptive and should not be used to claim clinical benefit. The main behavioral outcome is self-reported drift rate, not objectively detected distraction.
+These user-study measures are descriptive and should not be used to claim clinical benefit. The main behavioral outcome is self-reported drift rate, not objectively detected distraction. The model-specific outcome is whether the predicted risk helped trigger a timely reflective prompt without producing excessive false or annoying nudges.
 
 \subsection{Data Processing}
 The analysis pipeline loads \texttt{sessions.csv} and \texttt{activity\_windows.csv}, removes invalid sessions, removes unlabeled sessions for the binary task, and separates Stage 1 model-training data from Stage 2 condition-evaluation data. For prediction modeling, participant-wise splits are preferred to reduce leakage from the same participant's repeated browsing patterns. When participant-wise splitting is not possible because the dataset is too small, the paper should report this limitation clearly.
@@ -430,9 +455,11 @@ The analysis pipeline loads \texttt{sessions.csv} and \texttt{activity\_windows.
 Categorical variables are encoded using one-hot encoding or model-native categorical handling. Numeric activity features are standardized for models that require scaling. First-3-minute features are generated for model-assisted check-ins, while full-session features are generated for offline comparison.
 
 \subsection{Analysis Plan}
-The prediction hypothesis is that models using both intention and activity will outperform time-only and domain-only baselines on F1-score and ROC-AUC. Secondary prediction analyses compare intention-only versus activity-only models and inspect feature importance for the strongest tabular model.
+The prediction hypothesis is that models using both intention and activity will outperform time-only and domain-only baselines on F1-score and ROC-AUC. Secondary prediction analyses compare intention-only versus activity-only models and inspect feature importance for the strongest tabular model. For the model-assisted condition, the selected first-3-minute model is also evaluated by expected check-in rate and threshold behavior, because a highly sensitive model may be statistically interesting but unusable if it prompts too often.
 
 The condition-level hypothesis is that the model-assisted prompt condition will have lower self-reported drift than the static intention-prompt condition, and that the static intention-prompt condition will have lower self-reported drift than the passive baseline. Because the passive baseline uses a retrospective drift question rather than a pre-session intention prompt, this comparison should be framed cautiously as evidence about self-reported drift rates under different interaction designs.
+
+The ML-assistance analysis asks whether model-triggered reflection feels timely and useful. This analysis reports how often check-ins are shown, which risk levels and reason cues are displayed, how participants respond, and whether participants report that the check-ins appeared at appropriate moments. The paper should avoid claiming that a probability proves that a user was drifting; it should instead describe the probability as an estimate used to decide whether a reflective prompt may be worth showing.
 
 No results should be fabricated. If the dataset is incomplete, tables should use placeholders such as [INSERT RESULT]. If the dataset is small, the paper should emphasize uncertainty, report confidence intervals or bootstrap intervals where possible, and avoid generalizing beyond the study sample.
 

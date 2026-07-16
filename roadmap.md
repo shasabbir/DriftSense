@@ -228,7 +228,42 @@ Suggested threshold:
 
 ---
 
-## 5. Data Collection Rules
+## 5. Participant Dashboard
+
+The extension includes a detailed local dashboard for participant reflection, study transparency, and data inspection. It supports the research workflow, but dashboarding alone is not presented as the paper's novelty.
+
+### Dashboard Views
+
+1. **Overview:** monitored and labeled sessions, self-reported drift rate, average duration, monitoring status, current condition, and 7-day/study-to-date summaries.
+2. **Trends:** daily and weekly session counts, duration, drift rate, and time-of-day/day-of-week patterns. Use descriptive wording and never label the user as productive or distracted.
+3. **Intention Alignment:** intention distribution, drift rate and median duration by intention, intended-versus-actual duration, and domain-level intentional/drift outcomes.
+4. **Model Transparency:** check-ins shown, estimated probabilities, risk levels, privacy-safe reason cues, responses, timing, usefulness, and annoyance. Clearly separate estimates from self-reported labels.
+5. **Session History:** a filterable table by date, domain, condition, intention, label, and risk level, plus a detail view containing only allowed aggregate fields.
+6. **Data and Privacy:** pause/resume, monitored-domain settings, collected-field definitions, CSV/JSON export, per-session deletion, and delete-all.
+
+### Dashboard Study Controls
+
+- Keep the dashboard structure and availability the same across all Stage 2 conditions.
+- Update charts after a session or at a delayed aggregate interval, not during an active session, so the dashboard does not become another real-time intervention.
+- Show missing and uncertain labels explicitly instead of treating them as non-drift.
+- Show Condition C model details only for sessions where those details were generated.
+- Store dashboard preferences locally and do not collect new behavioral fields only for visualization.
+- Do not track dashboard opens unless participants separately consent and this is a predefined secondary analysis.
+- Never display page titles, full URLs, page text, screenshots, messages, or keystroke values.
+
+### Dashboard Build Order
+
+1. Create reusable local summary queries and synthetic dashboard data.
+2. Build overview summaries and trend charts.
+3. Add intention/domain breakdowns and filters.
+4. Add session history and session details.
+5. Add model-transparency panels.
+6. Add export, per-session deletion, delete-all, loading, empty, and error states.
+7. Test missing labels, all conditions, and large session histories.
+
+---
+
+## 6. Data Collection Rules
 
 Allowed data:
 
@@ -272,7 +307,7 @@ Forbidden data:
 
 ---
 
-## 6. Dataset Files
+## 7. Dataset Files
 
 ### `sessions.csv`
 
@@ -330,7 +365,7 @@ url_domain_only
 
 ---
 
-## 7. Model Plan
+## 8. Model Plan
 
 Train the prediction model using Stage 1 prompted data.
 
@@ -352,7 +387,7 @@ Avoid deep learning in the main study unless the dataset exceeds 1,000+ labeled 
 
 ---
 
-## 8. Evaluation Plan
+## 9. Evaluation Plan
 
 The evaluation should look familiar to related digital wellbeing and self-control studies, then add the ML layer as the main extension. In other words, first evaluate whether the intervention changes user-reported behavior and experience, then evaluate whether the model helps trigger the intervention at better moments.
 
@@ -447,7 +482,7 @@ Avoid:
 
 ---
 
-## 9. User Feedback Survey
+## 10. User Feedback Survey
 
 Use a short survey after Stage 2.
 
@@ -475,7 +510,7 @@ Optional:
 
 ---
 
-## 10. Six-Week Execution Plan
+## 11. Six-Week Execution Plan
 
 ### Week 1: Build Core Extension and Study Materials
 
@@ -492,6 +527,7 @@ Deliverables:
 - consent form
 - participant instructions
 - data schema
+- dashboard shell, overview summaries, session history, and privacy controls
 
 Decision gate:
 
@@ -524,11 +560,12 @@ Deliverables:
 - local model integration design
 - model-assisted check-in implemented
 - pilot test of Condition C
+- model-transparency dashboard panel with risk, reason-cue, and response summaries
 
 Implementation options:
 
 - simplest: export a small logistic model or rule-based model to JSON
-- acceptable: use Random Forest/XGBoost server-side only for study simulation if local integration is not ready
+- acceptable: use Random Forest/XGBoost only for offline researcher-side analysis after participant export, while the extension uses a simpler local model or threshold
 - better: run the model locally in the extension using a lightweight JavaScript implementation
 
 Decision gate:
@@ -571,6 +608,7 @@ Deliverables:
 - three-condition drift-rate comparison
 - first-3-minute vs full-session prediction comparison
 - survey responses
+- dashboard comprehension and usefulness feedback
 - figures:
   - dataset distribution
   - model comparison
@@ -604,7 +642,7 @@ Paper framing:
 
 ---
 
-## 11. Required Paper Tables
+## 12. Required Paper Tables
 
 ### Table 1: Dataset Summary
 
@@ -653,7 +691,7 @@ Paper framing:
 
 ---
 
-## 12. Required Figures
+## 13. Required Figures
 
 Minimum:
 
@@ -673,12 +711,13 @@ Optional:
 
 ---
 
-## 13. What To Cut If Time Is Short
+## 14. What To Cut If Time Is Short
 
 Cut:
 
 - deep learning
-- complex dashboard
+- advanced dashboard personalization and predictive recommendations
+- live cross-device dashboard synchronization
 - interviews
 - personalization
 - cross-device tracking
@@ -701,7 +740,7 @@ Keep:
 
 ---
 
-## 14. Final Definition of Done
+## 15. Final Definition of Done
 
 The project is complete when:
 
@@ -718,7 +757,7 @@ The project is complete when:
 
 ---
 
-## 15. Final Takeaway
+## 16. Final Takeaway
 
 The strongest version is no longer only:
 

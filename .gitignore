@@ -1,0 +1,26 @@
+# LaTeX auxiliary and temporary build files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+
+# LaTeX editor and recovery files
+*.bak
+*.sav
+*.tmp
+*~
+
+# Keep final paper PDFs under version control.
+!paper/*.pdf
