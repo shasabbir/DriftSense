@@ -147,11 +147,15 @@ Pre-session question:
 
 Options:
 
+- Work or study task
+- Learning or tutorial
 - Specific information
-- Intentional break
-- Boredom
-- Avoiding work
-- Accidental click
+- Communication or community
+- Planned entertainment or break
+- Open-ended browsing
+- Opened accidentally
+
+The intention choices are deliberately neutral. Domain category and activity type do not determine the drift label; alignment is established only through post-session reflection.
 
 Post-session question:
 

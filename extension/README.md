@@ -6,8 +6,8 @@ DriftSense is a local-first Chrome Manifest V3 research extension for collecting
 
 - consent-led onboarding and anonymous participant ID
 - optional per-domain Chrome permissions
-- editable monitored-domain list and categories
-- pre-session intention prompt with intended duration
+- balanced, editable research-domain selection across work/learning and mixed-use contexts
+- neutral pre-session intended-activity prompt with work, learning, information, communication, planned leisure, open-ended browsing, and accidental-open choices
 - privacy-safe 10-second activity windows
 - post-session self-report and label mapping
 - local session and activity-window storage
@@ -63,15 +63,16 @@ The icon source is deterministic. Regenerate the PNG sizes with:
 
 ## First Pilot Walkthrough
 
-1. Complete consent and approve access only to the selected monitored domains.
-2. Set the fallback reflection time to one minute for a short test.
-3. Open an enabled domain in a new tab.
-4. Select an intention and intended visit length.
-5. Click, scroll, or type normally. Only aggregate counts are retained.
-6. Wait for the reflection prompt, or choose **End and reflect** from the popup.
-7. Submit a reflection and inspect the session in the dashboard.
-8. Export `sessions.csv`, `activity-windows.csv`, and the JSON bundle.
-9. Verify that exported URL data contains hostnames only.
+1. Complete consent and choose participant-used domains from both work/learning and mixed-use contexts.
+2. Approve Chrome access only to those selected domains; no suggested domain is enabled automatically.
+3. Set the fallback reflection time to one minute for a short test.
+4. Open an enabled domain in a new tab.
+5. Select an intention and intended visit length.
+6. Click, scroll, or type normally. Only aggregate counts are retained.
+7. Wait for the reflection prompt, or choose **End and reflect** from the popup.
+8. Submit both aligned and drift reflections across separate test sessions and inspect them in the dashboard.
+9. Export `sessions.csv`, `activity-windows.csv`, and the JSON bundle.
+10. Verify that exported URL data contains hostnames only.
 
 Closing or navigating away from a session before reflection preserves it as an unlabeled, abandoned session. It is not silently treated as non-drift.
 
@@ -92,5 +93,9 @@ src/ui/           shared visual system and formatting
 ## Current Scope
 
 This version supports the Stage 1 static intention-prompt collection protocol. Passive-baseline scheduling, ML inference, risk estimates, and model-assisted check-ins are intentionally reserved for the next implementation phase.
+
+Domain categories are sampling context only. They are never used to assign drift labels: both aligned (`0`) and drift (`1`) outcomes come exclusively from the participant's post-session reflection.
+
+Intention choices are also descriptive rather than evaluative. Work is not automatically aligned, and entertainment is not automatically drift.
 
 See [docs/data-schema.md](docs/data-schema.md) for exact exports and [docs/privacy-checklist.md](docs/privacy-checklist.md) before beginning a participant pilot.

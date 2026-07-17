@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ArrowRight, Check, Clock3, Database, ShieldCheck, X } from 'lucide-react'
 import { INTENTION_OPTIONS } from '../shared/constants'
 import { sendRuntimeMessage } from '../shared/runtime'
-import type { DeclaredIntention, PostSessionAnswer } from '../shared/types'
+import type { CurrentDeclaredIntention, PostSessionAnswer } from '../shared/types'
 
 interface PromptAppProps {
   initialMode: 'intention' | 'hidden'
@@ -23,7 +23,7 @@ export function PromptApp({
 }: PromptAppProps) {
   const [mode, setMode] = useState<'intention' | 'reflection' | 'hidden'>(initialMode)
   const [lastSignal, setLastSignal] = useState(reflectionSignal)
-  const [intention, setIntention] = useState<DeclaredIntention | null>(null)
+  const [intention, setIntention] = useState<CurrentDeclaredIntention | null>(null)
   const [duration, setDuration] = useState('10')
   const [submitting, setSubmitting] = useState(false)
 

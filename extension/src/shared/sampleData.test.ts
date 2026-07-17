@@ -11,5 +11,8 @@ describe('synthetic dashboard data', () => {
     expect(data.activityWindows.length).toBeGreaterThan(18)
     expect(data.activityWindows.every((window) => data.sessions.some((session) => session.sessionId === window.sessionId))).toBe(true)
     expect(data.activityWindows.every((window) => !window.urlDomainOnly.includes('/'))).toBe(true)
+    expect(data.sessions.some((session) => session.domainCategory === 'work' || session.domainCategory === 'learning')).toBe(true)
+    expect(data.sessions.some((session) => session.driftLabel === 0)).toBe(true)
+    expect(data.sessions.some((session) => session.driftLabel === 1)).toBe(true)
   })
 })

@@ -1,4 +1,4 @@
-import { createDefaultSettings, STORAGE_KEYS } from './constants'
+import { createDefaultSettings, migrateDomainPresets, STORAGE_KEYS } from './constants'
 import type { ActivityWindow, AppSettings, InternalSession, StoredData } from './types'
 
 const fallbackEventName = 'driftsense-storage-change'
@@ -35,14 +35,15 @@ export async function initializeStorage(): Promise<StoredData> {
     readKey<ActivityWindow[]>(STORAGE_KEYS.activityWindows),
   ])
 
+  const initializedSettings = settings ? migrateDomainPresets(settings) : createDefaultSettings()
   const initialized: StoredData = {
-    settings: settings ?? createDefaultSettings(),
+    settings: initializedSettings,
     sessions: sessions ?? [],
     activityWindows: activityWindows ?? [],
   }
 
   await Promise.all([
-    settings ? Promise.resolve() : writeKey(STORAGE_KEYS.settings, initialized.settings),
+    settings === initializedSettings ? Promise.resolve() : writeKey(STORAGE_KEYS.settings, initialized.settings),
     sessions ? Promise.resolve() : writeKey(STORAGE_KEYS.sessions, initialized.sessions),
     activityWindows ? Promise.resolve() : writeKey(STORAGE_KEYS.activityWindows, initialized.activityWindows),
   ])
@@ -51,7 +52,11 @@ export async function initializeStorage(): Promise<StoredData> {
 }
 
 export async function getSettings(): Promise<AppSettings> {
-  return (await readKey<AppSettings>(STORAGE_KEYS.settings)) ?? createDefaultSettings()
+  const stored = await readKey<AppSettings>(STORAGE_KEYS.settings)
+  if (!stored) return createDefaultSettings()
+  const migrated = migrateDomainPresets(stored)
+  if (migrated !== stored) await writeKey(STORAGE_KEYS.settings, migrated)
+  return migrated
 }
 
 export async function setSettings(settings: AppSettings): Promise<void> {

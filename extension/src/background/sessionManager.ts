@@ -1,7 +1,7 @@
 import { domainMatches } from '../shared/domainUtils'
 import { driftLabelForAnswer } from '../shared/labelRules'
 import { getActivityWindows, getSessions, getSettings, runStorageOperation, setActivityWindows, setSessions } from '../shared/storage'
-import type { ActivityWindow, ActivityWindowInput, DeclaredIntention, InternalSession, PostSessionAnswer } from '../shared/types'
+import type { ActivityWindow, ActivityWindowInput, CurrentDeclaredIntention, InternalSession, PostSessionAnswer } from '../shared/types'
 
 function randomId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`
@@ -65,7 +65,7 @@ export async function ensureSession(tabId: number, domain: string): Promise<Inte
 
 export async function submitIntention(
   sessionId: string,
-  intention: DeclaredIntention,
+  intention: CurrentDeclaredIntention,
   intendedDurationMinutes: number | null,
 ): Promise<InternalSession | null> {
   return updateSession(sessionId, (session) => ({

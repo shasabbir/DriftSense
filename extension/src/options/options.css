@@ -9,6 +9,17 @@
 .onboarding-icon { width: 52px; height: 52px; margin: 0 auto 20px; display: grid; place-items: center; color: var(--green); background: var(--green-soft); border: 1px solid #d0e9de; border-radius: 8px; }
 .onboarding-panel h1 { max-width: 650px; margin: 0 auto 12px; font-size: 36px; line-height: 1.12; letter-spacing: 0; }
 .onboarding-lead { max-width: 650px; margin: 0 auto 28px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+.coverage-summary { max-width: 760px; margin: 0 auto 15px; padding: 12px 14px; display: grid; grid-template-columns: minmax(190px, 1fr) auto auto; gap: 14px; align-items: center; text-align: left; background: #fff7f3; border-left: 3px solid var(--coral); }
+.coverage-summary-ready { background: var(--green-soft); border-left-color: var(--green); }
+.coverage-summary > div { display: grid; gap: 3px; }
+.coverage-summary > div strong { font-size: 12px; }
+.coverage-summary > div small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.coverage-check { min-height: 30px; display: inline-flex; align-items: center; gap: 6px; color: #8d685f; font-size: 10px; white-space: nowrap; }
+.coverage-check svg { color: #c9aaa1; }
+.coverage-check strong { min-width: 18px; text-align: right; }
+.coverage-check-on { color: var(--green-dark); }
+.coverage-check-on svg { color: var(--green); }
+.coverage-summary-compact { max-width: none; margin: -5px 0 14px; }
 .privacy-grid { margin: 0 auto 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
 .privacy-grid > div { min-height: 118px; padding: 17px; display: grid; grid-template-columns: 24px 1fr; gap: 6px 9px; align-content: start; background: white; border: 1px solid var(--line); border-radius: 8px; }
 .privacy-grid svg { color: var(--green); grid-row: 1 / 3; }
@@ -31,6 +42,8 @@
 .domain-choice small { color: var(--muted); font-size: 11px; text-transform: capitalize; }
 .choice-check { width: 20px; height: 20px; display: grid; place-items: center; color: white; background: #d4dcd8; border-radius: 50%; }
 .domain-choice-on .choice-check { background: var(--green); }
+.onboarding-domain-add { margin: 0 auto 10px; display: grid; grid-template-columns: 1fr 190px auto; gap: 9px; align-items: end; text-align: left; }
+.onboarding-field-error { margin: 0 0 10px !important; text-align: left; }
 .setup-summary { max-width: 600px; margin: 0 auto 18px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; text-align: left; }
 .setup-summary > * { padding: 18px; background: white; border: 1px solid var(--line); border-radius: 8px; }
 .number-field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
@@ -87,4 +100,4 @@
 .protocol-panel p { color: #b9c4bf; }
 
 @media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } .settings-side { position: static; grid-template-columns: repeat(3, 1fr); } .timing-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 680px) { .privacy-grid, .domain-chooser, .setup-summary, .settings-side, .timing-grid { grid-template-columns: 1fr; } .onboarding-panel h1 { font-size: 29px; } .onboarding-content { padding: 28px 0; } .domain-add-row { grid-template-columns: 1fr; } .topbar-actions .button-secondary { width: 38px; padding: 0; font-size: 0; } }
+@media (max-width: 680px) { .privacy-grid, .domain-chooser, .setup-summary, .settings-side, .timing-grid, .onboarding-domain-add { grid-template-columns: 1fr; } .coverage-summary { grid-template-columns: 1fr; gap: 6px; } .onboarding-panel h1 { font-size: 29px; } .onboarding-content { padding: 28px 0; } .domain-add-row { grid-template-columns: 1fr; } .topbar-actions .button-secondary { width: 38px; padding: 0; font-size: 0; } }

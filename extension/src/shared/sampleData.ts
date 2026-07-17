@@ -4,9 +4,11 @@ import type { ActivityWindow, DeclaredIntention, InternalSession } from './types
 const domains = [
   ['youtube.com', 'video'],
   ['reddit.com', 'social'],
-  ['linkedin.com', 'social'],
+  ['github.com', 'work'],
+  ['wikipedia.org', 'learning'],
+  ['linkedin.com', 'work'],
 ] as const
-const intentions: DeclaredIntention[] = ['specific_information', 'intentional_break', 'boredom', 'avoiding_work']
+const intentions: DeclaredIntention[] = ['work_or_study', 'learning_or_tutorial', 'specific_information', 'communication_or_community', 'planned_entertainment_or_break', 'open_ended_browsing']
 
 export async function seedSyntheticData(): Promise<void> {
   const settings = await getSettings()

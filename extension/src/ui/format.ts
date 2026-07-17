@@ -20,7 +20,13 @@ export function formatTime(value: string): string {
 export function intentionLabel(value: DeclaredIntention | null): string {
   if (!value) return 'Not provided'
   return {
+    work_or_study: 'Work or study task',
+    learning_or_tutorial: 'Learning or tutorial',
     specific_information: 'Specific information',
+    communication_or_community: 'Communication or community',
+    planned_entertainment_or_break: 'Planned entertainment or break',
+    open_ended_browsing: 'Open-ended browsing',
+    accidental_open: 'Opened accidentally',
     intentional_break: 'Intentional break',
     boredom: 'Boredom',
     avoiding_work: 'Avoiding work',

@@ -7,12 +7,22 @@ export type DomainCategory =
   | 'work'
   | 'other'
 
-export type DeclaredIntention =
+export type CurrentDeclaredIntention =
+  | 'work_or_study'
+  | 'learning_or_tutorial'
   | 'specific_information'
+  | 'communication_or_community'
+  | 'planned_entertainment_or_break'
+  | 'open_ended_browsing'
+  | 'accidental_open'
+
+export type LegacyDeclaredIntention =
   | 'intentional_break'
   | 'boredom'
   | 'avoiding_work'
   | 'accidental_click'
+
+export type DeclaredIntention = CurrentDeclaredIntention | LegacyDeclaredIntention
 
 export type StudyCondition = 'static_intention_prompt'
 export type DriftLabel = 0 | 1 | null
@@ -26,7 +36,8 @@ export interface MonitoredDomain {
 }
 
 export interface AppSettings {
-  schemaVersion: 1
+  schemaVersion: 2
+  domainPresetsVersion: 2
   participantId: string
   consentAccepted: boolean
   consentedAt: string | null
@@ -119,7 +130,7 @@ export interface StoredData {
 
 export type RuntimeRequest =
   | { type: 'GET_PAGE_CONTEXT'; domain: string }
-  | { type: 'SUBMIT_INTENTION'; sessionId: string; intention: DeclaredIntention; intendedDurationMinutes: number | null }
+  | { type: 'SUBMIT_INTENTION'; sessionId: string; intention: CurrentDeclaredIntention; intendedDurationMinutes: number | null }
   | { type: 'SKIP_INTENTION'; sessionId: string }
   | { type: 'RECORD_ACTIVITY_WINDOW'; sessionId: string; window: ActivityWindowInput }
   | { type: 'SUBMIT_REFLECTION'; sessionId: string; answer: PostSessionAnswer }

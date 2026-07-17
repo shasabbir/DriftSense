@@ -96,11 +96,13 @@ Features:
    Question: “Why are you opening this?”
    Options:
 
+   * Work or study task
+   * Learning or tutorial
    * Specific information
-   * Intentional break
-   * Boredom
-   * Avoiding work
-   * Accidental click
+   * Communication or community
+   * Planned entertainment or break
+   * Open-ended browsing
+   * Opened accidentally
 
 3. After intention selection, allow site access.
 

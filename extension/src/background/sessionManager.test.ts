@@ -16,7 +16,8 @@ beforeEach(async () => {
 describe('session collection lifecycle', () => {
   it('records only configured domains and aggregates privacy-safe windows', async () => {
     const settings = createDefaultSettings()
-    await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true })
+    const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: item.domain === 'youtube.com' }))
+    await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains })
 
     expect(await ensureSession(7, 'example.com')).toBeNull()
     const session = await ensureSession(7, 'm.youtube.com')
@@ -44,14 +45,30 @@ describe('session collection lifecycle', () => {
 
   it('uses only post-session reflection to create the binary drift label', async () => {
     const settings = createDefaultSettings()
-    await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true })
+    const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: item.domain === 'reddit.com' }))
+    await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains })
     const session = await ensureSession(8, 'reddit.com')
-    await submitIntention(session!.sessionId, 'intentional_break', 5)
+    await submitIntention(session!.sessionId, 'planned_entertainment_or_break', 5)
     await submitReflection(session!.sessionId, 'no_drifted')
 
     const stored = (await getSessions()).find((item) => item.sessionId === session!.sessionId)
     expect(stored?.driftLabel).toBe(1)
     expect(stored?.labelSource).toBe('post_session_self_report')
     expect(stored?.status).toBe('completed')
+  })
+
+  it('records aligned sessions on participant-approved work domains', async () => {
+    const settings = createDefaultSettings()
+    const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: item.domain === 'github.com' }))
+    await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains })
+
+    const session = await ensureSession(9, 'github.com')
+    await submitIntention(session!.sessionId, 'specific_information', 20)
+    await submitReflection(session!.sessionId, 'yes_matched')
+
+    const stored = (await getSessions()).find((item) => item.sessionId === session!.sessionId)
+    expect(stored?.domainCategory).toBe('work')
+    expect(stored?.driftLabel).toBe(0)
+    expect(stored?.labelSource).toBe('post_session_self_report')
   })
 })

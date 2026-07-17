@@ -294,12 +294,16 @@ Why are you opening this?
 Options:
 
 ```text
+Work or study task
+Learning or tutorial
 Specific information
-Intentional break
-Boredom
-Avoiding work
-Accidental click
+Communication or community
+Planned entertainment or break
+Open-ended browsing
+Opened accidentally
 ```
+
+These options describe intended activity without assuming that work is automatically aligned or leisure is automatically drift.
 
 Optional field:
 

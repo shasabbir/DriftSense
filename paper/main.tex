@@ -61,7 +61,7 @@ Existing tools often operationalize undesirable use through screen time, app or 
 
 We use the term \textit{browser-based digital drift} to describe a session-level intention-behavior mismatch: the user begins with one declared purpose but later reports that the visit did not match that intention. This framing is deliberately narrower than addiction, attention detection, or productivity optimization. DriftSense does not infer clinical status or inner mental state. Instead, it collects explicit intention and explicit post-session reflection, then evaluates whether those self-reported labels can be predicted from lightweight browser-session signals.
 
-DriftSense is designed around a local-first Chrome Manifest V3 extension and a reproducible machine-learning pipeline. In prompted conditions, before accessing a configured domain, the user declares an intention, such as \textit{specific information}, \textit{intentional break}, \textit{boredom}, \textit{avoiding work}, or \textit{accidental click}. During the session, the extension records metadata and aggregate interaction counts, such as duration, click count, scroll count, idle time, tab focus changes, and activity-window summaries. It does not collect page text, screenshots, passwords, private messages, full browsing history, source code, webcam data, or keystroke values. After a configured duration or session boundary, the extension asks whether the visit matched the original intention or became drift. In the model-assisted condition, a locally computed drift-risk probability can trigger a lightweight reflective check-in that displays an estimated risk level and short privacy-safe reason cues, but the extension does not block the website.
+DriftSense is designed around a local-first Chrome Manifest V3 extension and a reproducible machine-learning pipeline. In prompted conditions, before accessing a configured domain, the user declares an intended activity using a neutral set of options: \textit{work or study task}, \textit{learning or tutorial}, \textit{specific information}, \textit{communication or community}, \textit{planned entertainment or break}, \textit{open-ended browsing}, or \textit{opened accidentally}. The categories avoid assuming that work is inherently aligned or leisure is inherently drift. During the session, the extension records metadata and aggregate interaction counts, such as duration, click count, scroll count, idle time, tab focus changes, and activity-window summaries. It does not collect page text, screenshots, passwords, private messages, full browsing history, source code, webcam data, or keystroke values. After a configured duration or session boundary, the extension asks whether the visit matched the original intention or became drift. In the model-assisted condition, a locally computed drift-risk probability can trigger a lightweight reflective check-in that displays an estimated risk level and short privacy-safe reason cues, but the extension does not block the website.
 
 The central research questions are:
 
@@ -151,14 +151,16 @@ In prompted conditions, when the user opens a monitored domain, the extension di
 The response options are:
 
 \begin{itemize}[leftmargin=*]
+  \item Work or study task
+  \item Learning or tutorial
   \item Specific information
-  \item Intentional break
-  \item Boredom
-  \item Avoiding work
-  \item Accidental click
+  \item Communication or community
+  \item Planned entertainment or break
+  \item Open-ended browsing
+  \item Opened accidentally
 \end{itemize}
 
-After selection, the site remains accessible. The prompt is a labeling and reflection mechanism, not a blocker.
+These choices describe the participant's intended activity rather than labeling an activity as productive or problematic. After selection, the site remains accessible. The prompt is a labeling and reflection mechanism, not a blocker.
 
 In the model-assisted condition, if the local model estimates high drift risk after the first three minutes, DriftSense can show a reflective check-in such as:
 
@@ -265,9 +267,19 @@ Figure~\ref{fig:labeling-flow} illustrates the session-labeling flow from monito
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/figure2.png}
+  \IfFileExists{figures/figure2-v2.png}{%
+    \includegraphics[width=\linewidth]{figures/figure2-v2.png}%
+  }{%
+    \fbox{\parbox{0.94\linewidth}{\centering
+      \textbf{Open monitored domain} $\rightarrow$ \textbf{Declare intended activity} $\rightarrow$ \textbf{Browse session} $\rightarrow$ \textbf{Post-session reflection}\\[4pt]
+      \small Work/study; learning/tutorial; specific information; communication/community; planned entertainment/break; open-ended browsing; accidental open\\[4pt]
+      \textit{Yes, it matched} $\rightarrow 0$ \quad
+      \textit{No, I drifted} $\rightarrow 1$ \quad
+      Other responses $\rightarrow$ non-binary
+    }}%
+  }
   \caption{DriftSense session-labeling flow. Prompted conditions ask users to declare an intention before a monitored-domain session and later report whether the visit matched that intention. The passive condition uses a retrospective post-session drift label.}
-  \Description{A flow diagram showing a monitored domain opening, an optional intention prompt with five possible intentions, browsing with activity windows, a post-session reflection prompt, and the mapping from reflection answers to non-drift, drift, or separate non-binary outcomes.}
+  \Description{A flow diagram showing a monitored domain opening, an optional intention prompt with seven neutral intended-activity choices, browsing with activity windows, a post-session reflection prompt, and the mapping from reflection answers to non-drift, drift, or separate non-binary outcomes.}
   \label{fig:labeling-flow}
 \end{figure}
 

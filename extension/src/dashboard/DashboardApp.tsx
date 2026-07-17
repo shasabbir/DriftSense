@@ -178,7 +178,7 @@ function Overview({ data, onNavigate }: { data: StoredData; onNavigate: (view: V
           <SessionTable sessions={[...data.sessions].sort((a, b) => b.startTime.localeCompare(a.startTime)).slice(0, 5)} compact />
         </article>
         <article className="panel top-domain-panel">
-          <PanelHeader title="Domain summary" detail="By session count" />
+          <PanelHeader title="Outcomes by domain" detail="Domains are context, not labels" />
           <DomainSummary sessions={data.sessions} />
         </article>
       </section>
@@ -287,7 +287,7 @@ function DataPrivacy({ data }: { data: StoredData }) {
           </div>
         </article>
         <article className="panel panel-pad schema-panel">
-          <PanelHeader title="Privacy boundary" detail="Schema version 1" />
+          <PanelHeader title="Privacy boundary" detail={`Schema version ${data.settings.schemaVersion}`} />
           <div className="privacy-boundary"><span><CheckCircle2 size={16} /> Domain hostname</span><span><CheckCircle2 size={16} /> Timing and aggregate counts</span><span><CheckCircle2 size={16} /> Declared intention</span><span><CheckCircle2 size={16} /> Self-reported outcome</span><span className="not-collected"><X size={16} /> Page text or full URL</span><span className="not-collected"><X size={16} /> Messages, screenshots, key values</span></div>
         </article>
       </section>
@@ -327,9 +327,9 @@ function OutcomeBadge({ session }: { session: InternalSession }) {
 }
 
 function DomainSummary({ sessions }: { sessions: InternalSession[] }) {
-  const counts = Object.entries(sessions.reduce<Record<string, { total: number; drift: number }>>((acc, session) => { const current = acc[session.domain] ?? { total: 0, drift: 0 }; current.total += 1; current.drift += session.driftLabel === 1 ? 1 : 0; acc[session.domain] = current; return acc }, {})).sort((a, b) => b[1].total - a[1].total).slice(0, 5)
+  const counts = Object.entries(sessions.reduce<Record<string, { total: number; aligned: number; drift: number }>>((acc, session) => { const current = acc[session.domain] ?? { total: 0, aligned: 0, drift: 0 }; current.total += 1; current.aligned += session.driftLabel === 0 ? 1 : 0; current.drift += session.driftLabel === 1 ? 1 : 0; acc[session.domain] = current; return acc }, {})).sort((a, b) => b[1].total - a[1].total).slice(0, 5)
   const max = Math.max(1, ...counts.map(([, value]) => value.total))
-  return <div className="domain-summary-list">{counts.map(([domain, value]) => <div key={domain}><span className="table-domain-icon">{domain[0].toUpperCase()}</span><div><strong>{domain}</strong><span className="domain-bar"><i style={{ width: `${(value.total / max) * 100}%` }} /></span></div><span><strong>{value.total}</strong><small>{value.drift} drift</small></span></div>)}</div>
+  return <div className="domain-summary-list">{counts.map(([domain, value]) => <div key={domain}><span className="table-domain-icon">{domain[0].toUpperCase()}</span><div><strong>{domain}</strong><span className="domain-bar"><i style={{ width: `${(value.total / max) * 100}%` }} /></span></div><span><strong>{value.total}</strong><small>{value.aligned} aligned, {value.drift} drift</small></span></div>)}</div>
 }
 
 function SessionDrawer({ session, windowCount, onClose }: { session: InternalSession; windowCount: number; onClose: () => void }) {
@@ -350,6 +350,6 @@ function dailySeries(sessions: InternalSession[], days: number) {
 function hourlySeries(sessions: InternalSession[]) { const labels = ['12a-4a','4a-8a','8a-12p','12p-4p','4p-8p','8p-12a']; return labels.map((label, index) => ({ label, sessions: sessions.filter((session) => Math.floor(new Date(session.startTime).getHours() / 4) === index).length })) }
 
 function intentionSeries(sessions: InternalSession[]) {
-  const keys = ['specific_information','intentional_break','boredom','avoiding_work','accidental_click'] as const
+  const keys = ['work_or_study','learning_or_tutorial','specific_information','communication_or_community','planned_entertainment_or_break','open_ended_browsing','accidental_open'] as const
   return keys.map((key) => { const matching = sessions.filter((session) => session.declaredIntention === key); const aligned = matching.filter((session) => session.driftLabel === 0).length; const drift = matching.filter((session) => session.driftLabel === 1).length; return { key, label: intentionLabel(key), shortLabel: intentionLabel(key), total: matching.length, aligned, drift, other: matching.length - aligned - drift, labeled: aligned + drift } }).filter((row) => row.total > 0)
 }

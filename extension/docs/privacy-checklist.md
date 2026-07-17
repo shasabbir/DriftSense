@@ -31,6 +31,9 @@ Complete this checklist before collecting participant data.
 
 ## Study Interpretation
 
+- [ ] The participant-approved domain set includes work/learning and mixed-use contexts.
+- [ ] Domain categories are treated as context only and never used as ground-truth drift labels.
+- [ ] Intention choices use neutral activity language and do not frame work as good or leisure as bad.
 - [ ] Labels are described as self-report.
 - [ ] Missing, continued, and deferred outcomes are not coded as non-drift.
 - [ ] Dashboard text makes no claim about attention, addiction, diagnosis, emotion, or general productivity.

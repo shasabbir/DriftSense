@@ -15,7 +15,7 @@ Create a clean academic HCI paper diagram for "DriftSense", a privacy-preserving
 Prompt:
 
 ```text
-Create a concise flow diagram for a browser-session labeling procedure. Start with "Open monitored domain", then "Declare intention" with options: specific information, intentional break, boredom, avoiding work, accidental click. Then "Browse session" with lightweight activity windows every 5 or 10 seconds. Then "Post-session reflection" with options: yes, no I drifted, continue intentionally, save for later. End with labels: Yes maps to non-drift 0, No I drifted maps to drift 1, Continue intentionally and Save for later are retained as separate outcomes or excluded from binary analysis. Style: academic, minimal, white background, no decorative icons, readable at single-column paper width.
+Create a concise flow diagram for a browser-session labeling procedure. Start with "Open monitored domain", then "Declare intended activity" with seven neutral options: work or study task; learning or tutorial; specific information; communication or community; planned entertainment or break; open-ended browsing; opened accidentally. Then "Browse session" with lightweight aggregate activity windows. Then "Post-session reflection" with options: yes, it matched; no, I drifted; continue intentionally; save for later. End with labels: Yes maps to non-drift 0, No I drifted maps to drift 1, Continue intentionally and Save for later are retained as separate outcomes or excluded from binary analysis. Make clear that work is not automatically non-drift and leisure is not automatically drift. Style: academic, minimal, white background, no decorative icons, readable at single-column paper width. Save the final image as `paper/figures/figure2-v2.png`; this replaces the retired content in figure2.png.
 ```
 
 ## Figure 3: Modeling and Evaluation Pipeline
@@ -25,4 +25,3 @@ Prompt:
 ```text
 Create an academic pipeline diagram for DriftSense's machine-learning evaluation. Inputs: sessions.csv and activity_windows.csv. Processing: clean invalid sessions, remove unlabeled sessions, user-wise train/validation/test split, aggregate tabular features, sequence tensors. Models: time threshold baseline, domain baseline, intention-only logistic regression, activity-only random forest or XGBoost, intention plus activity CatBoost/XGBoost, sequence TCN/GRU. Evaluation outputs: accuracy, precision, recall, F1, ROC-AUC, calibration, confusion matrix, per-domain and per-intention analysis, early prediction at 1, 3, 5 minutes and full session. Style: publication-ready flowchart, neutral colors, clear boxes and arrows, no 3D effects.
 ```
-

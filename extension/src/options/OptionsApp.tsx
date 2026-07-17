@@ -20,7 +20,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { DOMAIN_CATEGORIES } from '../shared/constants'
+import { assessDomainCoverage, DOMAIN_CATEGORIES } from '../shared/constants'
 import { normalizeDomain } from '../shared/domainUtils'
 import { missingPermissionDomains, removeUnusedDomainPermissions, requestDomainPermissions } from '../shared/permissions'
 import { sendRuntimeMessage } from '../shared/runtime'
@@ -58,8 +58,19 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
   const [reflectionMinutes, setReflectionMinutes] = useState(settings.reflectionAfterMinutes)
   const [saving, setSaving] = useState(false)
   const [permissionError, setPermissionError] = useState('')
+  const [newDomain, setNewDomain] = useState('')
+  const [newCategory, setNewCategory] = useState<DomainCategory>('learning')
+  const [domainError, setDomainError] = useState('')
 
-  const enabledCount = domains.filter((domain) => domain.enabled).length
+  const coverage = useMemo(() => assessDomainCoverage(domains), [domains])
+  const addDomain = () => {
+    const normalized = normalizeDomain(newDomain)
+    if (!normalized) return setDomainError('Enter a valid domain, such as example.com.')
+    if (domains.some((item) => item.domain === normalized)) return setDomainError('That domain is already listed.')
+    setDomains((current) => [...current, { domain: normalized, category: newCategory, enabled: true, createdAt: new Date().toISOString() }])
+    setNewDomain('')
+    setDomainError('')
+  }
   const finish = async () => {
     setSaving(true)
     const granted = await requestDomainPermissions(domains)
@@ -114,9 +125,10 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
         {step === 1 && (
           <div className="onboarding-panel">
             <span className="onboarding-icon"><Globe2 size={25} /></span>
-            <span className="eyebrow">Monitored domains</span>
-            <h1>Choose where sessions begin.</h1>
-            <p className="onboarding-lead">Only enabled domains can create a DriftSense session. Subdomains are included; paths and search queries are discarded.</p>
+            <span className="eyebrow">Research coverage</span>
+            <h1>Choose a balanced set of domains.</h1>
+            <p className="onboarding-lead">Select sites you actually use across work or learning and mixed-use contexts. A domain is never treated as drift by itself.</p>
+            <CoverageSummary coverage={coverage} />
             <div className="domain-chooser">
               {domains.map((item) => (
                 <button
@@ -131,7 +143,13 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
                 </button>
               ))}
             </div>
-            <div className="notice"><Info size={17} />You can add custom domains and change categories after setup.</div>
+            <div className="onboarding-domain-add">
+              <label className="field"><span>Your domain</span><input className="input" placeholder="example.com" value={newDomain} onChange={(event) => setNewDomain(event.target.value)} /></label>
+              <label className="field"><span>Research context</span><select className="select" value={newCategory} onChange={(event) => setNewCategory(event.target.value as DomainCategory)}>{DOMAIN_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></label>
+              <button className="button button-secondary add-domain-button" type="button" onClick={addDomain}><Plus size={16} /> Add</button>
+            </div>
+            {domainError && <p className="field-error onboarding-field-error">{domainError}</p>}
+            <div className="notice"><Info size={17} />Only selected hostnames and privacy-safe aggregate signals are recorded. Choose at least one work or learning domain and one mixed-use domain.</div>
           </div>
         )}
 
@@ -150,7 +168,8 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
             </div>
             <div className="ready-checks">
               <span><CheckCircle2 size={17} /> Consent recorded on this device</span>
-              <span><CheckCircle2 size={17} /> {enabledCount} monitored domains selected</span>
+              <span><CheckCircle2 size={17} /> {coverage.enabledCount} domains across {coverage.categoryCount} research contexts</span>
+              <span><CheckCircle2 size={17} /> Both aligned and drift outcomes can be recorded</span>
               <span><CheckCircle2 size={17} /> Data remains in extension storage until export</span>
             </div>
             {permissionError && <div className="notice danger-notice permission-error"><Info size={17} />{permissionError}</div>}
@@ -161,7 +180,7 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
       <footer className="onboarding-actions">
         <button className="button button-quiet" disabled={step === 0} type="button" onClick={() => setStep((current) => current - 1)}><ArrowLeft size={17} /> Back</button>
         {step < 2 ? (
-          <button className="button button-primary" disabled={(step === 0 && !consent) || (step === 1 && enabledCount === 0)} type="button" onClick={() => setStep((current) => current + 1)}>Continue <ArrowRight size={17} /></button>
+          <button className="button button-primary" disabled={(step === 0 && !consent) || (step === 1 && !coverage.balanced)} type="button" onClick={() => setStep((current) => current + 1)}>Continue <ArrowRight size={17} /></button>
         ) : (
           <button className="button button-green" disabled={saving} type="button" onClick={finish}><Play size={16} /> Start collecting</button>
         )}
@@ -180,6 +199,7 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
   const [missingPermissions, setMissingPermissions] = useState<string[]>([])
 
   const isDirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(settings), [draft, settings])
+  const coverage = useMemo(() => assessDomainCoverage(draft.monitoredDomains), [draft.monitoredDomains])
   const refreshPermissionStatus = async () => setMissingPermissions(await missingPermissionDomains(draft.monitoredDomains))
   useEffect(() => { void refreshPermissionStatus() }, [settings])
 
@@ -250,7 +270,8 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
             </section>
 
             <section className="panel panel-pad settings-section">
-              <div className="settings-section-head"><div><h2>Monitored domains</h2><p>DriftSense stores the configured hostname only.</p></div><span className="count-label">{draft.monitoredDomains.filter((item) => item.enabled).length} enabled</span></div>
+              <div className="settings-section-head"><div><h2>Research domains</h2><p>Domains provide study context, not a predefined drift label. DriftSense stores the configured hostname only.</p></div><span className="count-label">{coverage.enabledCount} enabled</span></div>
+              <CoverageSummary coverage={coverage} compact />
               <div className="domain-list">
                 {draft.monitoredDomains.map((item) => (
                   <div className="domain-row" key={item.domain}>
@@ -294,6 +315,16 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
           </aside>
         </div>
       </main>
+    </div>
+  )
+}
+
+function CoverageSummary({ coverage, compact = false }: { coverage: ReturnType<typeof assessDomainCoverage>; compact?: boolean }) {
+  return (
+    <div className={`${coverage.balanced ? 'coverage-summary coverage-summary-ready' : 'coverage-summary'}${compact ? ' coverage-summary-compact' : ''}`}>
+      <div><strong>{coverage.balanced ? 'Balanced domain coverage' : 'Broaden domain coverage'}</strong><small>{coverage.balanced ? 'The selected set can capture both purposeful and drifting sessions.' : 'Include both work or learning and mixed-use contexts to reduce sampling bias.'}</small></div>
+      <span className={coverage.workLearningCount > 0 ? 'coverage-check coverage-check-on' : 'coverage-check'}><CheckCircle2 size={15} /> Work or learning <strong>{coverage.workLearningCount}</strong></span>
+      <span className={coverage.mixedUseCount > 0 ? 'coverage-check coverage-check-on' : 'coverage-check'}><CheckCircle2 size={15} /> Mixed-use <strong>{coverage.mixedUseCount}</strong></span>
     </div>
   )
 }

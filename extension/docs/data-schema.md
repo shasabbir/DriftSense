@@ -1,8 +1,10 @@
 # DriftSense Export Schema
 
-Schema version: `1`
+Schema version: `2`
 
 All times use ISO 8601 strings. Durations use seconds unless the field explicitly says minutes. Binary drift labels come only from post-session self-report.
+
+Domain categories describe sampling context only. Work, learning, social, video, and other categories may each contain aligned, drift, or unlabeled sessions.
 
 ## sessions.csv
 
@@ -14,7 +16,7 @@ All times use ISO 8601 strings. Durations use seconds unless the field explicitl
 | `condition` | string | `static_intention_prompt` in this build |
 | `domain` | string | Configured hostname only |
 | `domainCategory` | enum | video, social, news, shopping, learning, work, or other |
-| `declaredIntention` | enum/null | Participant-selected pre-session intention |
+| `declaredIntention` | enum/null | Participant-selected neutral intended-activity category |
 | `intendedDurationMinutes` | integer/null | Participant-provided duration |
 | `intentionCapturedAt` | timestamp/null | Time the intention was submitted |
 | `startTime` | timestamp | Session creation time |
@@ -63,7 +65,7 @@ The bundle contains:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "exportedAt": "ISO-8601 timestamp",
   "participantId": "DS-...",
   "studyStage": "stage_1_training",
@@ -74,6 +76,22 @@ The bundle contains:
 ```
 
 The arrays use the same allowlisted fields as their CSV counterparts.
+
+## Intention Values
+
+New schema-version-2 sessions use:
+
+| Value | Display label |
+|---|---|
+| `work_or_study` | Work or study task |
+| `learning_or_tutorial` | Learning or tutorial |
+| `specific_information` | Specific information |
+| `communication_or_community` | Communication or community |
+| `planned_entertainment_or_break` | Planned entertainment or break |
+| `open_ended_browsing` | Open-ended browsing |
+| `accidental_open` | Opened accidentally |
+
+These values describe intended activity and do not determine whether a session is drift. Existing pilot records may retain the retired schema-version-1 values `intentional_break`, `boredom`, `avoiding_work`, or `accidental_click`; the dashboard keeps readable labels for them, but they should not be mixed into the formal study dataset without an explicit preprocessing decision.
 
 ## Label Mapping
 

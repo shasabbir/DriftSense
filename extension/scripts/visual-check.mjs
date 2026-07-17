@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright-core'
 
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-const baseUrl = 'http://127.0.0.1:5173'
+const baseUrl = process.argv[2] ?? process.env.DRIFTSENSE_VISUAL_URL ?? 'http://127.0.0.1:5173'
 const artifacts = new URL('../artifacts/', import.meta.url)
 await mkdir(artifacts, { recursive: true })
 const artifactPath = (name) => fileURLToPath(new URL(name, artifacts))
@@ -21,6 +21,12 @@ await page.goto(`${baseUrl}/src/options/index.html`, { waitUntil: 'networkidle' 
 await page.screenshot({ path: artifactPath('onboarding-desktop.png'), fullPage: true })
 await page.locator('.consent-check').click()
 await page.getByRole('button', { name: 'Continue' }).click()
+await page.locator('.domain-choice').filter({ hasText: 'wikipedia.org' }).click()
+await page.locator('.domain-choice').filter({ hasText: 'youtube.com' }).click()
+await page.screenshot({ path: artifactPath('domain-coverage-desktop.png'), fullPage: true })
+await page.setViewportSize({ width: 390, height: 844 })
+await page.screenshot({ path: artifactPath('domain-coverage-mobile.png'), fullPage: true })
+await page.setViewportSize({ width: 1440, height: 1000 })
 await page.getByRole('button', { name: 'Continue' }).click()
 await page.getByRole('button', { name: 'Start collecting' }).click()
 await page.getByText('Study configuration').waitFor()
@@ -51,6 +57,8 @@ await page.screenshot({ path: artifactPath('popup.png'), fullPage: true })
 await page.setViewportSize({ width: 1440, height: 900 })
 await page.goto(`${baseUrl}/src/content/preview.html`, { waitUntil: 'networkidle' })
 await page.screenshot({ path: artifactPath('intention-prompt.png'), fullPage: false })
+await page.setViewportSize({ width: 390, height: 844 })
+await page.screenshot({ path: artifactPath('intention-prompt-mobile.png'), fullPage: false })
 
 const overflowChecks = await page.evaluate(() => ({
   viewport: document.documentElement.clientWidth,
