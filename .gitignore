@@ -33,3 +33,13 @@ extension/artifacts/
 extension/*.tsbuildinfo
 extension/vite-dev*.log
 
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Real participant data must stay outside version control
+data.csv
+data/participants/
+data/private/
+driftsense_data.zip
+

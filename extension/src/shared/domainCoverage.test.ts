@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assessDomainCoverage, createDefaultSettings, migrateDomainPresets } from './constants'
+import { assessDomainCoverage, createDefaultSettings, migrateDomainPresets, normalizeParticipantId } from './constants'
 import type { AppSettings, MonitoredDomain } from './types'
 
 function domain(domain: string, category: MonitoredDomain['category'], enabled = true): MonitoredDomain {
@@ -30,5 +30,12 @@ describe('research domain coverage', () => {
     expect(migrated.domainPresetsVersion).toBe(2)
     expect(migrated.monitoredDomains.find((item) => item.domain === 'youtube.com')?.enabled).toBe(true)
     expect(migrated.monitoredDomains.find((item) => item.domain === 'github.com')?.enabled).toBe(false)
+  })
+
+  it('normalizes privacy-safe participant codes used as CSV filenames', () => {
+    expect(normalizeParticipantId(' p01 ')).toBe('P01')
+    expect(normalizeParticipantId('study_18')).toBe('STUDY_18')
+    expect(normalizeParticipantId('../P01')).toBeNull()
+    expect(normalizeParticipantId('P')).toBeNull()
   })
 })

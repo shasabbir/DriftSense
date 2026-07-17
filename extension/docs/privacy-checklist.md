@@ -27,7 +27,8 @@ Complete this checklist before collecting participant data.
 - [ ] Pause prevents new collection.
 - [ ] Per-session deletion removes linked activity windows.
 - [ ] Delete-all removes all sessions and activity windows.
-- [ ] CSV and JSON exports contain only documented allowlisted fields.
+- [ ] Participant CSV, activity-window CSV, and JSON exports contain only documented allowlisted fields.
+- [ ] Each participant receives a unique anonymous code such as `P01` before the first session is collected.
 
 ## Study Interpretation
 

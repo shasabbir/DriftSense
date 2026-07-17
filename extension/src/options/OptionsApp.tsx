@@ -20,7 +20,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { assessDomainCoverage, DOMAIN_CATEGORIES } from '../shared/constants'
+import { assessDomainCoverage, DOMAIN_CATEGORIES, normalizeParticipantId } from '../shared/constants'
 import { normalizeDomain } from '../shared/domainUtils'
 import { missingPermissionDomains, removeUnusedDomainPermissions, requestDomainPermissions } from '../shared/permissions'
 import { sendRuntimeMessage } from '../shared/runtime'
@@ -56,6 +56,8 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
   const [consent, setConsent] = useState(false)
   const [domains, setDomains] = useState(settings.monitoredDomains)
   const [reflectionMinutes, setReflectionMinutes] = useState(settings.reflectionAfterMinutes)
+  const [participantId, setParticipantId] = useState(settings.participantId.startsWith('DS-') ? '' : settings.participantId)
+  const [participantError, setParticipantError] = useState('')
   const [saving, setSaving] = useState(false)
   const [permissionError, setPermissionError] = useState('')
   const [newDomain, setNewDomain] = useState('')
@@ -72,6 +74,11 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
     setDomainError('')
   }
   const finish = async () => {
+    const normalizedParticipantId = normalizeParticipantId(participantId)
+    if (!normalizedParticipantId) {
+      setParticipantError('Use 2–24 letters, numbers, underscores, or hyphens; for example, P01.')
+      return
+    }
     setSaving(true)
     const granted = await requestDomainPermissions(domains)
     if (!granted) {
@@ -84,6 +91,7 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
       consentAccepted: true,
       consentedAt: new Date().toISOString(),
       monitoringEnabled: true,
+      participantId: normalizedParticipantId,
       monitoredDomains: domains,
       reflectionAfterMinutes: reflectionMinutes,
       onboardingComplete: true,
@@ -164,8 +172,9 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
                 <span>Fallback reflection time</span>
                 <div className="number-field"><input className="input" type="number" min="1" max="120" value={reflectionMinutes} onChange={(event) => setReflectionMinutes(Math.min(120, Math.max(1, Number(event.target.value))))} /><span>minutes</span></div>
               </label>
-              <div className="participant-code"><span>Anonymous participant code</span><strong>{settings.participantId}</strong><small>Generated locally and included in exported research rows.</small></div>
+              <label className="field"><span>Anonymous participant code</span><input className="input" value={participantId} placeholder="P01" onChange={(event) => { setParticipantId(event.target.value.toUpperCase()); setParticipantError('') }} /><small className="field-help">Assign a unique code such as P01 before collection. The CSV will use this filename.</small></label>
             </div>
+            {participantError && <p className="field-error onboarding-field-error">{participantError}</p>}
             <div className="ready-checks">
               <span><CheckCircle2 size={17} /> Consent recorded on this device</span>
               <span><CheckCircle2 size={17} /> {coverage.enabledCount} domains across {coverage.categoryCount} research contexts</span>
@@ -182,7 +191,7 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
         {step < 2 ? (
           <button className="button button-primary" disabled={(step === 0 && !consent) || (step === 1 && !coverage.balanced)} type="button" onClick={() => setStep((current) => current + 1)}>Continue <ArrowRight size={17} /></button>
         ) : (
-          <button className="button button-green" disabled={saving} type="button" onClick={finish}><Play size={16} /> Start collecting</button>
+          <button className="button button-green" disabled={saving || !normalizeParticipantId(participantId)} type="button" onClick={finish}><Play size={16} /> Start collecting</button>
         )}
       </footer>
     </main>
@@ -195,6 +204,7 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
   const [newDomain, setNewDomain] = useState('')
   const [newCategory, setNewCategory] = useState<DomainCategory>('other')
   const [domainError, setDomainError] = useState('')
+  const [participantError, setParticipantError] = useState('')
   const [permissionError, setPermissionError] = useState('')
   const [missingPermissions, setMissingPermissions] = useState<string[]>([])
 
@@ -214,16 +224,22 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
     await refreshPermissionStatus()
   }
   const save = async () => {
+    const normalizedParticipantId = normalizeParticipantId(draft.participantId)
+    if (!normalizedParticipantId) {
+      setParticipantError('Use 2–24 letters, numbers, underscores, or hyphens; for example, P01.')
+      return
+    }
     const granted = await requestDomainPermissions(draft.monitoredDomains)
     if (!granted) {
       setPermissionError('Chrome did not grant access to every enabled domain. Disable the unapproved domain or try saving again.')
       return
     }
     await removeUnusedDomainPermissions(settings.monitoredDomains, draft.monitoredDomains)
-    await setSettings(draft)
+    await setSettings({ ...draft, participantId: normalizedParticipantId })
     if (typeof chrome !== 'undefined' && chrome.runtime) await sendRuntimeMessage({ type: 'SYNC_COLLECTOR' })
     await refreshPermissionStatus()
     setPermissionError('')
+    setParticipantError('')
     setSaved(true)
     window.setTimeout(() => setSaved(false), 1800)
   }
@@ -303,7 +319,10 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
 
           <aside className="settings-side">
             <section className="panel panel-pad identity-panel">
-              <span className="side-icon"><FileKey2 size={19} /></span><h2>Participant identity</h2><strong>{draft.participantId}</strong><p>Generated locally. It is the only participant identifier included in exports.</p>
+              <span className="side-icon"><FileKey2 size={19} /></span><h2>Participant identity</h2>
+              {sessionCount === 0 && windowCount === 0 ? <input className="input" value={draft.participantId} placeholder="P01" onChange={(event) => { setDraft((current) => ({ ...current, participantId: event.target.value.toUpperCase() })); setParticipantError('') }} /> : <strong>{draft.participantId}</strong>}
+              <p>{sessionCount === 0 && windowCount === 0 ? 'Assign a unique anonymous code before collection; the participant CSV uses this filename.' : 'Locked because collected records already use this participant code.'}</p>
+              {participantError && <p className="field-error">{participantError}</p>}
             </section>
             <section className="panel panel-pad data-panel">
               <span className="side-icon side-icon-blue"><Database size={19} /></span><h2>Local data</h2>

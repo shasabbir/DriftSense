@@ -13,8 +13,7 @@ DriftSense is a local-first Chrome Manifest V3 research extension for collecting
 - local session and activity-window storage
 - popup for collection state and active-session reflection
 - dashboard for delayed summaries, intention alignment, session inspection, export, and deletion
-- CSV and JSON export through an explicit user action
-- synthetic dashboard records available only in Vite development mode
+- a 13-column participant CSV compatible with the modeling `data.csv`, plus optional activity-window CSV and JSON exports
 
 ## Privacy Boundary
 
@@ -51,7 +50,7 @@ If an enabled domain displays no intention prompt, open DriftSense settings and 
 ```powershell
 npm run dev        # Vite UI development server
 npm run typecheck  # TypeScript validation
-npm test           # privacy, labels, domains, permissions, and synthetic data
+npm test           # privacy, labels, domains, permissions, and exports
 npm run build      # build dist/ and verify the collector can load on approved domains
 ```
 
@@ -71,7 +70,7 @@ The icon source is deterministic. Regenerate the PNG sizes with:
 6. Click, scroll, or type normally. Only aggregate counts are retained.
 7. Wait for the reflection prompt, or choose **End and reflect** from the popup.
 8. Submit both aligned and drift reflections across separate test sessions and inspect them in the dashboard.
-9. Export `sessions.csv`, `activity-windows.csv`, and the JSON bundle.
+9. Assign a unique participant code such as `P01` before collection, then export `P01.csv`; optionally export activity windows and the JSON audit bundle.
 10. Verify that exported URL data contains hostnames only.
 
 Closing or navigating away from a session before reflection preserves it as an unlabeled, abandoned session. It is not silently treated as non-drift.
@@ -99,3 +98,5 @@ Domain categories are sampling context only. They are never used to assign drift
 Intention choices are also descriptive rather than evaluative. Work is not automatically aligned, and entertainment is not automatically drift.
 
 See [docs/data-schema.md](docs/data-schema.md) for exact exports and [docs/privacy-checklist.md](docs/privacy-checklist.md) before beginning a participant pilot.
+
+To combine participant files after collection, keep them in a private, consent-approved directory outside the repository and run `python ../ml/combine_participant_csv.py --input D:\private\driftsense --output D:\private\driftsense\data.csv` from this directory.

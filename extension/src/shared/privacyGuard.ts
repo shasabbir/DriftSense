@@ -1,4 +1,20 @@
-import type { ActivityWindow, InternalSession, SessionRecord } from './types'
+import type { ActivityWindow, InternalSession, ModelingSessionRecord, SessionRecord } from './types'
+
+export const MODELING_SESSION_EXPORT_FIELDS = [
+  'session_id',
+  'participant_id',
+  'start_time',
+  'domain',
+  'declared_intention',
+  'intended_duration_minutes',
+  'duration_seconds',
+  'click_count',
+  'scroll_count',
+  'keyboard_activity_count',
+  'idle_seconds',
+  'focus_loss_count',
+  'drift_label',
+] as const satisfies readonly (keyof ModelingSessionRecord)[]
 
 export const SESSION_EXPORT_FIELDS = [
   'sessionId',
@@ -49,6 +65,24 @@ export const ACTIVITY_EXPORT_FIELDS = [
 
 export function sanitizeSession(session: InternalSession): SessionRecord {
   return Object.fromEntries(SESSION_EXPORT_FIELDS.map((field) => [field, session[field]])) as unknown as SessionRecord
+}
+
+export function sanitizeModelingSession(session: InternalSession): ModelingSessionRecord {
+  return {
+    session_id: session.sessionId,
+    participant_id: session.anonymousUserId,
+    start_time: session.startTime,
+    domain: session.domain,
+    declared_intention: session.declaredIntention,
+    intended_duration_minutes: session.intendedDurationMinutes,
+    duration_seconds: Math.max(session.durationSeconds, session.actualDurationSeconds),
+    click_count: session.clickCount,
+    scroll_count: session.scrollCount,
+    keyboard_activity_count: session.keyboardActivityCount,
+    idle_seconds: session.idleSeconds,
+    focus_loss_count: session.tabFocusLossCount,
+    drift_label: session.driftLabel,
+  }
 }
 
 export function sanitizeActivityWindow(window: ActivityWindow): ActivityWindow {

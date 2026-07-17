@@ -114,7 +114,7 @@ DriftSense is designed for a research setting where participants voluntarily ins
   \item \textbf{Condition-aware measurement.} The system should support passive monitoring, static intention prompting, and model-assisted reflective check-ins.
   \item \textbf{Lightweight behavioral sensing.} The system should collect aggregate interaction signals that are plausible predictors of drift without collecting page content or sensitive input.
   \item \textbf{Local-first privacy.} Data should be stored locally, be exportable by the user, and be deletable through the interface.
-  \item \textbf{Model-comparable outputs.} The exported schema should support weak baselines, tabular models, first-3-minute prediction, and condition-level drift-rate comparison.
+  \item \textbf{Model-comparable outputs.} The exported schema should support weak baselines, tabular models, prediction at one, three, and five minutes, and condition-level drift-rate comparison.
   \item \textbf{Inspectable feedback.} Participants should be able to review aggregate trends, self-reported labels, and model-assisted events without exposing prohibited content or presenting model estimates as facts.
 \end{enumerate}
 
@@ -291,11 +291,12 @@ The \textit{Model Transparency} view summarizes how many model-assisted check-in
 The \textit{Session History} view provides a filterable table by date, monitored domain, condition, declared intention, reflection label, and model risk level. A session-detail view shows duration, aggregate activity counts, post-session reflection, and check-in outcome, but never page titles, full URLs, page text, screenshots, messages, or keystroke values. The \textit{Data and Privacy} view allows participants to pause monitoring, configure domains, inspect field definitions, delete an individual session, delete all local data, and export:
 
 \begin{itemize}[leftmargin=*]
-  \item \texttt{sessions.csv}
-  \item \texttt{activity\_windows.csv}
-  \item \texttt{sessions.json}
-  \item a schema README
+  \item a primary participant CSV named from the anonymous code, such as \texttt{P01.csv};
+  \item an optional activity-windows CSV for early-prediction analysis; and
+  \item an optional complete JSON audit bundle containing allowlisted session and activity-window records.
 \end{itemize}
+
+Participant CSV files share the same 13-column modeling schema and are combined locally into \texttt{data.csv}. Missing or non-binary reflection outcomes remain blank in the participant source files and are not silently recoded as non-drift.
 
 All dashboard queries run over locally stored records. The dashboard uses the same structure and availability across Stage 2 conditions and updates after a session or at a delayed aggregate interval rather than acting as an additional real-time intervention. Model details are shown only for records where the model-assisted interface generated them. Missing and uncertain labels remain visible as such and are not silently counted as non-drift. Dashboard preferences are stored locally, and dashboard-opening behavior is not logged unless separately consented to and defined as a secondary measure. The dashboard is included to support reflection, transparency, and data inspection; it is not treated as the paper's novelty claim.
 
@@ -462,7 +463,7 @@ The condition-level evaluation reports:
 These user-study measures are descriptive and should not be used to claim clinical benefit. The main behavioral outcome is self-reported drift rate, not objectively detected distraction. The model-specific outcome is whether the predicted risk helped trigger a timely reflective prompt without producing excessive false or annoying nudges.
 
 \subsection{Data Processing}
-The analysis pipeline loads \texttt{sessions.csv} and \texttt{activity\_windows.csv}, removes invalid sessions, removes unlabeled sessions for the binary task, and separates Stage 1 model-training data from Stage 2 condition-evaluation data. For prediction modeling, participant-wise splits are preferred to reduce leakage from the same participant's repeated browsing patterns. When participant-wise splitting is not possible because the dataset is too small, the paper should report this limitation clearly.
+The analysis pipeline validates participant files such as \texttt{P01.csv}, combines complete binary-labeled rows into \texttt{data.csv}, and optionally loads the activity-windows CSV for early-prediction analysis. It removes invalid sessions and separates Stage 1 model-training data from Stage 2 condition-evaluation data. For prediction modeling, participant-wise splits are preferred to reduce leakage from the same participant's repeated browsing patterns. When participant-wise splitting is not possible because the dataset is too small, the paper should report this limitation clearly.
 
 Categorical variables are encoded using one-hot encoding or model-native categorical handling. Numeric activity features are standardized for models that require scaling. First-3-minute features are generated for model-assisted check-ins, while full-session features are generated for offline comparison.
 

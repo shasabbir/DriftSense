@@ -82,6 +82,22 @@ export interface SessionRecord {
   updatedAt: string
 }
 
+export interface ModelingSessionRecord {
+  session_id: string
+  participant_id: string
+  start_time: string
+  domain: string
+  declared_intention: DeclaredIntention | null
+  intended_duration_minutes: number | null
+  duration_seconds: number
+  click_count: number
+  scroll_count: number
+  keyboard_activity_count: number
+  idle_seconds: number
+  focus_loss_count: number
+  drift_label: DriftLabel
+}
+
 export interface InternalSession extends SessionRecord {
   tabId: number
   lastWindowAt: string | null

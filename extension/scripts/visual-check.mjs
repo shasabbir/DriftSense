@@ -33,14 +33,11 @@ await page.getByText('Study configuration').waitFor()
 await page.screenshot({ path: artifactPath('settings-desktop.png'), fullPage: true })
 
 await page.goto(`${baseUrl}/src/dashboard/index.html`, { waitUntil: 'networkidle' })
-await page.getByRole('button', { name: 'Data & privacy' }).click()
-await page.getByRole('button', { name: 'Load synthetic records' }).click()
-await page.getByRole('button', { name: 'Overview' }).click()
-await page.locator('.metric-card').filter({ hasText: 'Total sessions' }).getByText('18', { exact: true }).waitFor()
+await page.getByText('No sessions collected yet').waitFor()
 await page.screenshot({ path: artifactPath('dashboard-desktop.png'), fullPage: true })
 
 await page.getByRole('button', { name: 'Session history' }).click()
-await page.getByText('18 records').waitFor()
+await page.getByText('0 records').waitFor()
 await page.screenshot({ path: artifactPath('sessions-desktop.png'), fullPage: true })
 
 await page.setViewportSize({ width: 390, height: 844 })

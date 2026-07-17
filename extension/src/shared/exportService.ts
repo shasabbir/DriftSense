@@ -1,5 +1,13 @@
-import { ACTIVITY_EXPORT_FIELDS, assertPrivacySafeRecord, sanitizeActivityWindow, sanitizeSession, SESSION_EXPORT_FIELDS } from './privacyGuard'
+import {
+  ACTIVITY_EXPORT_FIELDS,
+  assertPrivacySafeRecord,
+  MODELING_SESSION_EXPORT_FIELDS,
+  sanitizeActivityWindow,
+  sanitizeModelingSession,
+  sanitizeSession,
+} from './privacyGuard'
 import { getAllData } from './storage'
+import type { InternalSession } from './types'
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return ''
@@ -30,10 +38,23 @@ function dateStamp(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+export function participantCsvFilename(participantId: string): string {
+  const safeId = participantId.trim().replace(/[^A-Za-z0-9_-]/g, '_') || 'participant'
+  return `${safeId}.csv`
+}
+
+export function modelingSessionsToCsv(sessions: InternalSession[]): string {
+  const safe = sessions.map(sanitizeModelingSession) as unknown as Record<string, unknown>[]
+  return recordsToCsv(safe, MODELING_SESSION_EXPORT_FIELDS)
+}
+
 export async function exportSessionsCsv(): Promise<void> {
-  const { sessions } = await getAllData()
-  const safe = sessions.map(sanitizeSession) as unknown as Record<string, unknown>[]
-  download(recordsToCsv(safe, SESSION_EXPORT_FIELDS), `driftsense-sessions-${dateStamp()}.csv`, 'text/csv;charset=utf-8')
+  const { settings, sessions } = await getAllData()
+  download(
+    modelingSessionsToCsv(sessions),
+    participantCsvFilename(settings.participantId),
+    'text/csv;charset=utf-8',
+  )
 }
 
 export async function exportActivityWindowsCsv(): Promise<void> {

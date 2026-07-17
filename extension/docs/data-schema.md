@@ -6,7 +6,38 @@ All times use ISO 8601 strings. Durations use seconds unless the field explicitl
 
 Domain categories describe sampling context only. Work, learning, social, video, and other categories may each contain aligned, drift, or unlabeled sessions.
 
-## sessions.csv
+## Primary participant CSV (`P01.csv`)
+
+The dashboard's primary export uses the anonymous participant code as the
+filename. For example, participant `P01` exports `P01.csv`. Assign a unique code
+before collection; the extension locks the code after the first session is
+stored.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `session_id` | string | Random session identifier |
+| `participant_id` | string | Anonymous participant code, matching the filename |
+| `start_time` | timestamp | Session creation time with timezone |
+| `domain` | string | Configured hostname only |
+| `declared_intention` | enum/null | Participant-selected neutral intended-activity category |
+| `intended_duration_minutes` | integer/null | Participant-provided intended duration |
+| `duration_seconds` | integer | Final observed session duration |
+| `click_count` | integer | Aggregate click count |
+| `scroll_count` | integer | Aggregate scroll-event count |
+| `keyboard_activity_count` | integer | Keydown count without key values |
+| `idle_seconds` | integer | Seconds in idle activity windows |
+| `focus_loss_count` | integer | Count of tab focus departures |
+| `drift_label` | 0/1/null | `0` aligned, `1` drift, blank for non-binary or missing reflection |
+
+The primary export deliberately omits page content, full URLs, domain category,
+condition bookkeeping, duplicated timestamps, and supporting activity-window
+fields. Keep real participant exports in a private, consent-approved directory
+outside the repository and run `python ml/combine_participant_csv.py --input
+<private-directory> --output <private-directory>/data.csv` to produce the
+combined modeling table. The combiner reports and excludes incomplete or
+non-binary rows without changing the participant source files.
+
+## Full session records in the optional JSON bundle
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -41,7 +72,7 @@ Domain categories describe sampling context only. Work, learning, social, video,
 
 Internal fields such as Chrome tab ID, alarm state, and last-window bookkeeping are removed before export.
 
-## activity-windows.csv
+## Optional activity-windows CSV
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -67,7 +98,7 @@ The bundle contains:
 {
   "schemaVersion": 2,
   "exportedAt": "ISO-8601 timestamp",
-  "participantId": "DS-...",
+  "participantId": "P01",
   "studyStage": "stage_1_training",
   "condition": "static_intention_prompt",
   "sessions": [],
@@ -75,7 +106,10 @@ The bundle contains:
 }
 ```
 
-The arrays use the same allowlisted fields as their CSV counterparts.
+The JSON `sessions` array uses the full allowlisted camelCase session record
+documented above. The `activityWindows` array uses the same allowlisted fields as
+the optional activity-windows CSV. The JSON bundle is an audit/reproducibility
+export rather than the primary modeling table.
 
 ## Intention Values
 

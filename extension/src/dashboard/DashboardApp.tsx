@@ -23,7 +23,6 @@ import {
   Search,
   Settings2,
   ShieldCheck,
-  Sparkles,
   Target,
   Trash2,
   X,
@@ -43,7 +42,6 @@ import {
   YAxis,
 } from 'recharts'
 import { exportActivityWindowsCsv, exportJsonBundle, exportSessionsCsv } from '../shared/exportService'
-import { seedSyntheticData } from '../shared/sampleData'
 import { clearResearchData, deleteSessionData, patchSettings } from '../shared/storage'
 import type { AppSettings, InternalSession, StoredData } from '../shared/types'
 import { AppLogo } from '../ui/AppLogo'
@@ -106,7 +104,7 @@ export function DashboardApp() {
           <div className="dashboard-breadcrumb"><span>DriftSense</span><ChevronRight size={14} /><strong>{navItems.find((item) => item.id === view)?.label}</strong></div>
           <div className="dashboard-top-actions">
             <span className="participant-chip"><span>Participant</span><strong>{data.settings.participantId}</strong></span>
-            <button className="button button-primary" type="button" onClick={exportJsonBundle}><Download size={15} /> Export data</button>
+            <button className="button button-primary" type="button" onClick={exportSessionsCsv}><Download size={15} /> Export {data.settings.participantId}.csv</button>
           </div>
         </header>
         <div className="dashboard-content">{content}</div>
@@ -264,12 +262,10 @@ function Sessions({ data }: { data: StoredData }) {
 
 function DataPrivacy({ data }: { data: StoredData }) {
   const [busy, setBusy] = useState(false)
-  const showDevelopmentTools = import.meta.env.DEV || ['127.0.0.1', 'localhost'].includes(window.location.hostname)
   const deleteAll = async () => {
     if (!window.confirm('Delete every locally stored DriftSense session and activity window? This cannot be undone.')) return
     setBusy(true); await clearResearchData(); setBusy(false)
   }
-  const seed = async () => { setBusy(true); await seedSyntheticData(); setBusy(false) }
   return (
     <>
       <PageTitle eyebrow="Participant control" title="Data and privacy" subtitle="Inspect the local dataset, export allowlisted fields, or remove stored research records." />
@@ -281,9 +277,9 @@ function DataPrivacy({ data }: { data: StoredData }) {
         <article className="panel panel-pad">
           <PanelHeader title="Export dataset" detail="UTF-8, allowlisted fields" />
           <div className="export-list">
-            <button type="button" onClick={exportSessionsCsv}><span className="export-icon green"><FileSpreadsheet size={19} /></span><span><strong>Sessions CSV</strong><small>One row per monitored session</small></span><Download size={16} /></button>
-            <button type="button" onClick={exportActivityWindowsCsv}><span className="export-icon blue"><FileSpreadsheet size={19} /></span><span><strong>Activity windows CSV</strong><small>Aggregate ten-second windows</small></span><Download size={16} /></button>
-            <button type="button" onClick={exportJsonBundle}><span className="export-icon amber"><FileJson size={19} /></span><span><strong>Complete JSON bundle</strong><small>Sessions and activity windows</small></span><Download size={16} /></button>
+            <button type="button" onClick={exportSessionsCsv}><span className="export-icon green"><FileSpreadsheet size={19} /></span><span><strong>Participant CSV</strong><small>{data.settings.participantId}.csv, compatible with the modeling data</small></span><Download size={16} /></button>
+            <button type="button" onClick={exportActivityWindowsCsv}><span className="export-icon blue"><FileSpreadsheet size={19} /></span><span><strong>Activity windows CSV</strong><small>Optional ten-second rows for early prediction</small></span><Download size={16} /></button>
+            <button type="button" onClick={exportJsonBundle}><span className="export-icon amber"><FileJson size={19} /></span><span><strong>Complete JSON bundle</strong><small>Optional audit copy of sessions and activity windows</small></span><Download size={16} /></button>
           </div>
         </article>
         <article className="panel panel-pad schema-panel">
@@ -295,7 +291,6 @@ function DataPrivacy({ data }: { data: StoredData }) {
         <div><span className="side-icon side-icon-danger"><Trash2 size={19} /></span><div><h2>Delete local research data</h2><p>Removes all sessions and activity windows. Consent and domain settings remain on this device.</p></div></div>
         <button className="button button-danger" disabled={busy || (data.sessions.length === 0 && data.activityWindows.length === 0)} type="button" onClick={deleteAll}><Trash2 size={16} /> Delete all data</button>
       </section>
-      {showDevelopmentTools && <section className="dev-tools"><span><Sparkles size={15} /> Development preview</span><button className="button button-secondary" disabled={busy} type="button" onClick={seed}>Load synthetic records</button></section>}
     </>
   )
 }

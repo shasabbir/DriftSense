@@ -69,6 +69,11 @@ export function createParticipantId(): string {
   return `DS-${token.slice(0, 6)}-${token.slice(6)}`
 }
 
+export function normalizeParticipantId(input: string): string | null {
+  const normalized = input.trim().toUpperCase()
+  return /^[A-Z0-9][A-Z0-9_-]{1,23}$/.test(normalized) ? normalized : null
+}
+
 export function createDefaultSettings(): AppSettings {
   return {
     schemaVersion: 2,
