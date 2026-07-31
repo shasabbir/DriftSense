@@ -274,7 +274,7 @@ Implementation rules:
 * Make small commits or logically separated changes.
 * Add README setup instructions.
 * Add comments where browser APIs are tricky.
-* Add sample synthetic dataset so ML pipeline can run before real data collection.
+* Add schema and export tests that do not create a repository dataset.
 * Add unit tests where practical.
 * Do not overengineer backend/cloud.
 * Keep everything local-first.
@@ -289,7 +289,7 @@ Definition of done:
 * Extension stores sessions locally.
 * Extension exports CSV/JSON.
 * Dashboard loads and displays summary.
-* ML pipeline runs on synthetic data.
+* ML pipeline runs on consented extension pilot exports.
 * Baseline models train successfully.
 * TCN/GRU script trains successfully.
 * Evaluation report is generated.

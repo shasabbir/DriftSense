@@ -93,7 +93,7 @@ paper/
 paper draft, references, figure list, table list
 
 data/
-sample or synthetic datasets only unless real data is explicitly added with consent
+schema documentation only; keep real participant exports outside the repository
 
 ## Definition of Done for Implementation Tasks
 
@@ -104,7 +104,7 @@ A task is done only when:
 * privacy rules are respected
 * README is updated
 * no prohibited data is collected
-* synthetic test data works
+* export and schema tests pass with isolated test fixtures
 * exported data schema is documented
 
 ## Definition of Done for Paper Tasks

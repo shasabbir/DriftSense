@@ -54,15 +54,9 @@ extension/
   README.md
 
 ml/
-  data/
-    synthetic/
-      sessions.csv
-      activity_windows.csv
-    raw/
-    processed/
+  combine_participant_csv.py
   notebooks/
   src/
-    generate_synthetic_data.py
     preprocess.py
     features.py
     train_baselines.py
@@ -78,7 +72,6 @@ ml/
 data/
   README.md
   schema.md
-  synthetic/
 
 paper/
   main.tex
@@ -509,28 +502,26 @@ Acceptance checks:
 
 - Export schema matches `data/schema.md`.
 - Delete-all-data clears local extension data.
-- Synthetic/manual pilot data can be exported and loaded by ML scripts.
+- A consented extension pilot export can be loaded by ML scripts.
 
 ---
 
 ## 5. ML Pipeline Plan
 
-### 5.1 Synthetic Dataset
+### 5.1 Participant Dataset Intake
 
-Create a synthetic dataset first so the pipeline can run before real collection.
-
-Files:
-
-```text
-ml/data/synthetic/sessions.csv
-ml/data/synthetic/activity_windows.csv
-```
+Collect participant sessions with the extension after consent and ethics
+requirements are met. Keep individual exports and the combined dataset in a
+private, access-controlled directory outside the repository. Use
+`ml/combine_participant_csv.py` to validate and combine the participant files.
 
 Acceptance checks:
 
-- Synthetic data includes all three conditions.
-- Synthetic data includes drift and non-drift labels.
-- Pipeline can run end-to-end without real participant data.
+- Participant files match the documented export schema.
+- Participant identifiers match their CSV filenames.
+- Duplicate or overlapping sessions are rejected.
+- Incomplete and non-binary-labeled sessions are reported and excluded from the
+  modeling table without changing the original exports.
 
 ---
 
@@ -724,7 +715,7 @@ Documentation must include:
 - How to export data.
 - How to delete data.
 - How to run ML scripts.
-- How to reproduce synthetic-data results.
+- How to reproduce data preparation and model results with authorized exports.
 
 ---
 
@@ -787,7 +778,7 @@ Done when:
 
 Tasks:
 
-- Generate synthetic dataset.
+- Validate the extension export and participant-file combination workflow.
 - Implement preprocessing.
 - Implement feature engineering.
 - Train time/domain/intention/activity/intention+activity models.
@@ -795,7 +786,7 @@ Tasks:
 
 Done when:
 
-- ML pipeline runs on synthetic data.
+- ML pipeline runs on consented extension pilot exports.
 - Stage 1 real export can be processed.
 - First-3-minute model candidate is selected.
 
@@ -855,10 +846,10 @@ Done when:
 
 ### ML Tests
 
-- Synthetic data validates against schema.
+- A known-good isolated export fixture validates against the schema.
 - Preprocessing rejects prohibited columns.
 - Feature generation handles missing optional fields.
-- Model scripts run with synthetic data.
+- Model scripts run on extension-exported participant data.
 - Evaluation exports metrics and figures.
 - Condition analysis handles all three conditions.
 
@@ -885,7 +876,7 @@ If time becomes tight, keep only:
 - post-session reflection prompt
 - model-assisted check-in using simple exported threshold/model
 - CSV/JSON export
-- synthetic dataset
+- participant CSV validation and combination
 - baselines plus one tabular model
 - condition comparison analysis
 
@@ -910,7 +901,7 @@ The implementation is complete when:
 - No prohibited data is collected.
 - Data is stored locally and can be deleted.
 - Data exports match the documented schema.
-- Synthetic dataset works.
+- Extension-collected pilot exports pass schema validation.
 - Stage 1 data can train a drift-risk model.
 - First-3-minute model or threshold can run in the extension.
 - Stage 2 data can compare all three conditions.

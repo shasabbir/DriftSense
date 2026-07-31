@@ -257,7 +257,7 @@ The extension includes a detailed local dashboard for participant reflection, st
 
 ### Dashboard Build Order
 
-1. Create reusable local summary queries and synthetic dashboard data.
+1. Create reusable local summary queries and empty/populated test states.
 2. Build overview summaries and trend charts.
 3. Add intention/domain breakdowns and filters.
 4. Add session history and session details.
@@ -636,7 +636,7 @@ Deliverables:
 - final figures
 - code README
 - data schema README
-- synthetic/sample dataset
+- participant data-handling and schema documentation
 - limitations section updated
 
 Paper framing:
