@@ -1,298 +1,136 @@
-You are working as a senior full-stack engineer and research software engineer.
+# DriftSense Phase 2 Implementation Prompt
 
-Project name: DriftSense
+Continue the existing DriftSense Chrome Manifest V3 extension and Python ML
+pipeline. Do not rebuild the collector from scratch. The Phase 1 extension
+already collects real intention-labeled sessions and exports participant CSV and
+activity-window files.
 
-Goal:
-Build a privacy-preserving Chrome extension and ML pipeline for a research project on browser-based digital drift. The system should collect lightweight browser-session activity signals, ask the user for browsing intention, ask post-session reflection, export a dataset, and train baseline + deep learning models for session-level drift prediction.
+## Goal
 
-Important research framing:
-This is NOT a website blocker.
-This is NOT a generic productivity dashboard.
-This is NOT attention/emotion/ADHD detection.
-This is a research prototype for session-level intention-alignment and digital drift prediction.
+Implement the minimum additional functionality required for a seven-day
+micro-randomized model-assisted intervention after a 10-day collection phase.
 
-Core research question:
-Can declared browsing intention combined with lightweight browser activity signals predict whether a browser session becomes digital drift better than time-based or domain-based baselines?
+The intervention must answer:
 
-Privacy constraints:
+> Among sessions classified as elevated risk after three minutes, does a brief
+> reflective prompt reduce subsequent self-reported drift compared with a
+> randomized silent control?
 
-* Do not collect page text.
-* Do not collect passwords.
-* Do not collect screenshots.
-* Do not collect full browsing history.
-* Do not collect private messages.
-* Do not collect source code.
-* Do not collect keystroke content.
-* Only track configured domains.
-* Store data locally first.
-* Provide export and delete-all-data features.
-* No webcam or face detection in MVP.
+## Required Workflow
 
-Tech stack:
+1. Train a simple intention-plus-activity logistic-regression model from private,
+   consented Phase 1 extension exports.
+2. Compare it against time, domain, intention-only, and activity-only baselines.
+3. Freeze the three-minute preprocessing, coefficients, intercept, threshold,
+   model version, 0.5 assignment probability, and daily prompt cap.
+4. Package the model with the extension and run inference locally.
+5. For elevated-risk eligible sessions, persist a 1:1 random assignment before
+   showing any interface.
+6. Show the prompt only for `reflective_prompt`; render nothing for
+   `silent_control`.
+7. Ask the identical post-session reflection under both assignments.
+8. Export a separate allowlisted intervention log.
 
-* Chrome Manifest V3 extension
-* React + TypeScript for UI
-* Vite for build tooling
-* chrome.storage.local or IndexedDB for local storage
-* Python for ML pipeline
-* scikit-learn for baselines
-* CatBoost or XGBoost for strong tabular model
-* PyTorch for TCN/GRU deep model
-* pandas, numpy, matplotlib, scikit-learn for analysis
-* Export format: CSV and JSON
+## Prompt
 
-Repository structure:
-driftsense/
-extension/
-manifest.json
-src/
-background/
-content/
-popup/
-options/
-dashboard/
-shared/
-package.json
-vite.config.ts
-README.md
-ml/
-data/
-raw/
-processed/
-notebooks/
-src/
-preprocess.py
-features.py
-train_baselines.py
-train_sequence_model.py
-evaluate.py
-export_figures.py
-requirements.txt
-README.md
-paper/
-outline.md
-related_work.md
-methodology.md
-results_template.md
-references.bib
-AGENTS.md
-README.md
+Display only:
 
-Build Phase 1: Chrome extension MVP
-Features:
+> Still here for your original reason?
 
-1. Settings page where user can configure distraction-prone domains:
+Actions:
 
-   * youtube.com
-   * facebook.com
-   * reddit.com
-   * instagram.com
-   * x.com
-   * linkedin.com
-   * news websites
-   * custom domains
+- Continue intentionally
+- Finish now
 
-2. When user opens a configured domain, show a pre-session modal:
-   Question: “Why are you opening this?”
-   Options:
+Do not display a probability, call the session drift, shame the participant, or
+block access. Show at most once per session and at most three times per day.
 
-   * Work or study task
-   * Learning or tutorial
-   * Specific information
-   * Communication or community
-   * Planned entertainment or break
-   * Open-ended browsing
-   * Opened accidentally
+## Eligibility
 
-3. After intention selection, allow site access.
+Evaluate at exactly 180 seconds. A session is randomization-eligible only if it:
 
-4. Track session metadata only:
+- is still active;
+- has a declared intention;
+- contains every required frozen feature;
+- meets the frozen risk threshold; and
+- has not reached the daily displayed-prompt cap.
 
-   * session_id
-   * anonymous_user_id
-   * domain
-   * domain_category
-   * declared_intention
-   * start_time
-   * end_time
-   * duration_seconds
-   * click_count
-   * scroll_count
-   * keyboard_activity_count, but not key values
-   * idle_seconds
-   * active_seconds
-   * tab_focus_loss_count
-   * tab_switch_count
-   * video_playing_seconds if detectable
-   * checkin_count
-   * post_session_answer
-   * drift_label
-   * intended_duration_minutes if user provides it
-   * actual_duration_seconds
+Use `crypto.getRandomValues()` or another browser cryptographic random source.
+Persist assignment so service-worker suspension, tab changes, or reloads cannot
+rerandomize a session.
 
-5. Every 5 or 10 seconds, record an activity window:
+## Intervention Export
 
-   * session_id
-   * timestamp_offset_seconds
-   * clicks_in_window
-   * scroll_events_in_window
-   * keyboard_activity_in_window
-   * idle_in_window
-   * tab_focused
-   * video_playing
-   * url_domain_only
+Create a separate CSV with:
 
-6. After configurable duration, show post-session reflection:
-   Question: “Did this visit match your original intention?”
-   Options:
+```text
+session_id
+participant_id
+model_version
+prediction_offset_seconds
+risk_probability
+risk_threshold
+eligible
+randomized_assignment
+prompt_shown
+prompt_response
+suppression_reason
+assigned_at
+```
 
-   * Yes
-   * No, I drifted
-   * Continue intentionally
-   * Save for later
+Keep the existing 13-column participant CSV unchanged.
 
-7. Labeling rule:
+## ML Requirements
 
-   * Yes = drift_label 0
-   * No, I drifted = drift_label 1
-   * Continue intentionally = extended_intentional
-   * Save for later = interrupted_or_deferred
+Use Phase 1 days 1-7 for development and days 8-10 as chronological holdout.
+Use participant-grouped validation within development data. Report unseen-user
+performance separately when possible.
 
-8. Dashboard:
+Required comparisons:
 
-   * total configured-domain sessions
-   * drift sessions
-   * non-drift sessions
-   * top drift domains
-   * intention distribution
-   * average session duration
-   * active vs passive sessions
-   * daily/weekly trend
-   * export CSV/JSON button
-   * delete all data button
+1. time threshold;
+2. training-derived domain rule;
+3. intention-only logistic regression;
+4. activity-only logistic regression; and
+5. intention-plus-activity logistic regression.
 
-Build Phase 2: Data export
-Create exports:
+Random Forest is optional offline analysis. Do not implement a deep sequence
+model for this pilot.
 
-1. sessions.csv
-2. activity_windows.csv
-3. sessions.json
-4. README describing schema
+Report accuracy, precision, recall, F1, ROC-AUC, confusion matrices, and one-,
+three-, and five-minute performance. Construct every early feature only from
+information available by its cutoff.
 
-Build Phase 3: ML pipeline
-Implement preprocessing:
+Export a versioned model JSON and shared prediction vectors. Python and
+TypeScript predictions must match within a documented numeric tolerance.
 
-* Load sessions.csv and activity_windows.csv
-* Clean invalid sessions
-* Remove sessions without labels
-* Create train/validation/test split
-* Support user-wise split if user IDs exist
-* Generate tabular aggregate features
-* Generate sequence tensors for deep learning
+## Privacy Rules
 
-Tabular features:
+Never collect page text, titles, full URLs, query strings, passwords,
+screenshots, private messages, source code, keystroke values, full history,
+webcam data, identity, emotion, or inferred mental state. Model inference and
+randomization remain local. Real participant files stay outside the repository.
 
-* declared_intention
-* domain_category
-* time_of_day
-* day_of_week
-* duration_so_far
-* total_clicks
-* total_scrolls
-* total_keyboard_activity
-* idle_ratio
-* active_ratio
-* video_ratio
-* focus_loss_count
-* tab_switch_count
-* average_activity_per_minute
-* first_1_min_activity
-* first_3_min_activity
-* first_5_min_activity
+## Required Tests
 
-Models:
+- Three-minute features exclude post-cutoff activity and final duration.
+- TypeScript prediction matches Python reference vectors.
+- Invalid or mismatched model artifacts fail closed.
+- Prediction happens once at 180 seconds.
+- Only eligible elevated-risk sessions are randomized.
+- Assignment is persisted before UI rendering.
+- Silent control renders nothing.
+- Prompt assignment renders exactly once.
+- Daily prompt cap and suppression reasons work.
+- Both assignments use the same post-session question.
+- Export privacy allowlist rejects unexpected fields.
+- Existing collection, export, and privacy tests remain green.
+- Production extension build passes.
 
-1. Time threshold baseline:
+## Definition of Done
 
-   * classify drift if duration > threshold
-   * tune threshold on validation set
-
-2. Domain baseline:
-
-   * classify configured social/video domains as drift-prone
-
-3. Intention-only logistic regression
-
-4. Activity-only Random Forest or XGBoost/CatBoost
-
-5. Intention + activity CatBoost/XGBoost
-
-6. Deep learning sequence model:
-
-   * TCN preferred
-   * GRU acceptable
-   * input: activity windows
-   * static features: declared intention, domain category, time of day
-   * output: drift probability
-
-Early prediction:
-Train/evaluate models using only:
-
-* first 1 minute
-* first 3 minutes
-* first 5 minutes
-* full session
-
-Evaluation metrics:
-
-* accuracy
-* precision
-* recall
-* F1-score
-* ROC-AUC
-* confusion matrix
-* calibration curve
-* per-domain performance
-* per-intention performance
-
-Main hypothesis:
-Intention + activity features outperform time-only and domain-only baselines for predicting self-reported digital drift.
-
-Build Phase 4: Figures and tables
-Generate:
-
-1. Dataset summary table
-2. Model comparison table
-3. Confusion matrix
-4. ROC curve
-5. Early prediction performance chart
-6. Feature importance chart for CatBoost/XGBoost
-7. Dashboard screenshots placeholder folder
-
-Implementation rules:
-
-* Make small commits or logically separated changes.
-* Add README setup instructions.
-* Add comments where browser APIs are tricky.
-* Add schema and export tests that do not create a repository dataset.
-* Add unit tests where practical.
-* Do not overengineer backend/cloud.
-* Keep everything local-first.
-
-Definition of done:
-
-* Extension builds successfully.
-* Extension can add monitored domains.
-* Extension shows intention prompt.
-* Extension tracks activity metadata.
-* Extension shows post-session prompt.
-* Extension stores sessions locally.
-* Extension exports CSV/JSON.
-* Dashboard loads and displays summary.
-* ML pipeline runs on consented extension pilot exports.
-* Baseline models train successfully.
-* TCN/GRU script trains successfully.
-* Evaluation report is generated.
-* README explains installation, usage, data schema, privacy constraints, and ML pipeline.
-
-Start by creating the repository structure, AGENTS.md, README.md, and a phased TODO checklist. Then implement the extension MVP first.
+The Phase 2 implementation is complete when local prediction, eligibility,
+randomization, prompt display, persistent assignment, caps, and intervention
+export work end-to-end; Python and TypeScript predictions match; documentation
+describes the frozen model and schemas; the production extension builds; and no
+prohibited data is collected.

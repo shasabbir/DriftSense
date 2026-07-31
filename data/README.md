@@ -18,3 +18,9 @@ python ml/combine_participant_csv.py --input D:\private\driftsense\participants 
 
 The combined file contains only complete sessions with a binary post-session
 reflection label. Original participant exports remain unchanged.
+
+The study also requires private activity-window exports for one-, three-, and
+five-minute prediction. During the seven-day intervention phase, keep the
+separate randomized intervention log alongside those exports and join it by
+`session_id`. Do not add activity-window or intervention records to the stable
+13-column participant CSV.

@@ -39,3 +39,14 @@ Complete this checklist before collecting participant data.
 - [ ] Missing, continued, and deferred outcomes are not coded as non-drift.
 - [ ] Dashboard text makes no claim about attention, addiction, diagnosis, emotion, or general productivity.
 - [ ] No model-risk language appears in this data-collection-only build.
+
+## Additional Phase 2 Checks
+
+- [ ] The packaged model runs locally without a remote inference endpoint.
+- [ ] Three-minute features contain no final-session or post-cutoff values.
+- [ ] Only eligible elevated-risk sessions receive a persisted 1:1 assignment.
+- [ ] Silent-control assignment renders no mid-session interface.
+- [ ] Prompt assignment renders at most once per session and three times per day.
+- [ ] Both assignments use the same post-session reflection question.
+- [ ] The intervention log contains only documented allowlisted fields.
+- [ ] Participants are told that elevated-risk sessions may be randomized.

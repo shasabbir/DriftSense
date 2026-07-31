@@ -1,14 +1,22 @@
 # DriftSense Paper Folder
 
-This folder contains the ACM `acmart` LaTeX paper draft up to the methodology section.
+This folder contains the ACM `acmart` LaTeX paper draft through the complete
+planned methodology. The protocol uses one cohort, a 10-day collection phase,
+a frozen three-minute model, and a seven-day micro-randomized intervention in
+which elevated-risk sessions are assigned to a reflective prompt or silent
+control.
 
 Files:
 
 - `main.tex`: paper draft in ACM/CHI-compatible `acmart` format.
 - `references.bib`: BibTeX references, prioritizing recent peer-reviewed HCI and journal work where possible.
-- `diagram_prompts.md`: prompts for generating paper figures.
+- `related.md`: evidence summaries that support the study gap and evaluation.
+- `diagram_prompts.md`: prompts for future protocol-consistent figures.
 
-`figures/figure2.png` contains the retired five-option intention list and is no longer embedded. Generate the updated diagram from the Figure 2 prompt in `diagram_prompts.md` and save it as `figures/figure2-v2.png`; `main.tex` will use it automatically. Until then, the paper renders an accurate LaTeX fallback flow.
+`figures/figure1.png`, `figure2.png`, and `figure3.png` contain retired elements
+of earlier designs. They are not embedded by the current draft. Generate updated
+diagrams from `diagram_prompts.md` only after checking every label; until then,
+`main.tex` renders accurate LaTeX fallback flows.
 
 Compile from this folder with:
 
@@ -19,4 +27,6 @@ pdflatex main.tex
 pdflatex main.tex
 ```
 
-The draft intentionally leaves empirical results as placeholders because no real DriftSense study data exists yet.
+The draft contains no empirical results because real participant collection has
+not yet occurred. Do not add performance values, significance tests, or effect
+sizes until the consented dataset has been analyzed.

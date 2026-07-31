@@ -19,3 +19,17 @@ combined modeling table without changing the source files.
 
 Run `python ml/combine_participant_csv.py --help` for argument details. Never
 commit real participant exports or the resulting combined dataset.
+
+## Planned Analysis Workflow
+
+Phase 1 uses days 1-7 for participant-grouped development and days 8-10 for a
+chronological holdout. Required comparisons are time, domain, intention-only,
+activity-only, and intention-plus-activity logistic regression. Activity-window
+files provide leakage-safe one-, three-, and five-minute features; the deployed
+intervention uses the frozen three-minute logistic model. Random Forest is an
+optional offline comparison, and deep sequence models are outside this pilot.
+
+Phase 2 joins a separate intervention log by `session_id` and compares
+randomized reflective-prompt and silent-control sessions. Full implementation
+and statistical details are maintained in `implementation_plan.md` and
+`paper/main.tex`.

@@ -1,774 +1,253 @@
-# DriftSense 6-Week Roadmap: Prediction + Drift-Reduction Study
+# DriftSense Study Roadmap
 
-## Final Research Direction
+## Research Direction
 
-DriftSense will be studied in two linked stages:
+DriftSense studies whether a privacy-preserving browser model can predict
+self-reported intention drift and whether a lightweight reflective prompt can
+reduce drift in sessions that the frozen model classifies as elevated risk.
 
-1. **Prediction stage:** collect an intention-prompt dataset and train a model to predict self-reported browser-session drift.
-2. **UX/intervention stage:** use the trained model inside the extension to trigger lightweight reflective check-ins, then compare whether drift is lower than normal browsing and static intention prompting.
+The study has two research questions:
 
-The final paper should be framed carefully:
+1. Can declared intention plus lightweight activity predict self-reported drift
+   better than time and domain baselines?
+2. Among elevated-risk sessions, does a reflective prompt reduce subsequent
+   self-reported drift compared with a randomized silent control?
 
-> DriftSense evaluates whether intention prompts and local drift-risk prediction can reduce **self-reported browser-session drift** compared with passive monitored browsing.
+The project does not detect attention, emotion, addiction, ADHD, mental health,
+or productivity. A long session is not automatically harmful, and a monitored
+domain is not automatically distracting.
 
-Do **not** claim attention detection, addiction detection, emotion detection, ADHD diagnosis, or mental-health inference.
+## Final Study Design
 
----
+Use one cohort for 17 active study days.
 
-## 1. Final Research Questions
+### Participants
 
-### RQ1: Prediction
+- Target: 20 completers.
+- Recruit: 22-24 adults to allow for attrition.
+- Population: adult Chrome or Chromium users who regularly visit at least two
+  domains they are willing to monitor.
+- Do not recruit using clinical or diagnostic categories.
 
-Can declared browsing intention and lightweight browser activity signals predict self-reported browser-session drift better than time-on-site and domain-category baselines?
+### Phase 1: Ten-Day Collection
 
-### RQ2: Prompt Effect
+For every monitored-domain session:
 
-Does asking users to declare a browsing intention before a monitored-domain session reduce self-reported drift compared with passive monitored browsing?
+1. Ask for declared intention and optional intended duration.
+2. Record allowlisted aggregate activity and 10-second activity windows.
+3. Ask the same post-session intention-alignment question.
+4. Show no model-assisted mid-session prompt.
 
-### RQ3: Model-Assisted Effect
+Target at least 500 complete binary-labeled sessions overall and, where normal
+browsing frequency permits, at least 20 labeled sessions per participant.
+These are feasibility targets, not powered sample-size guarantees.
 
-Does a model-triggered reflective check-in reduce self-reported drift beyond a static intention prompt?
+### Model-Development Interval
 
----
+Keep the primary model deliberately simple:
 
-## 2. Final Contributions
+1. time-threshold baseline;
+2. domain baseline fitted on training data;
+3. intention-only logistic regression;
+4. activity-only logistic regression;
+5. intention-plus-activity logistic regression; and
+6. optional Random Forest as an offline robustness comparison.
 
-Keep the paper to four focused contributions:
+Use Phase 1 days 1-7 for development and days 8-10 as a chronological holdout.
+Use participant-grouped folds within development data and report a separate
+participant-held-out estimate when the data permits. Never randomly mix sessions
+from the same participant across ordinary row-level train and test sets.
 
-1. A privacy-preserving Chrome extension that collects lightweight browser-session metadata without content.
-2. A browser-session dataset with intention prompts, activity metadata, and post-session self-reported drift labels.
-3. A drift prediction model compared against time, domain, intention-only, and activity-only baselines.
-4. A three-condition field comparison of passive monitoring, intention prompting, and model-assisted reflective check-ins.
+Evaluate one-, three-, and five-minute features and full-session features. The
+intervention uses only the frozen three-minute model. Early features must contain
+only observations available by their cutoff.
 
-This is stronger than prediction-only, but still simple if the model-assisted check-in is lightweight.
+Freeze before Phase 2:
 
----
+- preprocessing parameters;
+- feature order;
+- logistic-regression coefficients and intercept;
+- model version;
+- risk threshold;
+- 0.5 randomization probability; and
+- prompt cap.
 
-## 3. Study Design Overview
+### Phase 2: Seven-Day Micro-Randomized Intervention
 
-Use a **two-stage study**.
+Keep intention collection, activity measurement, session boundaries, dashboard
+availability, and post-session reflection identical to Phase 1.
 
-### Stage 1: Model Training Dataset
+At three minutes:
 
-Purpose:
+1. Compute local risk using the frozen model.
+2. Check the threshold, required features, and prompt cap.
+3. For an eligible session, assign with equal probability:
+   - reflective prompt; or
+   - silent control.
+4. Log assignment before rendering the prompt.
+5. Ask both assignments the same post-session reflection.
 
-> Collect prompted sessions and train the drift-risk model.
+Prompt text:
 
-Condition:
-
-- Intention prompt before monitored-domain access.
-- Lightweight activity metadata collection.
-- Post-session reflection label.
-- No model-assisted nudges.
-
-Target:
-
-- 10-15 participants
-- 4-5 days
-- 250-500 labeled sessions
-
-Output:
-
-- training dataset
-- validated preprocessing pipeline
-- trained drift-risk model
-- selected threshold for model-assisted check-ins
-
-### Stage 2: Three-Condition Evaluation
-
-Purpose:
-
-> Compare normal monitored browsing, static intention prompting, and model-assisted prompting.
-
-Target:
-
-- 20-25 participants
-- 7 days
-- 400-800 labeled sessions
-
-Conditions:
-
-| Condition | Description | What It Tests |
-|---|---|---|
-| A. Passive baseline | No pre-session intention prompt. Lightweight tracking only. Post-session retrospective drift question. | Approximate normal monitored browsing. |
-| B. Intention prompt | Pre-session intention prompt + post-session reflection. No model nudge. | Whether declaring intention reduces drift. |
-| C. Model-assisted prompt | Pre-session intention prompt + local drift-risk prediction + reflective check-in when risk is high. | Whether model-triggered reflection reduces drift beyond static prompting. |
-
-Recommended design:
-
-- Prefer **within-subject counterbalancing** if possible: each participant experiences all three conditions on different days.
-- Example 7-day schedule:
-  - Day 1-2: Condition A
-  - Day 3-4: Condition B
-  - Day 5-7: Condition C
-- Better version: randomize/counterbalance order across participants to reduce order effects.
-
-If counterbalancing is too hard, use fixed order and clearly report it as a limitation.
-
----
-
-## 4. Condition Details
-
-### Condition A: Passive Baseline
-
-No pre-session prompt.
-
-The extension:
-
-- tracks configured monitored domains
-- records lightweight metadata
-- asks only after the session
-
-Post-session question:
-
-> Did this visit feel intentional, or did it become drift?
-
-Options:
-
-- Mostly intentional
-- I drifted
-- Not sure
-
-Label rule:
-
-- Mostly intentional = non-drift
-- I drifted = drift
-- Not sure = exclude or analyze separately
-
-Important note:
-
-Condition A does not capture declared intention before browsing. It approximates normal browsing and provides a baseline drift rate. The paper should acknowledge that its label is retrospective and not identical to Conditions B/C.
-
-### Condition B: Static Intention Prompt
-
-Pre-session question:
-
-> Why are you opening this?
-
-Options:
-
-- Work or study task
-- Learning or tutorial
-- Specific information
-- Communication or community
-- Planned entertainment or break
-- Open-ended browsing
-- Opened accidentally
-
-The intention choices are deliberately neutral. Domain category and activity type do not determine the drift label; alignment is established only through post-session reflection.
-
-Post-session question:
-
-> Did this visit match your original intention?
-
-Options:
-
-- Yes
-- No, I drifted
-- Continue intentionally
-- Save for later
-
-Label rule:
-
-- Yes = non-drift
-- No, I drifted = drift
-- Continue intentionally / Save for later = separate or excluded
-
-### Condition C: Model-Assisted Prompt
-
-Same as Condition B, plus local model prediction.
-
-Flow:
-
-```text
-User opens monitored domain
--> declares intention
--> browses normally
--> after 3 minutes, model estimates drift probability
--> if risk exceeds threshold, show reflective check-in
--> post-session reflection label
-```
-
-Example model output:
-
-```text
-drift_probability = 0.76
-risk_level = high
-reason_cues = longer_than_intended, high_scrolling
-```
-
-Example check-in:
-
-> Drift risk looks high for this session.
->
-> Estimated drift risk: 76%.
->
-> Possible reasons: longer than intended, high scrolling.
->
 > Still here for your original reason?
 
-Options:
+Actions:
 
-- Yes, continue
-- I drifted, wrap up
-- Remind me in 5 minutes
-- Save for later
+- Continue intentionally
+- Finish now
 
-Rules:
+Do not display a risk percentage or tell the participant that drift has been
+detected. Show at most one prompt per session and no more than three prompts per
+participant day.
 
-- Do not block the website.
-- Do not shame the user.
-- Do not claim the system detects attention.
-- Present the probability as an estimate, not a fact.
-- Show a simple risk label such as low, medium, or high, plus the estimated probability if the pilot shows that users understand it.
-- Show reason cues only from privacy-safe features, such as duration, idle time, scrolling, tab switching, or video playback.
-- Keep check-ins sparse to avoid annoyance.
+Target at least 100 randomized elevated-risk sessions overall. If eligible
+sessions are sparse, report the intervention as a technical feasibility pilot.
 
-Suggested threshold:
+## Required Data
 
-- Tune threshold on Stage 1 validation data.
-- Prefer a conservative threshold to reduce false nudges.
-- Example starting point: show check-in only when drift probability is above 0.70.
+### Primary Participant CSV
 
----
-
-## 5. Participant Dashboard
-
-The extension includes a detailed local dashboard for participant reflection, study transparency, and data inspection. It supports the research workflow, but dashboarding alone is not presented as the paper's novelty.
-
-### Dashboard Views
-
-1. **Overview:** monitored and labeled sessions, self-reported drift rate, average duration, monitoring status, current condition, and 7-day/study-to-date summaries.
-2. **Trends:** daily and weekly session counts, duration, drift rate, and time-of-day/day-of-week patterns. Use descriptive wording and never label the user as productive or distracted.
-3. **Intention Alignment:** intention distribution, drift rate and median duration by intention, intended-versus-actual duration, and domain-level intentional/drift outcomes.
-4. **Model Transparency:** check-ins shown, estimated probabilities, risk levels, privacy-safe reason cues, responses, timing, usefulness, and annoyance. Clearly separate estimates from self-reported labels.
-5. **Session History:** a filterable table by date, domain, condition, intention, label, and risk level, plus a detail view containing only allowed aggregate fields.
-6. **Data and Privacy:** pause/resume, monitored-domain settings, collected-field definitions, CSV/JSON export, per-session deletion, and delete-all.
-
-### Dashboard Study Controls
-
-- Keep the dashboard structure and availability the same across all Stage 2 conditions.
-- Update charts after a session or at a delayed aggregate interval, not during an active session, so the dashboard does not become another real-time intervention.
-- Show missing and uncertain labels explicitly instead of treating them as non-drift.
-- Show Condition C model details only for sessions where those details were generated.
-- Store dashboard preferences locally and do not collect new behavioral fields only for visualization.
-- Do not track dashboard opens unless participants separately consent and this is a predefined secondary analysis.
-- Never display page titles, full URLs, page text, screenshots, messages, or keystroke values.
-
-### Dashboard Build Order
-
-1. Create reusable local summary queries and empty/populated test states.
-2. Build overview summaries and trend charts.
-3. Add intention/domain breakdowns and filters.
-4. Add session history and session details.
-5. Add model-transparency panels.
-6. Add export, per-session deletion, delete-all, loading, empty, and error states.
-7. Test missing labels, all conditions, and large session histories.
-
----
-
-## 6. Data Collection Rules
-
-Allowed data:
-
-- anonymous participant ID
-- session ID
-- condition: passive, intention-prompt, model-assisted
-- monitored domain
-- domain category
-- declared intention, for Conditions B/C only
-- session start/end time
-- duration
-- click count
-- scroll count
-- keyboard activity count without key values
-- idle time
-- active time
-- tab focus changes
-- tab switch count
-- video playback status if accessible
-- model drift probability, Condition C only
-- model risk level, Condition C only
-- model reason cues, Condition C only
-- whether model check-in was shown, Condition C only
-- check-in response, Condition C only
-- whether drift probability was shown to the user, Condition C only
-- post-session reflection answer
-- drift label
-
-Forbidden data:
-
-- page text
-- passwords
-- screenshots
-- private messages
-- full browsing history
-- source code
-- keystroke values
-- webcam data
-- face identity
-- emotion data
-
----
-
-## 7. Dataset Files
-
-### `sessions.csv`
-
-Recommended columns:
+The extension exports one file such as `P01.csv` with:
 
 ```text
-participant_id
 session_id
-study_stage
-condition
-domain
-domain_category
-declared_intention
+participant_id
 start_time
-end_time
+domain
+declared_intention
+intended_duration_minutes
 duration_seconds
 click_count
 scroll_count
 keyboard_activity_count
 idle_seconds
-active_seconds
-tab_focus_loss_count
-tab_switch_count
-video_playing_seconds
-model_drift_probability
-model_risk_level
-model_reason_cues
-model_checkin_shown
-model_checkin_response
-model_probability_shown_to_user
-post_session_answer
+focus_loss_count
 drift_label
-intended_duration_minutes
-actual_duration_seconds
 ```
 
-### `activity_windows.csv`
+### Activity-Window CSV
 
-Recommended columns:
+Ten-second windows provide the time-truncated features required for prediction
+at one, three, and five minutes. Never construct an early predictor from final
+session totals.
+
+### Phase 2 Intervention Log
+
+Store a separate allowlisted record keyed by `session_id`:
 
 ```text
-participant_id
-session_id
-study_stage
-condition
-timestamp_offset_seconds
-clicks_in_window
-scroll_events_in_window
-keyboard_activity_in_window
-idle_in_window
-tab_focused
-video_playing
-url_domain_only
+model_version
+prediction_offset_seconds
+risk_probability
+risk_threshold
+eligible
+randomized_assignment
+prompt_shown
+prompt_response
+suppression_reason
 ```
 
----
+Keep all real exports in a private, access-controlled directory outside the
+repository.
 
-## 8. Model Plan
+## Evaluation
 
-Train the prediction model using Stage 1 prompted data.
-
-Compare:
-
-1. Time-threshold baseline
-2. Domain-category baseline
-3. Intention-only logistic regression
-4. Activity-only Random Forest or XGBoost
-5. Intention + activity Random Forest or XGBoost
-
-Primary model for extension integration:
-
-- Random Forest or XGBoost
-- Use first-3-minute features
-- Output drift probability
-
-Avoid deep learning in the main study unless the dataset exceeds 1,000+ labeled sessions.
-
----
-
-## 9. Evaluation Plan
-
-The evaluation should look familiar to related digital wellbeing and self-control studies, then add the ML layer as the main extension. In other words, first evaluate whether the intervention changes user-reported behavior and experience, then evaluate whether the model helps trigger the intervention at better moments.
-
-Related studies commonly report:
-
-- usage behavior, such as session count, time spent, and app/site openings
-- self-reported distraction, regret, usefulness, annoyance, and perceived control
-- comparisons between normal use and an intervention condition
-
-DriftSense keeps these standard HCI outcomes, but adds model evaluation and model-assisted timing.
-
-### Prediction Evaluation
-
-This evaluates whether the ML model is good enough to assist the extension.
+### Prediction
 
 Report:
 
-- F1-score
-- ROC-AUC
-- precision
-- recall
-- accuracy
-- confusion matrix
-- first-3-minute performance
-- expected check-in rate at the selected threshold
+- accuracy;
+- precision;
+- recall;
+- F1-score;
+- ROC-AUC;
+- confusion matrix;
+- class distribution;
+- one-, three-, and five-minute and full-session results; and
+- same-participant chronological and participant-held-out results separately.
 
-Main comparison:
+The main prediction comparison is intention-plus-activity logistic regression
+against time and domain baselines. Intention-only and activity-only models show
+the incremental value of each feature group.
 
-> Does intention + activity outperform time-only and domain-only baselines?
+### Prompt Effect
 
-Secondary comparison:
+The primary outcome is the binary post-session drift proportion among randomized
+eligible sessions.
 
-> Does intention + activity outperform activity-only?
+For each participant with both assignments:
 
-Model usability question:
+1. Calculate drift proportion under reflective-prompt assignment.
+2. Calculate drift proportion under silent-control assignment.
+3. Compare paired proportions with a Wilcoxon signed-rank test.
+4. Report the paired difference and a participant-bootstrap 95% confidence
+   interval.
+5. Report assignment-specific missing-label rates.
 
-> Does the first-3-minute model identify sessions where a reflective check-in is likely to be useful without creating too many false nudges?
+If the number of eligible sessions permits, add a mixed-effects logistic model
+with participant random intercept as a sensitivity analysis.
 
-### UX / Drift-Reduction Evaluation
+Secondary outcomes:
 
-This follows the style of related digital wellbeing field studies.
+- session duration after the three-minute assignment point;
+- total session duration;
+- immediate ending after a prompt;
+- prompt response;
+- prompt frequency and suppression;
+- label completion; and
+- short exit-survey responses.
 
-Compare the three conditions:
+Phase 1 versus Phase 2 differences are descriptive only. They are not the causal
+test of the prompt because the phases occur in a fixed order.
 
-| Outcome | Condition A | Condition B | Condition C |
-|---|---:|---:|---:|
-| Drift session percentage | | | |
-| Mean session duration | | | |
-| Median session duration | | | |
-| Sessions per participant | | | |
-| Prompt/check-in annoyance | | | |
-| Perceived control | | | |
-| Prompt usefulness | | | |
-| Privacy concern | | | |
+## Exit Survey
 
-Main UX hypothesis:
+Use five agreement items:
 
-> Condition C will have lower self-reported drift than Condition B, and Condition B will have lower self-reported drift than Condition A.
+1. The prompts appeared at appropriate times.
+2. The prompts helped me reconsider my intention.
+3. The prompts were annoying.
+4. The extension was easy to use.
+5. I would continue using the extension.
 
-### ML-Assisted Prompt Evaluation
+Open question:
 
-This is the supercharged part beyond typical prompt/friction studies.
+> What should be changed about the prompts or their timing?
 
-For Condition C, report:
+## Execution Checklist
 
-- number of model check-ins shown
-- percentage of sessions where check-in was shown
-- average model drift probability when check-in was shown
-- model risk level shown to user: low, medium, high
-- most common reason cues shown, such as "longer than intended" or "high scrolling"
-- user response to check-in
-- drift rate after check-in
-- annoyance rating for model-assisted check-ins
-- participant feedback on whether the prompt appeared at the right time
+### Before Recruitment
 
-Main ML-assistance question:
+- Obtain ethics approval or exemption.
+- Finish and test the collector.
+- Verify participant IDs, exports, and activity windows.
+- Prepare consent, participant instructions, and a private transfer procedure.
+- Pilot with the researcher for at least one day.
 
-> Does model-triggered reflection feel more timely and produce lower self-reported drift than always using the same static intention prompt?
+### After Phase 1
 
-Use cautious language:
+- Validate and combine private exports.
+- Report missing labels and class balance.
+- Train and evaluate the small model set.
+- Freeze one three-minute model and threshold.
+- Implement and test local inference, randomization, caps, and intervention logs.
 
-- "was associated with lower self-reported drift"
-- "participants reported fewer drift sessions"
-- "model-assisted check-ins may help users reassess intention"
-- "the model helped time reflective check-ins"
+### After Phase 2
 
-Avoid:
+- Validate session, window, and intervention files.
+- Check assignment balance and missing outcomes.
+- Run the prespecified prediction and intervention analyses.
+- Add real results without altering hypotheses or hiding null findings.
+- Report limitations, attrition, prompt burden, and uncertainty.
 
-- "the model prevented distraction"
-- "the system detected attention loss"
-- "the probability proves the user was drifting"
+## Interpretation Boundary
 
----
+A positive pilot may support this claim:
 
-## 10. User Feedback Survey
+> DriftSense demonstrated the feasibility of privacy-preserving early prediction
+> of self-reported browser-session drift, with preliminary short-term evidence
+> about model-assisted reflective prompts from randomized eligible sessions.
 
-Use a short survey after Stage 2.
-
-5-point Likert items:
-
-- The intention prompt was useful.
-- The model-assisted check-in was useful.
-- The prompts made me feel more in control.
-- The prompts were annoying.
-- The data collection felt acceptable.
-- The prompt wording was clear.
-- I would use a tool like this again.
-
-Open-ended questions:
-
-- What felt useful?
-- What felt annoying?
-- Did the model-assisted check-in appear at appropriate times?
-- Did the system ever feel too intrusive?
-- What should be changed?
-
-Optional:
-
-- 5 short interviews if time allows.
-
----
-
-## 11. Six-Week Execution Plan
-
-### Week 1: Build Core Extension and Study Materials
-
-Deliverables:
-
-- extension MVP
-- monitored-domain settings
-- passive condition support
-- intention prompt support
-- post-session reflection support
-- local storage
-- CSV export
-- delete-all-data button
-- consent form
-- participant instructions
-- data schema
-- dashboard shell, overview summaries, session history, and privacy controls
-
-Decision gate:
-
-- Do not recruit until export works and no prohibited data is present.
-
-### Week 2: Stage 1 Training Data Collection
-
-Deliverables:
-
-- 10-15 participants onboarded
-- 4-5 days of prompted sessions
-- 250-500 labeled sessions target
-- preprocessing script
-- time baseline
-- domain baseline
-- intention-only model
-
-Decision gate:
-
-- If fewer than 200 labels are collected, extend Stage 1 or reduce the model to a simpler logistic/Random Forest model.
-
-### Week 3: Train Model and Prepare Model-Assisted Extension
-
-Deliverables:
-
-- activity-only model
-- intention + activity model
-- selected 3-minute feature set
-- selected drift-risk threshold
-- local model integration design
-- model-assisted check-in implemented
-- pilot test of Condition C
-- model-transparency dashboard panel with risk, reason-cue, and response summaries
-
-Implementation options:
-
-- simplest: export a small logistic model or rule-based model to JSON
-- acceptable: use Random Forest/XGBoost only for offline researcher-side analysis after participant export, while the extension uses a simpler local model or threshold
-- better: run the model locally in the extension using a lightweight JavaScript implementation
-
-Decision gate:
-
-- If local ML integration is too slow, use a simpler model for the check-in and report the stronger model offline.
-
-### Week 4: Stage 2 Three-Condition Field Study
-
-Deliverables:
-
-- 20-25 participants onboarded
-- Condition A: passive baseline
-- Condition B: static intention prompt
-- Condition C: model-assisted prompt
-- reminder messages sent
-- daily check that exports are working
-
-Recommended schedule:
-
-- 2 days passive baseline
-- 2 days intention prompt
-- 3 days model-assisted prompt
-
-Better schedule:
-
-- counterbalance condition order across participants
-
-Decision gate:
-
-- If condition switching creates bugs, use fixed order and report it as a limitation.
-
-### Week 5: Clean Data and Evaluate
-
-Deliverables:
-
-- merged dataset
-- cleaned labels
-- dataset summary table
-- model comparison table
-- three-condition drift-rate comparison
-- first-3-minute vs full-session prediction comparison
-- survey responses
-- dashboard comprehension and usefulness feedback
-- figures:
-  - dataset distribution
-  - model comparison
-  - drift rate by condition
-  - confusion matrix
-  - ROC curve
-  - feature importance
-
-Decision gate:
-
-- If Condition C does not reduce drift, report honestly and focus discussion on model threshold, prompt timing, and prompt burden.
-
-### Week 6: Paper and Final Package
-
-Deliverables:
-
-- full paper draft
-- final PDF
-- final presentation
-- final results tables
-- final figures
-- code README
-- data schema README
-- participant data-handling and schema documentation
-- limitations section updated
-
-Paper framing:
-
-- If results are strong: field evaluation of prediction and model-assisted reflection.
-- If results are modest: feasibility study of intention-aware browser-session drift prediction and reflective check-ins.
-
----
-
-## 12. Required Paper Tables
-
-### Table 1: Dataset Summary
-
-| Item | Value |
-|---|---:|
-| Participants | |
-| Study duration | |
-| Stage 1 sessions | |
-| Stage 2 sessions | |
-| Labeled sessions | |
-| Drift sessions | |
-| Non-drift sessions | |
-| Monitored domains | |
-
-### Table 2: Prediction Model Comparison
-
-| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
-|---|---:|---:|---:|---:|---:|
-| Time baseline | | | | | |
-| Domain baseline | | | | | |
-| Intention-only | | | | | |
-| Activity-only | | | | | |
-| Intention + activity | | | | | |
-
-### Table 3: Three-Condition Comparison
-
-| Condition | Sessions | Drift % | Mean Duration | Annoyance | Perceived Control |
-|---|---:|---:|---:|---:|---:|
-| Passive baseline | | | | | |
-| Intention prompt | | | | | |
-| Model-assisted prompt | | | | | |
-
-### Table 4: Model-Assisted Check-In Outcomes
-
-| Outcome | Value |
-|---|---:|
-| Check-ins shown | |
-| Mean drift probability when shown | |
-| High-risk check-ins | |
-| Most common reason cue | |
-| Check-ins accepted | |
-| Remind-later responses | |
-| Save-for-later responses | |
-| Reported annoyance | |
-| Reported timing appropriateness | |
-
----
-
-## 13. Required Figures
-
-Minimum:
-
-1. System architecture
-2. Session-labeling and condition flow
-3. Modeling pipeline
-4. Drift rate by condition
-5. Model comparison chart
-6. ROC curve
-7. Confusion matrix
-8. Feature importance
-
-Optional:
-
-- prompt/check-in response distribution
-- first-3-minute vs full-session prediction chart
-
----
-
-## 14. What To Cut If Time Is Short
-
-Cut:
-
-- deep learning
-- advanced dashboard personalization and predictive recommendations
-- live cross-device dashboard synchronization
-- interviews
-- personalization
-- cross-device tracking
-- LLM nudges
-- website UI modification
-- cloud backend
-
-Keep:
-
-- passive baseline
-- intention prompt condition
-- model-assisted condition
-- post-session labels
-- local export
-- privacy-safe metadata
-- time/domain baselines
-- intention + activity model
-- drift-rate comparison
-- prompt burden survey
-
----
-
-## 15. Final Definition of Done
-
-The project is complete when:
-
-- extension supports the three conditions
-- no prohibited data is collected
-- Stage 1 model-training data is collected
-- drift-risk model is trained and frozen
-- Stage 2 three-condition dataset is collected
-- model evaluation is complete
-- drift rates are compared across conditions
-- user feedback is summarized
-- paper claims are careful and evidence-based
-- final PDF and presentation are ready
-
----
-
-## 16. Final Takeaway
-
-The strongest version is no longer only:
-
-> Can we predict drift?
-
-It becomes:
-
-> Can intention prompts and local drift-risk prediction reduce self-reported browser-session drift compared with passive monitored browsing?
-
-This is more ambitious, but still achievable if the model-assisted check-in remains simple and the paper avoids overclaiming.
+Do not claim permanent behavior change, addiction reduction, mental-health
+benefit, true attention detection, or general effectiveness beyond the study
+sample. A seven-day intervention only supports a short-term conclusion.

@@ -136,3 +136,27 @@ These values describe intended activity and do not determine whether a session i
 | Continue intentionally | null | Retained as a separate non-binary outcome |
 | Save for later | null | Retained as a separate non-binary outcome |
 | Missing reflection | null | Unlabeled; never treated as non-drift |
+
+## Planned Phase 2 Intervention Log
+
+The seven-day intervention build will export a separate allowlisted CSV rather
+than changing the stable participant CSV. The planned fields are:
+
+| Field | Meaning |
+|---|---|
+| `session_id` | Parent session identifier |
+| `participant_id` | Anonymous participant code |
+| `model_version` | Frozen local model identifier |
+| `prediction_offset_seconds` | Fixed at 180 for the deployed model |
+| `risk_probability` | Local model estimate used for eligibility |
+| `risk_threshold` | Frozen eligibility threshold |
+| `eligible` | Whether all intervention eligibility rules passed |
+| `randomized_assignment` | `reflective_prompt`, `silent_control`, or blank when ineligible |
+| `prompt_shown` | Whether the assigned prompt rendered successfully |
+| `prompt_response` | `continue_intentionally`, `finish_now`, or blank |
+| `suppression_reason` | Reason an otherwise evaluated session was not randomized or shown |
+| `assigned_at` | Local ISO 8601 assignment timestamp |
+
+Assignment must be stored before prompt rendering and must survive extension
+suspension without rerandomization. The risk estimate remains an audit field and
+is not shown to participants as proof of drift.

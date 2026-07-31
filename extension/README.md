@@ -91,7 +91,10 @@ src/ui/           shared visual system and formatting
 
 ## Current Scope
 
-This version supports the Stage 1 static intention-prompt collection protocol. Passive-baseline scheduling, ML inference, risk estimates, and model-assisted check-ins are intentionally reserved for the next implementation phase.
+This version supports the 10-day Phase 1 intention-labeled collection protocol.
+It does not implement a passive condition. Local three-minute inference,
+elevated-risk eligibility, 1:1 prompt-versus-silent-control randomization, prompt
+caps, and the separate intervention log are reserved for the Phase 2 build.
 
 Domain categories are sampling context only. They are never used to assign drift labels: both aligned (`0`) and drift (`1`) outcomes come exclusively from the participant's post-session reflection.
 

@@ -1,13 +1,16 @@
 # Diagram Prompts for DriftSense Paper
 
-Place generated images in `paper/figures/` and update the placeholders in `main.tex`.
+Place generated images in `paper/figures/` only after checking every label against
+the current protocol. `main.tex` currently uses accurate LaTeX fallback diagrams;
+the older `figure1.png` and `figure3.png` are retained assets but are not embedded
+because they show the retired model and study design.
 
 ## Figure 1: System Architecture
 
 Prompt:
 
 ```text
-Create a clean academic HCI paper diagram for "DriftSense", a privacy-preserving Chrome extension and local ML pipeline. Show four horizontal stages from left to right: (1) Monitored domain opened in Chrome, (2) pre-session intention prompt, (3) lightweight metadata and activity-window logging, (4) post-session reflection and local storage/export. Under the logging stage, include small labels: clicks, scrolls, keyboard count only, idle time, tab focus, video status, duration. Add a clear privacy boundary box: no page text, no screenshots, no passwords, no messages, no full history. On the far right show CSV/JSON export feeding local ML models: time baseline, domain baseline, intention-only, activity-only, intention plus activity, TCN/GRU. Style: grayscale with one muted accent color, simple vector shapes, readable labels, white background, suitable for an ACM-style paper.
+Create a clean academic HCI paper diagram for "DriftSense", a privacy-preserving Chrome extension and local ML pipeline. Show the horizontal flow: monitored domain opened; pre-session intention prompt; privacy-safe 10-second activity windows; local three-minute risk estimate; elevated-risk eligibility; 1:1 session-level randomization to reflective prompt or silent control; identical post-session reflection; local storage and participant-controlled export. Mark that prediction and randomization are disabled during the 10-day collection phase and enabled with a frozen model during the seven-day intervention phase. Under sensing include clicks, scrolls, keyboard activity count without values, idle time, focus loss, video status, and duration. Add a privacy boundary: no page text, titles, full URLs, screenshots, passwords, messages, keystroke values, or full history. Do not show deep models, passive baseline, static-prompt condition, exact risk percentages, or blocking. Style: grayscale with one muted accent color, simple vector shapes, readable labels, white background, suitable for an ACM-style paper.
 ```
 
 ## Figure 2: Session Labeling Flow
@@ -23,5 +26,5 @@ Create a concise flow diagram for a browser-session labeling procedure. Start wi
 Prompt:
 
 ```text
-Create an academic pipeline diagram for DriftSense's machine-learning evaluation. Inputs: participant CSV files such as P01.csv combined into data.csv, plus the optional activity-windows CSV. Processing: validate schema, clean invalid sessions, remove unlabeled sessions, user-wise train/validation/test split, aggregate tabular features, sequence tensors. Models: time threshold baseline, domain baseline, intention-only logistic regression, activity-only random forest or XGBoost, intention plus activity CatBoost/XGBoost, sequence TCN/GRU. Evaluation outputs: accuracy, precision, recall, F1, ROC-AUC, calibration, confusion matrix, per-domain and per-intention analysis, early prediction at 1, 3, 5 minutes and full session. Style: publication-ready flowchart, neutral colors, clear boxes and arrows, no 3D effects.
+Create an academic pipeline diagram for DriftSense's machine-learning evaluation. Inputs: private participant CSV files such as P01.csv, activity-window CSV files, and no repository dataset. Processing: validate exact schema, reject duplicate and overlapping sessions, preserve missing labels, use days 1-7 for development with participant-grouped folds, and reserve days 8-10 as chronological holdout. Create leakage-safe one-, three-, and five-minute and full-session tabular features. Models: time threshold baseline, training-derived domain baseline, intention-only logistic regression, activity-only logistic regression, intention plus activity logistic regression, and optional Random Forest. Outputs: accuracy, precision, recall, F1, ROC-AUC, confusion matrix, participant-held-out versus chronological performance, and a frozen three-minute logistic model with threshold. Then show elevated-risk Phase 2 sessions randomized 1:1 to reflective prompt or silent control. Do not show TCN, GRU, Transformer, three study conditions, or risk percentages shown to participants. Style: publication-ready flowchart, neutral colors, clear boxes and arrows, no 3D effects.
 ```
