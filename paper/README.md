@@ -15,7 +15,7 @@ Files:
 - `main_humanized.pdf`: compiled humanized manuscript.
 - `references.bib`: BibTeX references, prioritizing recent peer-reviewed HCI and journal work where possible.
 - `related.md`: evidence summaries that support the study gap and evaluation.
-- `figures/`: editable SVG figure masters and vector-PDF exports used by LaTeX.
+- `figures/`: editable SVG figure masters, vector-PDF exports, and the two implemented-UI captures used by LaTeX.
 - `figure_list.md`: current and planned figures, including result placeholders.
 - `table_list.md`: current and planned tables, including result placeholders.
 - `diagram_prompts.md`: figure provenance and prompts for future empirical plots.
@@ -23,7 +23,8 @@ Files:
 
 `figures/figure1.png`, `figure2.png`, and `figure3.png` contain retired elements
 of earlier designs and are not embedded. The manuscript uses
-`driftsense-architecture` and `driftsense-study-design`; the editable
+`driftsense-architecture`, `driftsense-study-design`, and the intention/reflection
+captures from the implemented collection prototype; the editable
 `driftsense-labeling` diagram is retained as optional supplementary material.
 Edit an SVG master and regenerate its PDF export together.
 

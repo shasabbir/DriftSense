@@ -9,9 +9,13 @@ style.textContent = promptStyles
 const mount = document.createElement('div')
 shadow.append(style, mount)
 
+const previewMode = new URLSearchParams(window.location.search).get('mode') === 'reflection'
+  ? 'reflection'
+  : 'intention'
+
 createRoot(mount).render(
   <PromptApp
-    initialMode="intention"
+    initialMode={previewMode}
     sessionId="preview-session"
     domain="youtube.com"
     reflectionSignal={0}

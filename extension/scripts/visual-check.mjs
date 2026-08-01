@@ -28,6 +28,7 @@ await page.setViewportSize({ width: 390, height: 844 })
 await page.screenshot({ path: artifactPath('domain-coverage-mobile.png'), fullPage: true })
 await page.setViewportSize({ width: 1440, height: 1000 })
 await page.getByRole('button', { name: 'Continue' }).click()
+await page.getByPlaceholder('P01').fill('P01')
 await page.getByRole('button', { name: 'Start collecting' }).click()
 await page.getByText('Study configuration').waitFor()
 await page.screenshot({ path: artifactPath('settings-desktop.png'), fullPage: true })
@@ -35,6 +36,10 @@ await page.screenshot({ path: artifactPath('settings-desktop.png'), fullPage: tr
 await page.goto(`${baseUrl}/src/dashboard/index.html`, { waitUntil: 'networkidle' })
 await page.getByText('No sessions collected yet').waitFor()
 await page.screenshot({ path: artifactPath('dashboard-desktop.png'), fullPage: true })
+
+await page.getByRole('button', { name: 'Data & privacy' }).click()
+await page.getByText('Your records have not been uploaded.').waitFor()
+await page.screenshot({ path: artifactPath('data-privacy-desktop.png'), fullPage: true })
 
 await page.getByRole('button', { name: 'Session history' }).click()
 await page.getByText('0 records').waitFor()
@@ -54,7 +59,10 @@ await page.screenshot({ path: artifactPath('popup.png'), fullPage: true })
 await page.setViewportSize({ width: 1440, height: 900 })
 await page.goto(`${baseUrl}/src/content/preview.html`, { waitUntil: 'networkidle' })
 await page.screenshot({ path: artifactPath('intention-prompt.png'), fullPage: false })
+await page.goto(`${baseUrl}/src/content/preview.html?mode=reflection`, { waitUntil: 'networkidle' })
+await page.screenshot({ path: artifactPath('reflection-prompt.png'), fullPage: false })
 await page.setViewportSize({ width: 390, height: 844 })
+await page.goto(`${baseUrl}/src/content/preview.html`, { waitUntil: 'networkidle' })
 await page.screenshot({ path: artifactPath('intention-prompt-mobile.png'), fullPage: false })
 
 const overflowChecks = await page.evaluate(() => ({
@@ -71,4 +79,4 @@ if (overflowChecks.content > overflowChecks.viewport + 1) {
   throw new Error(`Horizontal overflow: ${overflowChecks.content}px content in ${overflowChecks.viewport}px viewport`)
 }
 
-console.log('Visual checks passed: onboarding, settings, dashboard, sessions, mobile navigation, popup, and intention prompt.')
+console.log('Visual checks passed: onboarding, settings, dashboard, data/privacy, sessions, mobile navigation, popup, intention prompt, and reflection prompt.')

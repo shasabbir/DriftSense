@@ -133,6 +133,25 @@ Figure~\ref{fig:architecture} summarizes the planned DriftSense extension and lo
 \subsection{Chrome Extension Architecture}
 The collection prototype uses Chrome Manifest V3 with React and TypeScript. It contains a background service worker for session monitoring, content scripts for aggregate activity counting on monitored domains, a popup for quick status, an options page for domain configuration and privacy controls, and a dashboard for summaries and export. The intervention build will add a fixed local model evaluated after three minutes, an elevated-risk threshold, a 1:1 session-level randomizer, and a reflective prompt. No remote inference service is required.
 
+Figure~\ref{fig:implemented-ui} shows the two participant-facing dialogs already implemented for the collection phase.
+
+\begin{figure*}[t]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/driftsense-ui-intention.png}\\[-0.4ex]
+    \small (a) Intention declaration
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/driftsense-ui-reflection.png}\\[-0.4ex]
+    \small (b) Post-session reflection
+  \end{minipage}
+  \caption{Implemented participant-facing DriftSense interface for the collection phase. The dialogs are rendered by the actual extension component over a local example page: (a) captures intention and intended duration before monitoring begins, and (b) records the participant's session outcome. The planned Phase~2 model-assisted mid-session prompt is not depicted as implemented.}
+  \Description{Two screenshots of the implemented DriftSense browser overlay. The first asks what brought the participant to the configured domain and offers seven neutral intention choices plus intended duration. The second asks whether the visit matched the original intention and offers matched, drifted, continue intentionally, and save for later responses.}
+  \label{fig:implemented-ui}
+\end{figure*}
+
 \subsection{Session Flow, Sensing, and Labeling}
 Users select domains they consider drift-prone or worth studying; all other browsing is ignored. On opening a configured domain, they answer \textit{Why are you opening this?} using one of seven neutral categories: work/study, learning/tutorial, specific information, communication/community, planned entertainment/break, open-ended browsing, or accidental opening. These categories do not assume that work is aligned or leisure is drift.
 

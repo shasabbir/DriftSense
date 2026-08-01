@@ -5,7 +5,7 @@ import { sendRuntimeMessage } from '../shared/runtime'
 import type { CurrentDeclaredIntention, PostSessionAnswer } from '../shared/types'
 
 interface PromptAppProps {
-  initialMode: 'intention' | 'hidden'
+  initialMode: 'intention' | 'reflection' | 'hidden'
   sessionId: string
   domain: string
   onIntentionCaptured: () => void

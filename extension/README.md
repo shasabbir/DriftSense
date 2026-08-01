@@ -54,6 +54,15 @@ npm test           # privacy, labels, domains, permissions, and exports
 npm run build      # build dist/ and verify the collector can load on approved domains
 ```
 
+For the local UI regression captures, keep `npm run dev` running and use:
+
+```powershell
+npm run visual-check -- http://127.0.0.1:5173
+```
+
+The isolated prompt preview is available at `/src/content/preview.html`; append
+`?mode=reflection` to render the implemented post-session reflection state.
+
 The icon source is deterministic. Regenerate the PNG sizes with:
 
 ```powershell

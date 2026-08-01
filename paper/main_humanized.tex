@@ -133,6 +133,25 @@ Figure~\ref{fig:architecture} presents the planned extension and local learning 
 \subsection{Chrome Extension Architecture}
 The collection prototype is implemented as a Chrome Manifest V3 extension using React and TypeScript. A background service worker manages sessions, content scripts count aggregate activity on monitored domains, and the popup and options pages expose status, domain settings, and privacy controls. A local dashboard supports summaries and export. The intervention version adds a fixed model evaluated after three minutes, a frozen eligibility threshold, session-level 1:1 randomization, and the reflective prompt. Remote inference is not required.
 
+The two dialogs that participants actually see during collection are shown in Figure~\ref{fig:implemented-ui}. This makes the interaction concrete without presenting the later model-assisted prompt as finished.
+
+\begin{figure*}[t]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/driftsense-ui-intention.png}\\[-0.4ex]
+    \small (a) Intention declaration
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/driftsense-ui-reflection.png}\\[-0.4ex]
+    \small (b) Post-session reflection
+  \end{minipage}
+  \caption{The implemented DriftSense interface for the collection phase. These screens come from the working extension component on a local example page. The first collects intention and intended duration before monitoring starts; the second records the participant's account of how the session ended. The planned Phase~2 model-assisted prompt is not shown as an implemented feature.}
+  \Description{Two screenshots of the implemented DriftSense browser overlay. The first asks what brought the participant to the configured domain and offers seven neutral intention choices plus intended duration. The second asks whether the visit matched the original intention and offers matched, drifted, continue intentionally, and save for later responses.}
+  \label{fig:implemented-ui}
+\end{figure*}
+
 \subsection{Session Flow, Sensing, and Labeling}
 Participants choose the domains they want DriftSense to study; activity outside those domains is ignored. When a configured domain opens, the extension asks \textit{Why are you opening this?} The seven response categories cover work/study, learning/tutorial, specific information, communication/community, planned entertainment/break, open-ended browsing, and accidental opening. The categories describe purpose without judging it.
 
