@@ -1,0 +1,451 @@
+The three most popular features of digital wellbeing tools are domain blocking, screen-time limits and usage dashboards. Such techniques can fail to distinguish between purposeful browsing, when the same site can be used to obtain information and/or to take a short break, and unplanned browsing.
+consumption. We propose a locally installed machine learning pipeline and Chrome extension to investigate DriftSense, a privacy-preserving approach.
+browser-based digital drift (BDD) is a subjective sense of discrepancy between the stated browser goal and the actual result of the browsing session (as reported by the participant).
+DriftSense only captures configured-domain metadata, the summary counts of all interactions and short summaries of activity windows:
+Not to gather any data on page contents, screenshots, messages or keystroke values. We designate a two phase field protocol of about 20
+adult Chrome users. In a 10-day collection phase, participants state the intention and make a reflection after the session without any
+Prompt is displayed with the model. These are then compared to time, domain, intention-only, activity-only and intention-plus-activity models,
+The three minute model/threshold is fixed. At risk sessions are conducted at a higher level for 7 days of intervention.
+Randomized, each with the same probability, to a reflective prompt or a silent control, with the same intention and with the same
+post-session questions. Prediction is done with participant aware and chronological validation and intervention is evaluated.
+This was done by comparing self-reported drift in sessions that were randomly selected from the eligible sessions. Empirical collection has not yet taken place, thus this manuscript reports
+The system and methodology without make-up results. DriftSense is used to identify self-reported intention alignment, it is not used to identify
+attention, emotion, addiction or mental state.
+CCS Concepts: • Human-centered computing → Empirical studies in HCI; Ubiquitous and mobile computing systems and tools; •
+Machine learning approaches → Methods of computing.
+Other Key Words and Phrases: digital wellbeing, browser extension, intention alignment, digital drift, self-report, privacypreserving sensing, session-level prediction, reflective check-ins.
+1 Introduction
+There are many sites out there that distract us, and there are good reasons why we go there. A user can go to a site like YouTube to watch a video to learn how to do something, or Reddit to read the responses from others.
+To reply to a technical question, LinkedIn to see a message, or a news site to keep up with a particular event. The same sites
+Unplanned passive consumption and avoidance is also possible with can. This is a problem for common digital, as there is much ambiguity.
+wellbeing tools: Purposeful use of a domain category or elapsed time is not a reliable way to determine whether digital drift is taking place.
+Existing tools tend to define undesirable use by screen time, application or site category or by blocking apps and websites.
+rules [3, 13–15]. While these mechanisms may be beneficial in controlling the user's behavior, they also can produce false positives when a user
+has a legitimate intent for accessing a monitored website. There are also potential false negatives if a brief period of data collection is indeed
+misaligned with intention. Recent work has thus moved toward the notions of user agency, user reflection, user friction and user intention.
+alignment. For instance, systems like one sec are nudging themselves, with a short pause before accessing an application [9]; Purpose
+Mode is reducing the distractive patterns on interfaces and maintaining access to social media websites [11] and PauseNow
+conceptualizes digital wellbeing as a form of intentional action that is aligned with behaviour [17].
+We have termed a session-level intention-behavior mismatch a "browser-based digital drift" because the user starts
+With one stated purpose but later reports that the visit did not reflect the purpose. This framing is done intentionally
+broader than addiction, attention detection or productivity optimization. DriftSense does not imply the clinical situation or
+inner mental state. It does not collect, however, explicit intention and explicit post-session reflection, but assesses the presence of
+It is possible to predict those self-reported labels from "lightweight" browser-session signals.
+Contact information for the author(s): [Author Name], [Department / University], [City], [Country], [Email].
+1
+2 [Author Name]
+DriftSense is built around a Chrome Manifest V3 extension with local-first data, and a reproducible machine-learning
+pipeline. User specifies intentions of an activity with a neutral set of options before accessing a configured domain:
+work or study task, learning or tutorial, information, communication/community, planned entertainment or break,
+open-ended browsing (or browser opened accidentally). The categories do not presume that work is necessarily associated or leisure is
+inherently drift. In the session the extension keeps track of the duration of the session, number of clicks, number of scrolls, idle time, focus changes, etc.
+and brief activity window summaries. At the end of the session it asks if the visit was in keeping with the original intention.
+A three minute risk estimate, computed locally, will be used to assign eligibility for a session-level in the intervention phase.
+half of elevated-risk sessions receive brief reflective prompt, half are a silent control (randomization). The website
+can be accessed in both assignments.
+The research questions at the centre are:
+RQ1: Is declared browsing intention in conjunction with light activity on the browser superior to time-based or domain-based approaches for predicting selfreported session-level drift?
+RQ2: For sessions identified as high risk following 3 minutes, does a reflective prompt with a model help lower participants' risk scores?
+be more effective in reducing subsequent self-reported drift than a randomized (silent) control group?
+The expected deliverables are intention aware drift prediction implementation and evaluation framework
+Providing the lightweight reflective support in Browser sessions. It is not activity tracking, dashboarding or
+blocking alone. It is the conjunction of privacy preserving activity signals, intention based self-report labels, explicit
+comparisons to weak baselines, early prediction without leakage to future sessions, and a session-level random
+test of reflection with the use of models. The 10 days of the collection phase are not considered causal but for model development.
+later phase of intervention, control for.
+2 Related Work
+2.1 Digital Self-Control Interventions
+A common set of techniques are blocking, time limits, monitoring, reminders, friction, and interface modification.
+[3, 13, 14]. Reviews reveal potential for positive short-term results and brief deployments, same outcome (homogeneous).
+Time spent is common, but too coarse to represent why a site was used [14, 15] and few control groups samples. Purpose
+Mode has found that by allowing users to remove attention grabbing UI patterns without losing access to the pattern, it achieves that objective.
+The use of alignment was more informative than site context alone [11]. The results support the use of time and domain as
+baselines, instead of viewing them as “ground truth”.
+2.2 Intention and Reflection
+Several systems provide a reflective moment around technology use, one sec provides pre access friction and explicit choice.
+StayFocused [14] offers no evaluation of results.
+and MindShift provide reflective or made responses, mixed behaviors and repetition worry.
+prompts, assumptions and more personal data [12, 16]. WellScreen connects the dots between estimated and actual smartphone use and what happens every day.
+Although the deployment was only a couple weeks, there was no control condition [2]. Instead of a longer blocking
+Does not check-in and does not take mental state.
+DriftSense: Privacy-Preserving Intention-Aware Prediction and Model-Assisted Reflection for Browser-based Digital
+Drift 3
+Table 1. Similar systems that help identify the DriftSense research gap.
+Work Timing, mechanism, role of intention, Evaluation, Remaining gap
+Purpose Mode (while in use interface) [11]
+modification
+Goal alignment
+measured in EMA
+Two-week field
+deployment
+No session prediction;
+fixed phase order
+one sec [9] Friction bef app
+access
+Opening reason elicited
+around nudge
+Observational field
+study and online
+experiment
+No within-session
+prediction or field
+control
+PauseNow [17] Proposed recognition
+and nudging
+Original intention is
+central
+No deployed outcome: Conceptual framework
+evaluation
+You Scroll is not the only thing that is predicted.Prediction is not just for You Scroll.
+social-media use
+Mismatch reported
+after use
+Seven-day sensing
+study; within-person
+and held-out tests
+Regret label; no
+intervention test
+WellScreen [2] Daily post-use
+reflection
+Estimated versus actual
+use
+Two-week
+mixed-methods
+deployment
+No session classifier or
+control
+DriftSense (planned) Three-minute
+model-assisted
+reflection
+Declared before and
+revisited after use
+Ten-day collection plus
+randomized seven-day
+intervention
+Browser-only pilot
+with short follow-up
+The session level modeling and research gap are discussed in this section.
+Regret is based not just on time passed (duration), but also on activity and intention [7, 10]. Perceived was investigated in a 7 days duration study with 21 subjects.
+The correlation between intention–use mismatch and regret was stronger than that between duration and regret; phone-context CatBoost had higher AUC values
+The results for this study were 0.732 within person and 0.536 when a participant was removed [1]. This lack of overlap is an incentive for separate known-user and
+unseen-user evaluation. Behavioral sensing also poses privacy concerns and DriftSense only collects the information at a host name level.
+neither infers any clinical or mental-state information [4, 5] nor does it consider the context or aggregate interaction signals.
+The closest comparison points are shown in Table 1. There is no system that was evaluated that provides a declared pre-session browser intention, and a declared pre-session server intention.
+content free early activity, post session alignment label, explicit weak baselines, and randomized model triggered.
+reflection.
+So the contribution is limited: Does intention plus light activity have an impact on session level?
+Compare with a prediction over time, domain, intention-only, and activity-only alternatives, and then test the resulting prompt against a
+randomized silent control. The short pilot does not provide for long-term behavior change or generalization to a population.
+3 System Design
+3.1 Evidence-Derived Design Requirements
+DriftSense is intended for a research context in which users are asked to install a browser extension, to opt-in for the collection of their browsing data, and to set-up their user accounts.
+Domains being monitored and export a local data set for analysis. Based on the reviewed evidence, there are five requirements:
+(1) Look at the alignment, do not assume harmfulness. Screen time and domain are carried over as a baseline, while:
+The target label needs to be based on what the participant says they are aiming for and on what they reflect. This is in the wake of evidence that goal
+The duration of misalignment and mismatch between the intention and use can be more informative than duration alone [1, 11].
+(2) Intervention to be light; maintain agency. Reflection should offer an explicit choice and should never be obstructive to the website.
+One neutral check-in comes after a finding that friction and an opt-out can create a disruption that hampers automatic action, while
+The repetitive or inflexible prompts could be irritating [9, 12].
+4 [Author Name]
+(3) Decrease and confine sensing. The system should be made of a collection of interaction counts and hostnames context
+excluding content, screenshots and messages and key values. Local save, check, export and delete.
+Participant control of the must be.
+(4) Maintain consistent measurement under conditions. It should be the same intention and post-session questions should be used.
+Throughout collection and intervention so that it is the only interface difference that is randomized: the mid-session prompt.
+(5) Ensure prediction and intervention is auditable. Exported records should be able to include weak baselines, one, three, and five year periods.
+5-minute forecast, participant-aware validation, frozen deployment and verification of each
+in the eligibility and randomization decision.
+A planned extension of DriftSense and local machine-learning pipeline are summarized in Figure 1.
+DRIFTSENSE: LOCAL-FIRST SESSION PIPELINE Phase 1 · observe Phase 2 · predict + test
+1 Declare intention
+Neutral activity choice
+Optional planned duration
+Access is always maintained
+2 Aggregate activity
+10-second windows
+clicks · scrolls · idle
+focus 2 1 2 typing count 1 1 video
+There is no content or key values.
+3 Frozen model
+Evaluate at 3 minutes
+intention + activity
+Phase 1: disabled
+4 Eligibility
+Risk ≥ frozen threshold
+required features present
+daily limit not hit.
+No evidence of drift.
+5 Randomize 1:1
+Reflective prompt
+or
+Silent control
+6 Same post-session reflection
+drifted: Matched intention · drifted · continue · save for later
+Only explicit matched / drifted responses are used for binary labels.
+Local records
+Inspect · export · delete
+Participant-controlled
+LOCAL PRIVACY BOUNDARY
+Stored: – configured hostname, timing, counts, focus,
+intention, model auditor, reflection
+Never stored: page text, titles, complete URLs, screenshots, messages,
+passwords, key values, webcam, emotion, complete history
+Fig. 1. The DriftSense architecture and decision flow for interventions. The prediction and randomisation modes are turned off during the 10-day
+collection phase was performed with a frozen model for the 7 day intervention phase.
+3.2 Chrome Extension Architecture
+Collection prototype is developed in Chrome Manifest V3, React and Typescript. It has a background service worker
+Session monitoring, content scripts to count all activities in the monitored domains, and a popup to quickly
+status, a domain configuration and privacy options page, and a summary and export dashboard.
+The intervention build will feature a fixed local model rated after 3 minutes, an elevated-risk threshold, and a 1:1 ratio, which is less than the standard 1:2.The intervention build will include a fixed local model, rated after three minutes, an increased risk threshold and a reduced ratio of 1:1 versus the standard 1:2.
+Randomizer at session level, and reflective prompt. There is no need for a remote inference service.
+3.3 Session Flow, Sensing and Labeling
+Only domains the user thinks are drift-prone and/or interesting for study are selected and all other browsing is ignored. When a configured
+If delivered via domain they respond with Why are you opening this? in one of seven neutral categories (work/study, learning/tutorial,
+specific information, communication/community, planned entertainment/break, open-ended browsing or accidental
+opening. The categories are not work equals alignment, drift equals leisure.
+DriftSense: Privacy-Preserving Intention-Aware Prediction and Model-Assisted Reflection for Browser-based Digital Apps
+Drift 5
+The session begins when one of the configured domains is opened/focused and ends when the tab is closed/leaves that domain,
+times out or completes reflection. The export of the session includes anonymized participant and session identifiers, start/end times, and the full transcript of the session.
+time, hostname, declared intention and intended duration, total duration, number of clicks/scroll/keyboard-activity, idle
+time, focus loses and label for reflection. For every 10 seconds, a linked activity record only stores offset, event counts,
+idle/focus state accessible video-playback state. The version of the Frozen Model is noted on a separate intervention log,
+threshold decision, eligibility, assignment, prompt delivery/response and suppression reason. Field names are remained exactly as they are.
+in the export schema's documentation.
+The question for both study phases and both randomized assignments is identical, and follows each session:
+Was the aim of this visit as you intended?
+The main binary labels are only determined by explicit Yes / No answers, I drifted answers are:
+𝑦 =
+
+
+
+0, if answer is Yes
+(If answer is No, put 1), if I bounced, put 2
+(1)
+Continue intentionally and Save for later are not binary and will not be included in the primary binary
+classification and intervention analyses for each student. The missing answers are also not marked: not marked = missing.
+Outcomes that are non-drift are recoded.
+In Phase 2, the prompt is added to sessions where the risk of elevated to: Still here for your original reason?
+Go on with the intention and Finish now – no mid-session interface for the silent-control sessions. Well, it's not like the probability is
+the site is still available and the photos are displayed. The local dashboard enables aggregate inspection, pausing, domain-level inspection and downloading of aggregates.
+exporting, deleting and configuration. It is not infrastructure, it's not a contribution, it's supporting infrastructure.
+Drift prediction and model-assisted reflection.
+4.1 Prediction Task
+The major problem is binary prediction at session-level:
+With a prompted browser, domain metadata and declared intention
+predict whether, at the time of the session, the user will later report that the session was drift.
+The positive class is the label No, I drifted, which was provided as a self-report. The negative class is self-reported Yes label. Sessions
+Continue (intentional) or Save for later are analyzed separately or not included in the binary task. The resulting
+model gives back a probability of drift for each session. In Phase 2, crossing the frozen threshold makes a student eligible to the
+prompt-versus-silent-control randomization; the probability is not considered to be an attention detection.
+4.2 Feature Groups
+Features include declared intention, domain category, time and day, duration so far, click, scroll, keyboard-activity,
+focus-loss and tab-switch counts, idle, active and video ratios and activity rates. Activity windows are cut off at
+with the 1 minute, 3 minute (deployment) and 5 minute set and the 5 minute cut-off plus full session used
+offline. There are no early features with final duration or later activity.
+Figure 2 presents the proposed processing, modelling and evaluation pipeline for tabular drift prediction and
+model-assisted reflection.
+6 [Author Name]
+Two phases – Two distinct evaluation question(s).
+PHASE 1 · 10-DAY OBSERVATION
+Same prompts and sensing – no mid session model
+Days 1–7
+Development data
+Participant-grouped folds
+Days 8–10
+Chronological holdout
+Evaluate once
+MODEL FREEZE
+• preprocessing
+• have a cut off at 3 minutes
+• logistic coefficients
+• eligibility threshold
+• prompt cap
+Tuning on Phase 2 outcomes not planned
+PHASE 2 · 7 DAYS
+At 3 minutes:
+The complete features + risk threshold.
+Below threshold: → observe only
+Elevated risk → randomize 1:1
+Prompt Silent control
+RQ1 – Can DRIFT be predicted?
+Required comparisons
+threshold in time · domain · intention only · activity only
+intention + activity logistic regression (optionally Random Forest)
+Validation views
+chronological known user · participant held out unseen user
+Accuracy Precision Recall F1 ROC-AUC Confusion matrix 1/3/5 min
+RQ2 · Does the prompt help?
+Primary randomized contrast
+Drift proportion by arm (by eligible sessions)
+Analysis safeguards
+ITT analysis, clustering of participants, missing-label rates.
+The paired participant estimate + 95% bootstrap interval is shown.
+Phase 1 vs Phase 2 is a descriptive comparison only - 7 days is too short a period of time to see real change.
+Empirical values are not displayed: outcome plots and tables are currently placeholders; they will be filled with numbers after analysis of consented participant data.
+Fig. 2. Pathway for study and evaluation planned. RQ1 assesses prediction with Phase 1 only, RQ2 assesses the prompt with
+Randomized eligible Phase 2 sessions. The Phase 1–Phase 2 change is NOT the causal intervention contrast.
+4.3 Baselines
+DriftSense uses four baselines to assess prior to the main models:
+(1) Time-threshold baseline. Predict drift if the length of a session is longer than a threshold set on validation set.
+(2) Domain baseline. Estimate drift tendency per each domain based on only training data and classify validation or test
+sessions with the frozen training derived rule.
+(3) Intention-only logistic regression. Predict only based on stated purpose and/or obvious text cues.
+(4) Activity-only logistic regression. Predict from overall activity signals but no intention.
+These baselines investigate whether the intention-plus-activity models proposed are useful in addition to common digital wellbeing models.
+heuristics.
+4.4 Main Models
+The main model used is the intention-plus-activity logistic regression model. It is chosen for being interpretable, having low data requirements, being easily deployable locally as a fixed preprocessing specification, coefficient vector, intercept, and
+threshold. If the number and class balance of
+Labelled sessions will suffice. Only a secondary offline model may be reported [6, 8]; they can be CatBoost or XGBoost
+do not need to be present for deployment of intervention. The use of deep sequence models is not within the scope of this first study as the number of participants is 15 – 20.
+These are unlikely to provide sufficient independent data to support them.
+DriftSense: Privacy-Preserving Intentionality-Aware Prediction and Model-assisted Reflection in the Browser-based Digital World.
+Drift 7
+4.5 Early Prediction
+Offline evaluation is performed for 1 min, 3 min and 5 min cut-offs and the entire session. Model is 3 minutes.
+Selected a priori for deployment of intervention as it is an early but not immediate reflection point. Model
+The words family, preprocessing, threshold and prompt cap are frozen before Phase 2. Anything past the threshold makes a session .Anything over the threshold makes a session .
+This is not automatically marked as a prompt or as there being drift, but is eligible for local randomization.
+5 Methodology
+5.1 Study Design
+Our pilot involves one cohort and a duration of 17 days in two phases, in the wild. Phase 1 has a 10 day observational collection period with
+but no model-assisted mid-session intervention, consistent pre-session intention and post-session reflection prompts.
+Phase 2 follows the short model-development interval with the seven-day intervention period with frozen model. In Phase
+Randomized 1:1 to a reflective session: (2, sessions that are active for 3 minutes and are considered frozen risk).
+Prompting or a quiet or silent control. RQ2 is primarily based on this micro-randomized comparison. A simple before–after
+The comparison between Phase 1 and Phase 2 will only be reported descriptively as phase order, novelty and temporal information cannot be displayed on a graph.
+Causal attribution is prevented by changes.
+A goal is to reach a target of 20 completers with 22-24 participants being recruited to accommodate attrition. Potential objectives:
+least 500 complete binary-labeled Phase 1 sessions overall, at least 20 labeled Phase 1 sessions per participant where
+After browsing frequency permits, and at least 100 randomly selected elevated-risk Phase 2 sessions. These are "working targets"
+as opposed to a formal power calculation. Where the number of recruitment, labels or eligible intervention sessions are significantly less than
+If so, the study will be presented as feasibility and any intervention estimates will be considered to be exploratory.
+5.2 Participants and Recruitment
+Eligible participants will be adults (18 years and older) who use Chrome or a Chromium-based browser on a personal
+Can use a computer, visit at least two websites they would like to monitor and install a research extension for the
+study period. The sample of students and knowledge workers used in the recruitment can be a convenience sample of the university. Participants
+Do not recruit or screen for addiction, ADHD, mental health issues or other clinical categories. The
+paper will provide the following data: recruitment source, relevant demographic data for interpretation, attrition, number of usable sessions and
+Without claiming representativeness, the missing-label rates are reported.
+Consent, Privacy and Data Handling 5.3
+A consent form is provided and field level explanation of the extension is given prior to installation. Consent covers
+configured domain hostnames, declared intention, intended duration, session timing, aggregate click, scroll, and other measures were used to capture the information.
+keyboard-activity: No key values and idle times, No focus loss, activity-window summaries, post-session answers
+During Phase 2, the factors to be modeled are: and—model version, risk estimate, random assignment, prompt display, and prompt response. The
+extension will not save page texts or passwords, screenshots, private messages, complete browsing history, source code,
+key strokes, webcam information, face recognition or emotional information.
+An anonymous code (e.g. P01) is given to each participant. They can stop monitoring, modify monitored domains, review monitoring and more.
+Records, export their data, delete individual sessions or delete all local data. Participant exports are kept in a private,
+Study directory outside the source repository, which is access controlled. The combined is only accessible by consented research staff.
+8 [Author Name]
+dataset. The raw participant files will not be included in any publication artifact but aggregates or de-identified excerpts will be included.
+Ethics approval/institutional exemption (as appropriate) should be secured prior to recruitment.
+5.4 Phase 1: Ten-Day Collection
+Once on board, each participant selects monitored areas of work/learning and mixed use.
+For each session monitored on each domain, DriftSense prompts the user to select one of seven neutral intention categories and optional
+intended duration. Then the participant navigates as usual and aggregate session and 10-second activity-window is computed.
+signals are locally stored. The extension asks this question at the session boundary: "Did the visit meet the stated purpose?
+There is no mid session risk estimate or reflective intervention displayed during Phase 1.
+The collector is used by the participants for 10 study days in a row. Research team only monitors adherence and technical
+Does not perform inspections of page content, as there is no page content collected; only failures during collection. At the end of Phase 1, each
+The main CSV and activity-window CSV are exported by participant. The exports are carried out with the agreed study.
+outside the repository and combined in a procedure that had been validated.
+5.5 Development of a Model and Freeze
+Phase-1 days 1-7 represent the development period and days 8-10 are a chronological hold-out to validate known user futuresession performance. Selection of model preprocessing, feature definitions, hyperparameters and threshold rules are done using
+The participant-grouped folds are within the days 1–7 only outer development set. The days 8, 9, 10 which are not touched are evaluated.
+once. A participant-grouped or leave-one-participant-out analysis over Phase 1 is reported as an estimate of
+performance that has no connection with the chronological result of the same participant; it is not equated with the same-participant chronological result.
+Intention-plus-activity logistic regression is the main candidate deployed. It is then compared to a time threshold,
+Random Forest is an optional domain rule, intention-only logistic regression, and activity-only logistic regression.
+offline robustness model. The prediction metrics are accuracy, precision, recall, F1-score, ROC-AUC and confusion matrices.
+Although performance is calculated at 1, 3 and 5 minutes and for the entire session, the intervention only uses the 3 minute result.
+three-minute specification. Any session feature used at a cut-off is only based on the data observed up to that cut-off.
+Once the model has been evaluated, one 3 min. model, the parameters used in preprocessing, probability threshold and maximum
+Prompt rate rates will not be changed. The threshold is selected from development data so as to balance sensitivity and false prompts and
+Not tuned to Phase 2 outcomes (i.e., expected burden). If the model is close to chance or yields a model that it is not feasible to implement,
+For the eligible-session rate, the intervention can continue to be considered and operationalized as a technical feasibility pilot but the paper should not make claims about.
+successful prediction.
+5.6 Phase 2: Seven-Day Micro-Randomized Intervention
+The intervention build is used by the same participants for seven study days. Intentional, passive and session.
+boundaries, and post-session reflection are the same as in Phase 1. Only a session that is randomization eligible can be randomized.
+If it is still active after three minutes, has the features needed by the frozen model, exceeds the frozen threshold,
+and is not capped by the pre-specified prompt. Local random assignment with equal
+probability:
+(1) Reflective-prompt assignment. Show Still here for your original reason? intentionally, Finish
+now actions.
+(2) Silent-control assignment. Do not exhibit any mid-session interface.
+This project aims to develop driftSense, a Privacy-Preserving Intention-Aware Prediction and Model-Assisted Reflection for Browser-based Digital.
+Drift 9
+The assignment is logged prior to the prompt being presented. Analysis is done after assignment, whether or not the participant
+Interacts with the prompt in some way. One reflective prompt per session, up to 3 per day pre-specified
+Burden is reduced by the use of prompts displayed. Sessions that fall below threshold, sessions less than 3 minutes in length, sessions that do not contain required features,
+The words that are "written" or "spoken" after the cap are kept for the descriptive reporting but are not included in the random prompt-effect
+comparison. Randomized assignments get the same post-session reflection, avoiding differences in label
+Language in definition of outcome.
+5.7 Measures
+The main prediction results are F1 Score & ROC-AUC of intention-plus-activity prediction with regard to time
+and domain baselines. Accuracy, precision, recall, confusion matrices, class balance, calibration (where possible), and the
+expected intervention rate at the frozen threshold are also reported. Chronological and chronological/calendar age groups are displayed as separate results.
+same participant prediction and participant held out prediction.
+The key outcome of the intervention is the percentage of complete binary labeled eligible sessions as drift,
+Randomized assignment to compare. Secondary behavioral outcomes are total session duration, duration after the
+The following assignments were used: three-minute assignment point, immediate session ending after a prompt, prompt response, prompt frequency, and
+post-session label completion. Phase 1 and Phase 2 changes in drift rate and duration are descriptive secondary
+results only.
+When the Phase 2 is over, participants rate 5 statements that appeared at:
+appropriate time; the prompts helped them to reconsider their intention; the prompts were annoying; the extension
+was very user friendly and they would keep using it. One open question is which should change about prompt
+wording or timing. These measures evaluate acceptability and burden and not necessarily clinical benefit or objective attention.
+These data-processing operations and quality checks are carried out with the utmost care.
+The preprocessing pipeline validates the exact participant CSV schema, and that each filename corresponds to its
+rejects duplicate session identifier and overlapping sessions, and provides incomplete or nonbinary outcomes with participant identifier. Participant exports are never changed. Only Yes, it matched (0) and are included in the binary analyses.
+No, I drifted (1) is different from missing, Continue intentionally and Save for later outcomes.
+The joins between session exports and activity windows/intervention logs happen on the basis of session_id. Categorical features are
+For logistic regression, one-hot encoded and numeric features are standardized in the training data. All preprocessing
+Parameters are trained on training partitions and then tested on the validation or test partitions, without changing the parameters. Quality reporting
+Includes participants recruited and completed, sessions per participant, distribution of classes, final number of labels completed, and files rejected for various reasons
+Areas of intervention eligibility, prompt suppression, attrition, windows missing and assignment balance.
+5.9 Analysis Plan
+Model performance is summarized over the pre-defined splits and 95% confidence intervals are obtained by
+Increasing the number of participants in a sample who can be re-sampled if possible. The main comparison is of intention plus activity to logistic regression.
+Outperforms time and domain baselines in terms of F1-score and ROC-AUC. In intention only and activity only models, the rate is shown.
+The amount of value added by each feature group. A result is not considered a generalization of new users unless
+That is substantiated by the participant-held-out performance.
+For RQ2, analysis is limited to randomized eligible sessions, based on assigned binary post-session labels and follows assigned
+condition. Drift proportions are computed independently for each participant with observations in both assignment.
+10 [Author Name]
+Reflective-prompt/silent-control sessions. The simple comparison is prespecified as paired Wilcoxon signed-rank test.
+test with participant-level drift proportions, with paired difference, and participant-bootstrap 95% confidence interval.
+confidence interval. Percentages of missing labels are reported on an assignment basis. When sufficient number of eligible sessions is available,
+A mixed-effects logistic regression was used to assess the impact of prompt assignment (main fixed effect), with a participant random intercept.
+The sensitivity analysis was carried out by adding is.
+Secondary outcomes are described, and/or compared using paired participant-level comparisons. Open-ended responses
+With an easily understood lightweight content analysis the are summarized. No person is designated effective as of a
+Pre-post Phase 1 - Phase 2 only. Results will be reported as preliminary and short term; 7 days will be used to report results.
+In isolation, intervention is not effective in making long-term changes in behavior. No result, significance values or effect sizes will be inserted.
+To avoid any confusion, this is only the virtual consented dataset until the real consented dataset has been analysed.
+The commitments of The 5.10 Group with regard to reproducability and reporting are:
+The study materials will detail the rules around sessions boundaries, there will be seven options of intentions, reflection
+As well as wording, binary-label mapping, prompt cap, exclusion rules, and confirmatory/exploratory.
+outcomes. Prior to Phase 2, the extension build will be used to record a model artifact, a set of pre-processing specifications, decision protocol.
+threshold, and randomisation procedure. The analysis will yield a participant-flow summary and an accountable
+All the recorded sessions' session-flow were summarized and directed to the final RQ1 and RQ2 analysis sets. Kids aged three to eight will be counted for the 2015-16 school year.
+short sessions (less than 3 minutes), lack of reflection labels, unclosed activity windows, threshold eligibility,
+Daily cap, randomized assignment and prompt delivery failures lead to suppression.
+Raw data and test fixtures (isolated non-participant resources) may not be released without review, whereas code and schemas may be released following review.
+No participant exports will be made public. A de-identified derived data set will be made available only
+Where possible, with the consent of the student, ethics approval and disclosure-risk review. Otherwise, the only way to be reproducible will be on the field-level
+Documentation, deterministic preprocessing, fixed random seeds, environment information and disclosuresafe outputs.
+5.11 Anticipated Validity Boundaries
+It is the participant's post-session judgment of alignment that is the primary construct – not an objective measure of attention.
+The labeling may differ from person to person, and can be influenced by recall or social desirability, repeated prompting, or the intervention itself.
+itself. Thus it is part of the main validity of each reporting label completion and non-binary outcomes by assignment.
+This is not a housekeeping item, but an assessment.
+The causal estimate for RQ2 only applies to sessions that satisfy the eligibility rule of the frozen model, and not
+The prompt cap will suppress it. It does not provide an approximation of the impact of prompting all browser sessions or all users.
+Randomization provides protection for the prompt-versus-silent comparison within this eligible set, and the fixed order of the phases provides protection for the comparison between prompts.
+prevents a causal interpretation of the overall Phase 1–Phase 2 change. It is also a convenience sample of 15–20 people, which is a limitation of the study.
+precision and generalization, especially prediction held out by participants. Lastly, you can have a seven day intervention.
+It can only show short term feasibility and preliminary efficacy not persistence after the extension is over.
+removed. These will be clearly expressed even if the observed impacts are beneficial.

@@ -10,6 +10,9 @@ the local PDFs in `downloads/` on 2026-08-01.
 Files:
 
 - `main.tex`: paper draft in ACM/CHI-compatible `acmart` format.
+- `main_humanized.tex`: separately compiled prose revision based on
+  `humanized.txt`, with factual and methodological errors corrected.
+- `main_humanized.pdf`: compiled humanized manuscript.
 - `references.bib`: BibTeX references, prioritizing recent peer-reviewed HCI and journal work where possible.
 - `related.md`: evidence summaries that support the study gap and evaluation.
 - `figures/`: editable SVG figure masters and vector-PDF exports used by LaTeX.
@@ -37,6 +40,15 @@ pdflatex main.tex
 bibtex main
 pdflatex main.tex
 pdflatex main.tex
+```
+
+Compile the separate prose revision with:
+
+```powershell
+pdflatex main_humanized.tex
+bibtex main_humanized
+pdflatex main_humanized.tex
+pdflatex main_humanized.tex
 ```
 
 The draft contains no empirical DriftSense results because real participant
