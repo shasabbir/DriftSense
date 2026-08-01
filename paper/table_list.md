@@ -2,7 +2,7 @@
 
 | Table | Purpose | Status |
 |---|---|---|
-| 1 | Compare the closest related systems by timing, intention, evidence, prediction, and randomization | Complete in `main.tex` |
+| 1 | Compare the closest related systems by timing, intention, evaluation, and remaining gap | Complete in `main.tex` |
 | 2 | Participant demographics, recruitment, completion, and attrition | Results placeholder |
 | 3 | Session counts, class balance, label completion, and exclusions by participant and phase | Results placeholder |
 | 4 | RQ1 performance for all required baselines/models at 1, 3, 5 minutes and full session | Results placeholder |

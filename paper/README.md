@@ -19,9 +19,10 @@ Files:
 - `downloads/`: the local paper corpus used for the evidence audit.
 
 `figures/figure1.png`, `figure2.png`, and `figure3.png` contain retired elements
-of earlier designs and are not embedded. The active diagrams are
-`driftsense-architecture`, `driftsense-labeling`, and `driftsense-study-design`.
-Edit the SVG master and regenerate its PDF export together.
+of earlier designs and are not embedded. The manuscript uses
+`driftsense-architecture` and `driftsense-study-design`; the editable
+`driftsense-labeling` diagram is retained as optional supplementary material.
+Edit an SVG master and regenerate its PDF export together.
 
 Regenerate all active vector-PDF figures from their SVG masters with:
 

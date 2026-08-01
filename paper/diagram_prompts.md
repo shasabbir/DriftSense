@@ -1,22 +1,23 @@
 # DriftSense Figure Sources and Future Prompts
 
-The current protocol figures are established as editable SVG files in
-`paper/figures/` and embedded in the manuscript through vector-PDF exports. They
-show structure only and contain no empirical DriftSense results.
+The protocol figures are established as editable SVG files in `paper/figures/`.
+The architecture and study-design diagrams are embedded through vector-PDF
+exports; the labeling diagram is retained as optional supplementary material.
+They show structure only and contain no empirical DriftSense results.
 
 ## Active protocol figures
 
 - `driftsense-architecture.svg`: local-first sensing, model decision,
   randomization, post-session reflection, and the privacy boundary.
-- `driftsense-labeling.svg`: neutral intentions and the exact mapping from
-  post-session responses to binary or separate outcomes.
+- `driftsense-labeling.svg`: optional supplementary diagram of neutral
+  intentions and the response-to-label mapping.
 - `driftsense-study-design.svg`: ten-day observation, model freeze, seven-day
   intervention, and the separate RQ1/RQ2 analyses.
 
 The matching `.pdf` files are publication exports used by `main.tex`. When a
 label or protocol decision changes, update the SVG and PDF together.
 
-## Future Figure 4: prediction results
+## Future Figure 3: prediction results
 
 Generate only after the consented analysis is complete:
 
@@ -32,7 +33,7 @@ amber palette, and a visible 0.5 chance reference for ROC-AUC. White background,
 no 3D effects, and readable at ACM two-column width.
 ```
 
-## Future Figure 5: randomized prompt result
+## Future Figure 4: randomized prompt result
 
 Generate only after the consented analysis is complete:
 

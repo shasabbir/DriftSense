@@ -12,7 +12,7 @@
       text[fill="#ffffff"] { fill: #ffffff; }
       .title { font-size: 34px; font-weight: 700; letter-spacing: 0.6px; }
       .phase { font-size: 20px; font-weight: 700; }
-      .step { font-size: 23px; font-weight: 700; }
+      .step { font-size: 21px; font-weight: 700; }
       .body { font-size: 19px; }
       .small { font-size: 17px; }
       .tiny { font-size: 15px; }
@@ -32,7 +32,7 @@
   <rect x="56" y="108" width="250" height="202" class="box" fill="#f4f7fb"/>
   <circle cx="93" cy="145" r="22" fill="#183153"/>
   <text x="93" y="153" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">1</text>
-  <text x="126" y="153" class="step">Declare intention</text>
+  <text x="121" y="153" class="step">Declare intention</text>
   <text x="82" y="199" class="body">Neutral activity choice</text>
   <text x="82" y="229" class="body">Optional planned duration</text>
   <text x="82" y="270" class="small" fill="#475569">Access is always preserved</text>
