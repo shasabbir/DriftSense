@@ -4,19 +4,30 @@ This folder contains the ACM `acmart` LaTeX paper draft through the complete
 planned methodology. The protocol uses one cohort, a 10-day collection phase,
 a frozen three-minute model, and a seven-day micro-randomized intervention in
 which elevated-risk sessions are assigned to a reflective prompt or silent
-control.
+control. The related-work claims and protocol rationale were checked against
+the local PDFs in `downloads/` on 2026-08-01.
 
 Files:
 
 - `main.tex`: paper draft in ACM/CHI-compatible `acmart` format.
 - `references.bib`: BibTeX references, prioritizing recent peer-reviewed HCI and journal work where possible.
 - `related.md`: evidence summaries that support the study gap and evaluation.
-- `diagram_prompts.md`: prompts for future protocol-consistent figures.
+- `figures/`: editable SVG figure masters and vector-PDF exports used by LaTeX.
+- `figure_list.md`: current and planned figures, including result placeholders.
+- `table_list.md`: current and planned tables, including result placeholders.
+- `diagram_prompts.md`: figure provenance and prompts for future empirical plots.
+- `downloads/`: the local paper corpus used for the evidence audit.
 
 `figures/figure1.png`, `figure2.png`, and `figure3.png` contain retired elements
-of earlier designs. They are not embedded by the current draft. Generate updated
-diagrams from `diagram_prompts.md` only after checking every label; until then,
-`main.tex` renders accurate LaTeX fallback flows.
+of earlier designs and are not embedded. The active diagrams are
+`driftsense-architecture`, `driftsense-labeling`, and `driftsense-study-design`.
+Edit the SVG master and regenerate its PDF export together.
+
+Regenerate all active vector-PDF figures from their SVG masters with:
+
+```powershell
+.\figures\export_svg.ps1
+```
 
 Compile from this folder with:
 
@@ -27,6 +38,7 @@ pdflatex main.tex
 pdflatex main.tex
 ```
 
-The draft contains no empirical results because real participant collection has
-not yet occurred. Do not add performance values, significance tests, or effect
-sizes until the consented dataset has been analyzed.
+The draft contains no empirical DriftSense results because real participant
+collection has not yet occurred. Do not add performance values, significance
+tests, or effect sizes until the consented dataset has been analyzed. Numerical
+results cited from prior work must remain attributed to those papers.

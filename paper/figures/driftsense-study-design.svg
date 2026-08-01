@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img" aria-labelledby="title desc">
+  <title id="title">DriftSense study and evaluation design</title>
+  <desc id="desc">A ten-day observational phase produces development and chronological holdout data. A frozen three-minute model is deployed for a seven-day intervention phase. Elevated-risk sessions are randomized equally to a reflective prompt or silent control. Prediction and intervention effects are analyzed separately.</desc>
+  <defs>
+    <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <style>
+      @page { size: 1600px 820px; margin: 0; }
+      html, body { margin: 0; }
+      text { font-family: Arial, Helvetica, sans-serif; fill: #172033; }
+      text[fill="#ffffff"] { fill: #ffffff; }
+      .title { font-size: 34px; font-weight: 700; letter-spacing: 0.5px; }
+      .section { font-size: 25px; font-weight: 700; }
+      .body { font-size: 19px; }
+      .small { font-size: 17px; }
+      .tiny { font-size: 15px; }
+      .box { stroke: #334155; stroke-width: 2.5; rx: 16; }
+      .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow3); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="820" fill="#ffffff"/>
+  <text x="56" y="58" class="title">TWO PHASES, TWO DISTINCT EVALUATION QUESTIONS</text>
+
+  <rect x="56" y="98" width="610" height="90" rx="16" fill="#e8f0fa" stroke="#3b6ea8" stroke-width="2.5"/>
+  <text x="84" y="135" class="section">PHASE 1 · 10-DAY OBSERVATION</text>
+  <text x="84" y="168" class="body">Same prompts and sensing; no mid-session model</text>
+
+  <rect x="86" y="232" width="250" height="132" class="box" fill="#f4f7fb"/>
+  <text x="211" y="272" text-anchor="middle" class="section">Days 1–7</text>
+  <text x="211" y="307" text-anchor="middle" class="body">Development data</text>
+  <text x="211" y="338" text-anchor="middle" class="small" fill="#475569">Participant-grouped folds</text>
+  <path d="M 336 298 L 380 298" class="arrow"/>
+  <rect x="382" y="232" width="250" height="132" class="box" fill="#f4f7fb"/>
+  <text x="507" y="272" text-anchor="middle" class="section">Days 8–10</text>
+  <text x="507" y="307" text-anchor="middle" class="body">Chronological holdout</text>
+  <text x="507" y="338" text-anchor="middle" class="small" fill="#475569">Evaluate once</text>
+
+  <path d="M 666 143 L 746 143" class="arrow"/>
+  <rect x="748" y="98" width="326" height="266" class="box" fill="#fff7e8"/>
+  <text x="911" y="138" text-anchor="middle" class="section">MODEL FREEZE</text>
+  <text x="782" y="180" class="body">• preprocessing</text>
+  <text x="782" y="213" class="body">• feature cutoff at 3 minutes</text>
+  <text x="782" y="246" class="body">• logistic coefficients</text>
+  <text x="782" y="279" class="body">• eligibility threshold</text>
+  <text x="782" y="312" class="body">• prompt cap</text>
+  <text x="911" y="344" text-anchor="middle" class="tiny" fill="#475569">No tuning on Phase 2 outcomes</text>
+
+  <path d="M 1074 143 L 1154 143" class="arrow"/>
+  <rect x="1156" y="98" width="388" height="266" rx="16" fill="#e5f4f2" stroke="#1c7c72" stroke-width="2.5"/>
+  <text x="1184" y="138" class="section">PHASE 2 · 7 DAYS</text>
+  <text x="1184" y="179" class="body">At 3 minutes:</text>
+  <text x="1184" y="211" class="body">complete features + risk threshold</text>
+  <text x="1184" y="251" class="small" fill="#475569">Below threshold → observe only</text>
+  <text x="1184" y="282" class="small" fill="#475569">Elevated risk → randomize 1:1</text>
+  <rect x="1184" y="304" width="158" height="38" rx="9" fill="#ffffff" stroke="#1c7c72" stroke-width="1.6"/>
+  <text x="1263" y="329" text-anchor="middle" class="small">Prompt</text>
+  <rect x="1356" y="304" width="158" height="38" rx="9" fill="#ffffff" stroke="#64748b" stroke-width="1.6"/>
+  <text x="1435" y="329" text-anchor="middle" class="small">Silent control</text>
+
+  <path d="M 361 364 L 361 432" class="arrow"/>
+  <rect x="56" y="434" width="714" height="286" class="box" fill="#f8fafc"/>
+  <rect x="56" y="434" width="714" height="55" rx="16" fill="#183153"/>
+  <rect x="56" y="473" width="714" height="16" fill="#183153"/>
+  <text x="84" y="471" class="section" fill="#ffffff">RQ1 · CAN DRIFT BE PREDICTED?</text>
+  <text x="86" y="532" class="body">Required comparisons</text>
+  <text x="86" y="568" class="small">time threshold · domain · intention only · activity only</text>
+  <text x="86" y="597" class="small">intention + activity logistic regression · optional Random Forest</text>
+  <text x="86" y="640" class="body">Validation views</text>
+  <text x="86" y="676" class="small">chronological known-user · participant-held-out unseen-user</text>
+  <text x="86" y="703" class="tiny" fill="#475569">Accuracy · precision · recall · F1 · ROC-AUC · confusion matrix · 1/3/5 min</text>
+
+  <path d="M 1350 364 L 1350 432" class="arrow"/>
+  <rect x="830" y="434" width="714" height="286" class="box" fill="#f8fafc"/>
+  <rect x="830" y="434" width="714" height="55" rx="16" fill="#1c7c72"/>
+  <rect x="830" y="473" width="714" height="16" fill="#1c7c72"/>
+  <text x="858" y="471" class="section" fill="#ffffff">RQ2 · DOES THE PROMPT HELP?</text>
+  <text x="860" y="532" class="body">Primary randomized contrast</text>
+  <text x="860" y="568" class="small">Drift proportion among eligible sessions, by assigned arm</text>
+  <text x="860" y="611" class="body">Analysis safeguards</text>
+  <text x="860" y="647" class="small">intention-to-treat · participant clustering · missing-label rates</text>
+  <text x="860" y="676" class="small">paired participant estimate + 95% bootstrap interval</text>
+  <text x="860" y="703" class="tiny" fill="#475569">Phase 1 vs Phase 2 is descriptive only; seven days cannot show durable change</text>
+
+  <rect x="56" y="753" width="1488" height="43" rx="11" fill="#fceeed" stroke="#b64b4b" stroke-width="1.6"/>
+  <text x="800" y="781" text-anchor="middle" font-size="18" font-weight="700">No empirical values are shown: outcome plots and tables remain placeholders until consented participant data are analyzed.</text>
+</svg>

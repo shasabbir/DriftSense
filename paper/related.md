@@ -309,5 +309,5 @@ This comparison supports a narrow DriftSense evaluation:
 
 - PauseNow has no reported user evaluation; avoid phrases such as “PauseNow was effective.”
 - *Before You Scroll Again* is an arXiv preprint dated June 2026 and displays a placeholder ACM DOI in the manuscript; cite the arXiv identifier until a verified publication record exists.
-- The correct WellScreen author list is Karthik S. Bhat, Jiayue Melissa Shi, Wenxuan Song, Dong Whi Yoo, and Koustuv Saha. The current `references.bib` entry in this repository does not match this publication and should be corrected before the paper is submitted.
+- The correct WellScreen author list is Karthik S. Bhat, Jiayue Melissa Shi, Wenxuan Song, Dong Whi Yoo, and Koustuv Saha; `references.bib` now uses this list.
 - “Problematic smartphone use,” “smartphone addiction,” and similar terms above reproduce the source papers’ constructs. DriftSense should not present its classifier as diagnosing addiction, ADHD, mental health, emotion, or true attention.

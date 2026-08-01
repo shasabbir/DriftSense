@@ -2,6 +2,8 @@
 
 \usepackage{booktabs}
 \usepackage{enumitem}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 \setlength{\headheight}{21pt}
 
 \setcopyright{none}
@@ -106,36 +108,54 @@ Behavioral tracking creates privacy risks, especially when systems collect fine-
 DriftSense responds by minimizing data collection. The prototype records only monitored domains and metadata needed for session-level modeling. It does not collect page text, passwords, screenshots, messages, full history, source code, keystroke content, webcam data, face identity, or emotion data. The extension stores data locally first and provides export and delete-all-data controls. These constraints reduce model expressiveness, but they keep the prototype aligned with the paper's narrow claim.
 
 \subsection{Synthesis and Research Gap}
-Across this literature, interventions operate before access through friction, during use through interface modification or contextual prompting, and after use through reflection. However, the selected work does not evaluate the exact combination proposed here: a declared pre-session browser intention, content-free early activity signals, a post-session intention-alignment label, explicit time/domain/intention/activity baselines, and a randomized model-assisted prompt. Evaluation quality also motivates the protocol. Purpose Mode used a fixed baseline-then-intervention order, the \textit{one sec} field deployment lacked a concurrent control, and systematic reviews identify short duration, missing controls, and limited follow-up as recurring weaknesses \citep{lee2025purpose,gruning2023onesec,roffarello2023digital,biedermann2021digital}. DriftSense cannot solve the short follow-up problem in a seven-day pilot, but session-level randomization among equally elevated-risk sessions provides a stronger prompt comparison than a simple before--after design.
+Table~\ref{tab:related-comparison} compares the closest systems along the dimensions that define the DriftSense gap. The timing of support ranges from pre-access friction to post-use reflection, but intention is usually either absent, collected after use, or used to generate an intervention rather than a session label. PauseNow is the closest conceptual framing but has no outcome evaluation; \textit{Before You Scroll Again} is the closest predictive study but predicts regret from pre-session phone and wearable context, with intention--use mismatch reported after the session rather than declared before it \citep{zhao2024pausenow,ahmed2026scroll}.
+
+\begin{table*}[t]
+  \caption{Comparison of the selected systems most directly informing DriftSense. ``Randomized contrast'' means that the stated intervention mechanism was compared under random assignment, not merely that a study contained multiple phases.}
+  \label{tab:related-comparison}
+  \small
+  \begin{tabularx}{\textwidth}{@{}lYYYYY@{}}
+    \toprule
+    Work & Intervention timing & Role of intention & Primary evidence & Predictive evaluation & Randomized contrast \\
+    \midrule
+    Purpose Mode \citep{lee2025purpose} & During use; interface features toggled & Goal alignment measured in EMA & Two-week field deployment; perceived distraction and use time & No session classifier & No; baseline always preceded intervention \\
+    MindShift \citep{wu2024mindshift} & At self-identified habitual app use & Purpose and reported mental state condition LLM messages & Formative studies and five-week field experiment & No drift classifier & LLM order counterbalanced; baseline fixed first \\
+    StayFocused \citep{li2024stayfocused} & Attempted exit from a focus period & User initiates a focus goal & Five-week, three-group field study & No session classifier & Between-group versions; several behavioral results mixed \\
+    PauseNow \citep{zhao2024pausenow} & Proposed across recognition, intervention, and reflection & Original intention is central & Conceptual framework & Proposed, not validated & No outcome study \\
+    \textit{one sec} \citep{gruning2023onesec} & Before app access & Reason for opening is elicited around the nudge & Six-week observational field data plus online mechanism experiment & No session classifier & Online experiment only; no field control \\
+    \textit{Before You Scroll Again} \citep{ahmed2026scroll} & Predicts before a social-media session & Intention--use gap reported after use & Seven-day sensing and experience-sampling study & CatBoost; within-person and participant-held-out tests & No intervention test \\
+    WellScreen \citep{bhat2026wellscreen} & Daily post-use reflection & Estimated use compared with actual use & Two-week mixed-methods technology-probe deployment & No session classifier & No control condition \\
+    \textbf{DriftSense (planned)} & Three minutes into an elevated-risk browser session & Declared before use; revisited after use & Ten-day collection plus seven-day intervention & Time, domain, intention, and activity baselines; early and participant-aware tests & 1:1 prompt versus silent control among eligible sessions \\
+    \bottomrule
+  \end{tabularx}
+\end{table*}
+
+Across this literature, interventions operate before access through friction, during use through interface modification or contextual prompting, and after use through reflection. However, the selected work does not evaluate the exact combination proposed here: a declared pre-session browser intention, content-free early activity signals, a post-session intention-alignment label, explicit time/domain/intention/activity baselines, and a randomized model-assisted prompt. Evaluation quality also motivates the protocol. Purpose Mode used a fixed baseline-then-intervention order, the \textit{one sec} field deployment lacked a concurrent control, and systematic reviews identify short duration, missing controls, homogeneous convenience samples, and nonstandard outcomes as recurring weaknesses \citep{lee2025purpose,gruning2023onesec,roffarello2023digital,biedermann2021digital,plackett2023socialmedia}. One review found that only 7 of 35 between-subject digital self-control studies used a no-intervention control and that the median evaluation lasted 21 days \citep{roffarello2023digital}. DriftSense cannot solve the short follow-up or population-diversity problems in a small pilot, but session-level randomization among equally eligible sessions provides a stronger prompt comparison than a simple before--after design.
 
 \section{System Design}
-\subsection{Design Goals}
-DriftSense is designed for a research setting where participants voluntarily install a browser extension, configure monitored domains, and export a local dataset for analysis. The system has five design goals:
+\subsection{Evidence-Derived Design Requirements}
+DriftSense is designed for a research setting where participants voluntarily install a browser extension, configure monitored domains, and export a local dataset for analysis. Five requirements follow from the reviewed evidence:
 
 \begin{enumerate}[leftmargin=*]
-  \item \textbf{Phase-consistent measurement.} The same intention and post-session questions should be used throughout collection and intervention so that model-assisted prompting is the only randomized difference.
-  \item \textbf{Lightweight behavioral sensing.} The system should collect aggregate interaction signals that are plausible predictors of drift without collecting page content or sensitive input.
-  \item \textbf{Local-first privacy.} Data should be stored locally, be exportable by the user, and be deletable through the interface.
-  \item \textbf{Model-comparable outputs.} The exported schema should support weak baselines, tabular models, prediction at one, three, and five minutes, and condition-level drift-rate comparison.
-  \item \textbf{Inspectable feedback.} Participants should be able to review aggregate trends, self-reported labels, and model-assisted events without exposing prohibited content or presenting model estimates as facts.
+  \item \textbf{Measure alignment, not assumed harmfulness.} Screen time and domain are retained as baselines, but the target label must come from the participant's declared purpose and later reflection. This follows evidence that goal alignment and intention--use mismatch can be more informative than duration alone \citep{lee2025purpose,ahmed2026scroll}.
+  \item \textbf{Intervene lightly and preserve agency.} Reflection should provide an explicit choice and never block the site. A single neutral check-in follows evidence that friction and an opt-out can disrupt automatic action, whereas repetitive or inflexible prompts can be irritating \citep{gruning2023onesec,li2024stayfocused}.
+  \item \textbf{Minimize and localize sensing.} The system should use aggregate interaction counts and hostname-level context while excluding content, screenshots, messages, and key values. Local storage, inspection, export, and deletion must be participant controlled.
+  \item \textbf{Keep measurement stable across conditions.} The same intention and post-session questions should be used throughout collection and intervention so that the mid-session prompt is the only randomized interface difference.
+  \item \textbf{Make prediction and intervention auditable.} Exported records should support weak baselines, one-, three-, and five-minute prediction, participant-aware validation, a frozen deployment model, and verification of every eligibility and randomization decision.
 \end{enumerate}
-
-\subsection{Chrome Extension Architecture}
-The collection prototype uses Chrome Manifest V3 with React and TypeScript. It contains a background service worker for session monitoring, content scripts for aggregate activity counting on monitored domains, a popup for quick status, an options page for domain configuration and privacy controls, and a dashboard for summaries and export. The intervention build will add a fixed local model evaluated after three minutes, an elevated-risk threshold, a 1:1 session-level randomizer, and a reflective prompt. No remote inference service is required.
 
 Figure~\ref{fig:architecture} summarizes the planned DriftSense extension and local machine-learning pipeline.
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
-  \fbox{\parbox{0.94\linewidth}{\centering
-    \textbf{Open monitored domain} $\rightarrow$ \textbf{Declare intention} $\rightarrow$ \textbf{Privacy-safe activity windows} $\rightarrow$ \textbf{Three-minute risk estimate}\\[4pt]
-    Elevated risk $\rightarrow$ \textbf{1:1 randomization} $\rightarrow$ reflective prompt \textit{or} silent control\\[4pt]
-    All sessions $\rightarrow$ \textbf{same post-session reflection} $\rightarrow$ \textbf{local storage and participant-controlled export}
-  }}
+  \includegraphics[width=\linewidth]{figures/driftsense-architecture.pdf}
   \caption{DriftSense architecture and intervention decision flow. The prediction and randomization steps are disabled during the 10-day collection phase and enabled with a frozen model during the seven-day intervention phase.}
   \Description{A flow from monitored-domain access through intention declaration and privacy-safe activity logging to a three-minute risk estimate. Elevated-risk sessions are randomized to a reflective prompt or silent control, and all sessions receive the same post-session reflection before local storage and export.}
   \label{fig:architecture}
 \end{figure}
+
+\subsection{Chrome Extension Architecture}
+The collection prototype uses Chrome Manifest V3 with React and TypeScript. It contains a background service worker for session monitoring, content scripts for aggregate activity counting on monitored domains, a popup for quick status, an options page for domain configuration and privacy controls, and a dashboard for summaries and export. The intervention build will add a fixed local model evaluated after three minutes, an elevated-risk threshold, a 1:1 session-level randomizer, and a reflective prompt. No remote inference service is required.
 
 \subsection{Monitored Domains and Study Phases}
 Users configure domains that they consider drift-prone or worth studying. Default examples include \texttt{youtube.com}, \texttt{facebook.com}, \texttt{reddit.com}, \texttt{instagram.com}, \texttt{x.com}, \texttt{linkedin.com}, news websites, and custom domains. DriftSense only tracks configured domains.
@@ -243,23 +263,13 @@ y =
 
 Figure~\ref{fig:labeling-flow} illustrates the session-labeling flow from monitored-domain access through intention declaration, activity-window logging, and post-session reflection.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \IfFileExists{figures/figure2-v2.png}{%
-    \includegraphics[width=\linewidth]{figures/figure2-v2.png}%
-  }{%
-    \fbox{\parbox{0.94\linewidth}{\centering
-      \textbf{Open monitored domain} $\rightarrow$ \textbf{Declare intended activity} $\rightarrow$ \textbf{Browse session} $\rightarrow$ \textbf{Post-session reflection}\\[4pt]
-      \small Work/study; learning/tutorial; specific information; communication/community; planned entertainment/break; open-ended browsing; accidental open\\[4pt]
-      \textit{Yes, it matched} $\rightarrow 0$ \quad
-      \textit{No, I drifted} $\rightarrow 1$ \quad
-      Other responses $\rightarrow$ non-binary
-    }}%
-  }
+  \includegraphics[width=\textwidth]{figures/driftsense-labeling.pdf}
   \caption{DriftSense session-labeling flow. Both phases use the same intention declaration and post-session reflection so that the label definition remains stable.}
   \Description{A flow diagram showing a monitored domain opening, an intention prompt with seven neutral intended-activity choices, browsing with activity windows, a post-session reflection prompt, and the mapping from reflection answers to non-drift, drift, or separate non-binary outcomes.}
   \label{fig:labeling-flow}
-\end{figure}
+\end{figure*}
 
 \subsection{Dashboard and Export}
 The participant-facing dashboard is a local reflection and transparency interface organized into five views. An \textit{Overview} reports monitored and labeled sessions, self-reported drift rate, average duration, and monitoring status. \textit{Trends} visualizes delayed aggregate patterns. \textit{Intention Alignment} compares intention categories, domains, and post-session outcomes. \textit{Session History} exposes the allowlisted metadata for individual records, and \textit{Data and Privacy} supports export and deletion. These views use descriptive language and do not infer productivity, attention, addiction, or mental state.
@@ -311,17 +321,13 @@ Activity windows are truncated at one, three, and five minutes to construct earl
 
 Figure~\ref{fig:model-pipeline} shows the planned preprocessing, modeling, and evaluation pipeline for tabular drift prediction and model-assisted reflection.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \fbox{\parbox{0.94\linewidth}{\centering
-    \textbf{Private participant exports} $\rightarrow$ schema and overlap checks $\rightarrow$ time-truncated features\\[4pt]
-    $\rightarrow$ time/domain baselines; intention-only; activity-only; intention+activity logistic regression; optional Random Forest\\[4pt]
-    $\rightarrow$ participant-aware and chronological evaluation $\rightarrow$ frozen three-minute model and threshold
-  }}
-  \caption{Planned modeling pipeline. A deliberately small set of tabular models is evaluated before one three-minute model is frozen for local intervention use.}
-  \Description{A pipeline from private participant exports through validation, time-truncated features, baseline and logistic-regression models, participant-aware and chronological evaluation, and a frozen three-minute intervention model.}
+  \includegraphics[width=\textwidth]{figures/driftsense-study-design.pdf}
+  \caption{Planned study and evaluation pipeline. RQ1 evaluates prediction using Phase 1 only; RQ2 evaluates the prompt using randomized eligible Phase 2 sessions. The Phase 1--Phase 2 change is not the causal intervention contrast.}
+  \Description{A ten-day observation phase is divided into development and chronological holdout data, followed by a frozen model and a seven-day intervention phase. The left analysis evaluates prediction baselines and models. The right analysis compares randomized reflective-prompt and silent-control sessions.}
   \label{fig:model-pipeline}
-\end{figure}
+\end{figure*}
 
 \subsection{Baselines}
 DriftSense evaluates four baselines before the main models:
@@ -404,6 +410,16 @@ For RQ1, model performance is summarized across the predefined splits with 95\% 
 For RQ2, analysis is restricted to randomized eligible sessions with binary post-session labels and follows assigned condition. For each participant with observations in both assignments, drift proportions are calculated separately for reflective-prompt and silent-control sessions. The prespecified simple comparison is a paired Wilcoxon signed-rank test on participant-level drift proportions, accompanied by the paired difference and a 95\% participant-bootstrap confidence interval. Assignment-specific missing-label rates are reported. If the number of eligible sessions supports it, a mixed-effects logistic regression with a participant random intercept and prompt assignment as the main fixed effect is added as a sensitivity analysis.
 
 Secondary outcomes are analyzed descriptively or with paired participant-level comparisons. Open-ended responses are summarized with a transparent lightweight content analysis. No individual mechanism is declared effective from a Phase 1--Phase 2 before--after difference alone. Results will be described as short-term and preliminary; a seven-day intervention cannot establish durable behavior change. No results, significance values, or effect sizes will be inserted until the real consented dataset has been analyzed.
+
+\subsection{Reproducibility and Reporting Commitments}
+Before recruitment, the study materials will specify the session boundary rules, seven intention options, reflection wording, binary-label mapping, prompt cap, exclusion rules, and the distinction between confirmatory and exploratory outcomes. Before Phase 2, the extension build will record a versioned model artifact, preprocessing specification, decision threshold, and randomization procedure. The analysis will produce a participant-flow summary and an accountable session-flow summary from all recorded sessions to the final RQ1 and RQ2 analysis sets. Counts will be reported for sessions ending before three minutes, missing reflection labels, incomplete activity windows, threshold eligibility, suppression by the daily cap, randomized assignment, and prompt delivery failures.
+
+Code, schemas, isolated non-participant test fixtures, and analysis scripts may be released after review, but raw participant exports will not be placed in the public repository. A de-identified derived dataset will be shared only if consent, ethics approval, and disclosure-risk review permit it. Otherwise, reproducibility will rely on field-level documentation, deterministic preprocessing, fixed random seeds, environment information, and aggregate or disclosure-safe outputs.
+
+\subsection{Anticipated Validity Boundaries}
+The primary construct is a participant's post-session judgment of alignment, not an objective measurement of attention. Labels may vary across people and may be influenced by recall, social desirability, repeated prompting, or the intervention itself. Reporting label-completion and non-binary outcomes by assignment is therefore part of the main validity assessment rather than a housekeeping detail.
+
+The causal estimate for RQ2 applies only to sessions that meet the frozen model's eligibility rule and are not suppressed by the prompt cap. It does not estimate the effect of prompting every browser session or every user. Randomization protects the prompt-versus-silent comparison within this eligible set, while the fixed phase order prevents a causal interpretation of the overall Phase 1--Phase 2 change. A 15--20-person convenience sample also limits precision and generalization, particularly for participant-held-out prediction. Finally, a seven-day intervention can establish short-term feasibility and preliminary efficacy only; it cannot demonstrate persistence after the extension is removed. These boundaries will remain explicit even if the observed effects are favorable.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

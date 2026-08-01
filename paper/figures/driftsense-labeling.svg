@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="720" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+  <title id="title">DriftSense intention and labeling flow</title>
+  <desc id="desc">The flow begins with a monitored domain, records one of seven neutral intentions, observes aggregate browsing activity, and asks a post-session reflection. Explicit matched and drifted answers map to binary labels, while other or missing answers remain separate.</desc>
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <style>
+      @page { size: 1600px 720px; margin: 0; }
+      html, body { margin: 0; }
+      text { font-family: Arial, Helvetica, sans-serif; fill: #172033; }
+      text[fill="#ffffff"] { fill: #ffffff; }
+      .title { font-size: 34px; font-weight: 700; letter-spacing: 0.5px; }
+      .step { font-size: 25px; font-weight: 700; }
+      .body { font-size: 19px; }
+      .small { font-size: 17px; }
+      .tiny { font-size: 15px; }
+      .box { stroke: #334155; stroke-width: 2.5; rx: 16; }
+      .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow2); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="720" fill="#ffffff"/>
+  <text x="56" y="58" class="title">FROM DECLARED PURPOSE TO A SESSION-LEVEL LABEL</text>
+
+  <rect x="56" y="115" width="220" height="164" class="box" fill="#f4f7fb"/>
+  <circle cx="93" cy="152" r="22" fill="#183153"/>
+  <text x="93" y="160" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">1</text>
+  <text x="127" y="160" class="step">Open</text>
+  <text x="84" y="207" class="body">Configured domain</text>
+  <text x="84" y="238" class="small" fill="#475569">Hostname only</text>
+
+  <path d="M 276 197 L 324 197" class="arrow"/>
+
+  <rect x="326" y="91" width="400" height="310" class="box" fill="#e8f0fa"/>
+  <circle cx="363" cy="128" r="22" fill="#3b6ea8"/>
+  <text x="363" y="136" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">2</text>
+  <text x="397" y="136" class="step">Declare intended activity</text>
+  <text x="358" y="181" class="body">• Work or study task</text>
+  <text x="358" y="214" class="body">• Learning or tutorial</text>
+  <text x="358" y="247" class="body">• Specific information</text>
+  <text x="358" y="280" class="body">• Communication or community</text>
+  <text x="358" y="313" class="body">• Planned entertainment or break</text>
+  <text x="358" y="346" class="body">• Open-ended browsing</text>
+  <text x="358" y="379" class="body">• Opened accidentally</text>
+
+  <path d="M 726 197 L 774 197" class="arrow"/>
+
+  <rect x="776" y="115" width="280" height="164" class="box" fill="#f4f7fb"/>
+  <circle cx="813" cy="152" r="22" fill="#183153"/>
+  <text x="813" y="160" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">3</text>
+  <text x="847" y="160" class="step">Browse</text>
+  <text x="804" y="207" class="body">Aggregate activity windows</text>
+  <text x="804" y="238" class="small" fill="#475569">No content inspection</text>
+
+  <path d="M 1056 197 L 1104 197" class="arrow"/>
+
+  <rect x="1106" y="91" width="438" height="310" class="box" fill="#e5f4f2"/>
+  <circle cx="1143" cy="128" r="22" fill="#1c7c72"/>
+  <text x="1143" y="136" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">4</text>
+  <text x="1177" y="136" class="step">Reflect after session</text>
+  <text x="1138" y="183" class="body">Did this visit match your</text>
+  <text x="1138" y="211" class="body">original intention?</text>
+  <rect x="1138" y="236" width="374" height="38" rx="8" fill="#ffffff" stroke="#1c7c72" stroke-width="1.5"/>
+  <text x="1155" y="261" class="small">Yes, it matched</text>
+  <rect x="1138" y="281" width="374" height="38" rx="8" fill="#ffffff" stroke="#b64b4b" stroke-width="1.5"/>
+  <text x="1155" y="306" class="small">No, I drifted</text>
+  <text x="1138" y="350" class="small">Continue intentionally · Save for later</text>
+  <text x="1138" y="378" class="tiny" fill="#475569">Missing answer remains missing</text>
+
+  <path d="M 1228 401 L 1228 460 L 498 460 L 498 494" class="arrow"/>
+  <path d="M 1325 401 L 1325 494" class="arrow"/>
+
+  <rect x="326" y="496" width="344" height="116" class="box" fill="#e5f4f2"/>
+  <text x="498" y="536" text-anchor="middle" class="step">Binary target</text>
+  <text x="498" y="575" text-anchor="middle" class="body">matched = 0  ·  drifted = 1</text>
+  <text x="498" y="599" text-anchor="middle" class="tiny" fill="#475569">Primary prediction and prompt analyses</text>
+
+  <rect x="1130" y="496" width="390" height="116" class="box" fill="#fff7e8"/>
+  <text x="1325" y="536" text-anchor="middle" class="step">Separate outcomes</text>
+  <text x="1325" y="573" text-anchor="middle" class="body">continue · save · missing</text>
+  <text x="1325" y="599" text-anchor="middle" class="tiny" fill="#475569">Never recoded as non-drift</text>
+
+  <rect x="56" y="652" width="1488" height="44" rx="11" fill="#183153"/>
+  <text x="800" y="681" text-anchor="middle" font-size="20" font-weight="700" fill="#ffffff">Alignment is defined by the participant: work is not automatically non-drift, and leisure is not automatically drift.</text>
+</svg>

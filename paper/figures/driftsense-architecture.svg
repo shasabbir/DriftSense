@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
+  <title id="title">DriftSense local-first system architecture</title>
+  <desc id="desc">A browser session flows from declared intention through aggregate activity sensing to a frozen three-minute model. Elevated-risk sessions are randomized to a reflective prompt or silent control. All sessions receive the same post-session reflection and remain within a local privacy boundary.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <style>
+      @page { size: 1600px 760px; margin: 0; }
+      html, body { margin: 0; }
+      text { font-family: Arial, Helvetica, sans-serif; fill: #172033; }
+      text[fill="#ffffff"] { fill: #ffffff; }
+      .title { font-size: 34px; font-weight: 700; letter-spacing: 0.6px; }
+      .phase { font-size: 20px; font-weight: 700; }
+      .step { font-size: 23px; font-weight: 700; }
+      .body { font-size: 19px; }
+      .small { font-size: 17px; }
+      .tiny { font-size: 15px; }
+      .box { stroke: #334155; stroke-width: 2.5; rx: 16; }
+      .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="760" fill="#ffffff"/>
+  <text x="56" y="57" class="title">DRIFTSENSE: LOCAL-FIRST SESSION PIPELINE</text>
+
+  <rect x="950" y="24" width="270" height="48" rx="24" fill="#e8f0fa" stroke="#3b6ea8" stroke-width="2"/>
+  <text x="1085" y="55" text-anchor="middle" class="phase">Phase 1 · observe</text>
+  <rect x="1234" y="24" width="310" height="48" rx="24" fill="#e5f4f2" stroke="#1c7c72" stroke-width="2"/>
+  <text x="1389" y="55" text-anchor="middle" class="phase">Phase 2 · predict + test</text>
+
+  <rect x="56" y="108" width="250" height="202" class="box" fill="#f4f7fb"/>
+  <circle cx="93" cy="145" r="22" fill="#183153"/>
+  <text x="93" y="153" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">1</text>
+  <text x="126" y="153" class="step">Declare intention</text>
+  <text x="82" y="199" class="body">Neutral activity choice</text>
+  <text x="82" y="229" class="body">Optional planned duration</text>
+  <text x="82" y="270" class="small" fill="#475569">Access is always preserved</text>
+
+  <path d="M 306 209 L 350 209" class="arrow"/>
+
+  <rect x="352" y="108" width="286" height="202" class="box" fill="#f4f7fb"/>
+  <circle cx="389" cy="145" r="22" fill="#183153"/>
+  <text x="389" y="153" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">2</text>
+  <text x="422" y="153" class="step">Aggregate activity</text>
+  <text x="380" y="198" class="body">10-second windows</text>
+  <text x="380" y="229" class="small">clicks · scrolls · idle</text>
+  <text x="380" y="256" class="small">focus · typing count · video</text>
+  <text x="380" y="284" class="tiny" fill="#475569">No content or key values</text>
+
+  <path d="M 638 209 L 682 209" class="arrow"/>
+
+  <rect x="684" y="108" width="264" height="202" class="box" fill="#e8f0fa"/>
+  <circle cx="721" cy="145" r="22" fill="#3b6ea8"/>
+  <text x="721" y="153" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">3</text>
+  <text x="754" y="153" class="step">Frozen model</text>
+  <text x="712" y="199" class="body">Evaluate at 3 minutes</text>
+  <text x="712" y="230" class="small">intention + activity</text>
+  <rect x="715" y="253" width="202" height="34" rx="17" fill="#ffffff" stroke="#3b6ea8" stroke-width="1.8"/>
+  <text x="816" y="276" text-anchor="middle" class="tiny">Phase 1: disabled</text>
+
+  <path d="M 948 209 L 992 209" class="arrow"/>
+
+  <rect x="994" y="108" width="244" height="202" class="box" fill="#fff7e8"/>
+  <circle cx="1031" cy="145" r="22" fill="#d08720"/>
+  <text x="1031" y="153" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">4</text>
+  <text x="1064" y="153" class="step">Eligibility</text>
+  <text x="1022" y="199" class="body">Risk ≥ frozen threshold</text>
+  <text x="1022" y="231" class="small">required features present</text>
+  <text x="1022" y="260" class="small">daily cap not reached</text>
+  <text x="1022" y="288" class="tiny" fill="#475569">Not a claim that drift occurred</text>
+
+  <path d="M 1238 209 L 1282 209" class="arrow"/>
+
+  <rect x="1284" y="108" width="260" height="202" class="box" fill="#e5f4f2"/>
+  <circle cx="1321" cy="145" r="22" fill="#1c7c72"/>
+  <text x="1321" y="153" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">5</text>
+  <text x="1354" y="153" class="step">Randomize 1:1</text>
+  <rect x="1310" y="180" width="208" height="44" rx="10" fill="#ffffff" stroke="#1c7c72" stroke-width="1.8"/>
+  <text x="1414" y="208" text-anchor="middle" class="body">Reflective prompt</text>
+  <text x="1414" y="247" text-anchor="middle" class="small" fill="#475569">or</text>
+  <rect x="1310" y="258" width="208" height="36" rx="10" fill="#ffffff" stroke="#64748b" stroke-width="1.8"/>
+  <text x="1414" y="282" text-anchor="middle" class="small">Silent control</text>
+
+  <path d="M 1414 310 L 1414 358 L 1122 358 L 1122 389" class="arrow"/>
+  <path d="M 816 310 L 816 347 L 922 347 L 922 389" class="arrow"/>
+
+  <rect x="760" y="391" width="546" height="120" class="box" fill="#f8fafc"/>
+  <circle cx="802" cy="429" r="22" fill="#183153"/>
+  <text x="802" y="437" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">6</text>
+  <text x="838" y="436" class="step">Same post-session reflection</text>
+  <text x="790" y="478" class="body">Matched intention · drifted · continue · save for later</text>
+  <text x="790" y="501" class="tiny" fill="#475569">Binary labels use only explicit matched / drifted responses</text>
+
+  <path d="M 760 451 L 646 451" class="arrow"/>
+  <rect x="356" y="391" width="288" height="120" class="box" fill="#f8fafc"/>
+  <text x="386" y="431" class="step">Local records</text>
+  <text x="386" y="466" class="body">Inspect · export · delete</text>
+  <text x="386" y="494" class="small" fill="#475569">Participant-controlled</text>
+
+  <rect x="56" y="568" width="1488" height="142" rx="18" fill="#f8fafc" stroke="#183153" stroke-width="3" stroke-dasharray="10 7"/>
+  <text x="82" y="606" class="step">LOCAL PRIVACY BOUNDARY</text>
+  <rect x="82" y="625" width="630" height="58" rx="12" fill="#e5f4f2"/>
+  <text x="105" y="651" class="small" font-weight="700">Stored:</text>
+  <text x="180" y="651" class="small">configured hostname, timing, counts, focus,</text>
+  <text x="180" y="675" class="small">intention, model audit fields, reflection</text>
+  <rect x="738" y="625" width="780" height="58" rx="12" fill="#fceeed"/>
+  <text x="761" y="651" class="small" font-weight="700">Never stored:</text>
+  <text x="883" y="651" class="small">page text, titles, full URLs, screenshots, messages,</text>
+  <text x="883" y="675" class="small">passwords, key values, webcam, emotion, full history</text>
+</svg>
