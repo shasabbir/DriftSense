@@ -1,0 +1,896 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "DriftSense Dataset Insights",
+    "description": "Answer-first analysis of session outcomes, intention, activity signals, baselines, and data quality.",
+    "generatedAt": "2026-08-14T19:23:55.299858+00:00",
+    "cards": [
+      {
+        "id": "sessions_card",
+        "description": "Complete labeled session rows in the provided exports.",
+        "dataset": "overview",
+        "sourceId": "aggregate_analysis",
+        "metrics": [
+          {
+            "label": "Labeled sessions",
+            "field": "sessions",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "participants_card",
+        "description": "Anonymous participant codes represented in the exports.",
+        "dataset": "overview",
+        "sourceId": "aggregate_analysis",
+        "metrics": [
+          {
+            "label": "Participants",
+            "field": "participants",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "drift_card",
+        "description": "Share of sessions labeled drift by the post-session binary reflection.",
+        "dataset": "overview",
+        "sourceId": "aggregate_analysis",
+        "metrics": [
+          {
+            "label": "Self-reported drift",
+            "field": "drift_rate",
+            "format": "percent"
+          },
+          {
+            "label": "95% CI lower",
+            "field": "drift_ci_lower",
+            "format": "percent"
+          },
+          {
+            "label": "95% CI upper",
+            "field": "drift_ci_upper",
+            "format": "percent"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "intention_chart",
+        "title": "Self-reported drift rate by declared intention",
+        "subtitle": "Participant coverage is 18 for every category except accidental openings (14 participants).",
+        "type": "bar",
+        "dataset": "intentions",
+        "sourceId": "aggregate_analysis",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "intention",
+            "type": "nominal",
+            "label": "Declared intention"
+          },
+          "y": {
+            "field": "drift_rate",
+            "type": "quantitative",
+            "label": "Self-reported drift rate"
+          },
+          "tooltip": [
+            {
+              "field": "sessions",
+              "type": "quantitative",
+              "label": "Sessions"
+            },
+            {
+              "field": "participant_coverage",
+              "type": "quantitative",
+              "label": "Participants"
+            },
+            {
+              "field": "ci_lower",
+              "type": "quantitative",
+              "label": "95% CI lower",
+              "format": "percent"
+            },
+            {
+              "field": "ci_upper",
+              "type": "quantitative",
+              "label": "95% CI upper",
+              "format": "percent"
+            }
+          ]
+        }
+      },
+      {
+        "id": "model_chart",
+        "title": "Participant-held-out ROC-AUC by model family",
+        "subtitle": "Six group folds; each fold holds out three participants. Values use full-session aggregates.",
+        "type": "bar",
+        "dataset": "models",
+        "sourceId": "aggregate_analysis",
+        "valueFormat": "number",
+        "encodings": {
+          "x": {
+            "field": "model",
+            "type": "nominal",
+            "label": "Model family"
+          },
+          "y": {
+            "field": "roc_auc",
+            "type": "quantitative",
+            "label": "ROC-AUC"
+          },
+          "tooltip": [
+            {
+              "field": "f1",
+              "type": "quantitative",
+              "label": "F1"
+            },
+            {
+              "field": "accuracy",
+              "type": "quantitative",
+              "label": "Accuracy"
+            },
+            {
+              "field": "auc_ci_lower",
+              "type": "quantitative",
+              "label": "95% CI lower"
+            },
+            {
+              "field": "auc_ci_upper",
+              "type": "quantitative",
+              "label": "95% CI upper"
+            }
+          ]
+        }
+      },
+      {
+        "id": "overrun_chart",
+        "title": "Self-reported drift rate by intended-time overrun",
+        "subtitle": "The final band contains only 10 sessions and should not be treated as a stable reversal.",
+        "type": "bar",
+        "dataset": "overrun_bands",
+        "sourceId": "aggregate_analysis",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "band",
+            "type": "nominal",
+            "label": "Observed duration relative to intention"
+          },
+          "y": {
+            "field": "drift_rate",
+            "type": "quantitative",
+            "label": "Self-reported drift rate"
+          },
+          "tooltip": [
+            {
+              "field": "sessions",
+              "type": "quantitative",
+              "label": "Sessions"
+            }
+          ]
+        }
+      },
+      {
+        "id": "activity_chart",
+        "title": "Median activity difference for drift versus aligned sessions",
+        "subtitle": "Relative difference in medians; positive values are higher in self-reported drift sessions.",
+        "type": "bar",
+        "dataset": "activity",
+        "sourceId": "aggregate_analysis",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "signal",
+            "type": "nominal",
+            "label": "Signal"
+          },
+          "y": {
+            "field": "relative_difference",
+            "type": "quantitative",
+            "label": "Relative median difference"
+          },
+          "tooltip": [
+            {
+              "field": "aligned_median",
+              "type": "quantitative",
+              "label": "Aligned median"
+            },
+            {
+              "field": "drift_median",
+              "type": "quantitative",
+              "label": "Drift median"
+            },
+            {
+              "field": "unit",
+              "type": "nominal",
+              "label": "Unit"
+            }
+          ]
+        }
+      },
+      {
+        "id": "daily_chart",
+        "title": "Daily self-reported drift rate",
+        "subtitle": "July 19\u201331, 2026; daily denominators range from 39 to 58 sessions.",
+        "type": "line",
+        "dataset": "daily",
+        "sourceId": "aggregate_analysis",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "date",
+            "type": "temporal",
+            "label": "Date"
+          },
+          "y": {
+            "field": "drift_rate",
+            "type": "quantitative",
+            "label": "Self-reported drift rate"
+          },
+          "tooltip": [
+            {
+              "field": "sessions",
+              "type": "quantitative",
+              "label": "Sessions"
+            }
+          ]
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "youtube_table",
+        "title": "YouTube sessions by declared intention",
+        "subtitle": "Exact counts and self-reported outcomes for the most frequently observed domain.",
+        "dataset": "youtube_intentions",
+        "sourceId": "aggregate_analysis",
+        "defaultSort": {
+          "field": "sessions",
+          "direction": "desc"
+        },
+        "columns": [
+          {
+            "field": "intention",
+            "label": "Declared intention",
+            "type": "text"
+          },
+          {
+            "field": "sessions",
+            "label": "Sessions",
+            "format": "number"
+          },
+          {
+            "field": "drift_rate",
+            "label": "Self-reported drift",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "model_table",
+        "title": "Exploratory model metrics",
+        "subtitle": "Thresholds are selected in each training fold for F1; ROC-AUC is threshold-independent.",
+        "dataset": "models",
+        "sourceId": "aggregate_analysis",
+        "defaultSort": {
+          "field": "roc_auc",
+          "direction": "desc"
+        },
+        "columns": [
+          {
+            "field": "model",
+            "label": "Model",
+            "type": "text"
+          },
+          {
+            "field": "roc_auc",
+            "label": "ROC-AUC",
+            "format": "number"
+          },
+          {
+            "field": "accuracy",
+            "label": "Accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "precision",
+            "label": "Precision",
+            "format": "percent"
+          },
+          {
+            "field": "recall",
+            "label": "Recall",
+            "format": "percent"
+          },
+          {
+            "field": "f1",
+            "label": "F1",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "quality_table",
+        "title": "Data-quality checks",
+        "subtitle": "Structural validity is high; provenance and naturalness require confirmation.",
+        "dataset": "quality_checks",
+        "sourceId": "aggregate_analysis",
+        "defaultSort": {
+          "field": "status",
+          "direction": "desc"
+        },
+        "columns": [
+          {
+            "field": "check",
+            "label": "Check",
+            "type": "text"
+          },
+          {
+            "field": "status",
+            "label": "Status",
+            "type": "text"
+          },
+          {
+            "field": "evidence",
+            "label": "Evidence",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "participant_exports",
+        "label": "DriftSense participant session exports (18 CSV files)",
+        "path": "driftsense_data_final/participants/*.csv"
+      },
+      {
+        "id": "aggregate_analysis",
+        "label": "Reproducible aggregate analysis summary",
+        "path": "driftsense_data_final/analysis/analysis_summary.json",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT\n    session_id,\n    participant_id,\n    start_time,\n    domain,\n    declared_intention,\n    intended_duration_minutes,\n    duration_seconds,\n    click_count,\n    scroll_count,\n    keyboard_activity_count,\n    idle_seconds,\n    focus_loss_count,\n    drift_label,\n    source_file\nFROM session_exports\nORDER BY participant_id, start_time, session_id",
+          "description": "Selects validated session rows from an in-memory SQLite table loaded from the 18 CSV exports; the reviewed Python script then computes the aggregate report datasets.",
+          "executed_at": "2026-08-14T19:23:55.299858+00:00",
+          "tables_used": [
+            "driftsense_data_final/participants/*.csv"
+          ],
+          "filters": [
+            "All rows in the 18 supplied participant CSV files",
+            "Binary post-session labels only; the supplied files contain no missing/non-binary labels",
+            "Participant-grouped folds for exploratory model evaluation"
+          ],
+          "metric_definitions": [
+            "Self-reported drift rate = sessions with drift_label = 1 divided by labeled sessions.",
+            "ROC-AUC = threshold-independent ranking performance on held-out participants.",
+            "Confidence intervals = percentile intervals from participant-clustered bootstrap resamples."
+          ]
+        }
+      },
+      {
+        "id": "analysis_code",
+        "label": "Standard-library analysis code",
+        "path": "driftsense_data_final/analysis/analyze_dataset.py"
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# DriftSense Dataset Insights"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "body": "## Executive Summary\n\n- **Declared intention is the clearest separator.** Open-ended browsing has a 62.1% self-reported drift rate, +30.4 percentage points above task-directed sessions; the participant-bootstrap 95% interval is +24.2 percentage points to +37.5 percentage points.\n- **Domain alone is weak.** Its participant-held-out ROC-AUC is 0.483, while the same domain\u2014especially YouTube\u2014contains both low- and high-drift intention contexts.\n- **Combining intention with full-session activity improves ranking, but only modestly.** The exploratory combined model reaches ROC-AUC 0.627 (95% participant-bootstrap interval 0.603\u20130.654), above intention-only (0.593) and activity-only (0.548). This is not an early-prediction result.\n- **Treat the dataset as synthetic or heavily curated until provenance is confirmed.** All 633 rows are complete and binary-labeled, and 92.1% of sessions start exactly on a quarter-hour\u2014an unusually regular pattern for natural browser telemetry.\n",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "overview_metrics",
+        "type": "metric-strip",
+        "cardIds": [
+          "sessions_card",
+          "participants_card",
+          "drift_card"
+        ]
+      },
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## What these numbers mean\n\nA **session** is one completed row in the supplied 13-column export. **Drift** means the participant selected the binary post-session response mapped to `drift_label = 1`; it is not a direct measure of attention, emotion, diagnosis, or productivity. All activity features are aggregate counts or durations for the complete session."
+      },
+      {
+        "id": "intention_finding",
+        "type": "markdown",
+        "body": "## Intention separates sessions more clearly than domain\n\n**Accidental openings and open-ended browsing are the highest-risk contexts in this dataset.** Accidental openings are labeled drift in 76.7% of 30 sessions, while open-ended browsing is 62.1% across 87 sessions. By comparison, work/study, learning/tutorial, specific-information, and planned-break sessions cluster near 31\u201333%. The open-ended-versus-task-directed gap is +30.4 percentage points, with a participant-bootstrap 95% interval that remains above zero. This supports the project\u2019s intention-aware framing without implying that any intention determines an outcome.",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "intention_visual",
+        "type": "chart",
+        "chartId": "intention_chart"
+      },
+      {
+        "id": "domain_finding",
+        "type": "markdown",
+        "body": "## The same domain can contain aligned and drift sessions\n\n**YouTube illustrates why domain blocking is too coarse.** Learning/tutorial sessions on YouTube show 25.0% self-reported drift (6 of 24), open-ended browsing shows 63.6% (14 of 22), and planned entertainment/break shows 29.7% (11 of 37). Small cells should not be overread, but the within-domain spread is consistent with the weak participant-held-out domain baseline. The implication is narrow: domain adds context, while declared purpose changes how the same destination should be interpreted.",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "youtube_evidence",
+        "type": "table",
+        "tableId": "youtube_table"
+      },
+      {
+        "id": "model_finding",
+        "type": "markdown",
+        "body": "## Combined signals improve ranking, but not enough for deployment claims\n\n**The combined exploratory model ranks held-out participants\u2019 sessions better than the required alternatives.** Its ROC-AUC is 0.627, compared with 0.593 for intention-only, 0.548 for activity-only, 0.552 for the time threshold, and 0.483 for domain. Participant-bootstrap contrasts put the combined-minus-intention gain at 0.034 (95% interval 0.001\u20130.063). The direction supports further study, but ROC-AUC 0.627 is modest and the thresholds produce many false positives. Do not call this a validated drift detector.",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "model_visual",
+        "type": "chart",
+        "chartId": "model_chart"
+      },
+      {
+        "id": "model_exact",
+        "type": "table",
+        "tableId": "model_table"
+      },
+      {
+        "id": "time_activity_finding",
+        "type": "markdown",
+        "body": "## Time alone is insufficient; activity differences are directional, not definitive\n\n**Self-reported drift generally rises as sessions run 1.5\u20133 times longer than intended, but the pattern is not monotonic.** Drift is 36.7% at or below the intended duration, 45.5% at 1.5\u20132.0\u00d7, and 52.8% at 2.0\u20133.0\u00d7; the >3\u00d7 band falls to 20.0% but contains only 10 sessions. Activity-rate medians show 19.0% more focus losses per minute and 12.0% more scrolling per minute in drift sessions, while drift sessions are 12.2% shorter at the median. These mixed directions explain why simple rules are brittle and why lightweight signals should be modeled together rather than interpreted individually.",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "overrun_visual",
+        "type": "chart",
+        "chartId": "overrun_chart"
+      },
+      {
+        "id": "activity_visual",
+        "type": "chart",
+        "chartId": "activity_chart"
+      },
+      {
+        "id": "chronology_finding",
+        "type": "markdown",
+        "body": "## Later sessions have a higher drift rate in this dataset\n\n**The second chronological half of each participant\u2019s sessions is +11.4 percentage points higher than the first half** (34.2% versus 45.6%); the participant-bootstrap 95% interval is +4.3 percentage points to +17.4 percentage points. The daily series is volatile rather than smoothly increasing, so this could reflect changing session mix, repeated-reflection effects, constructed data patterns, or participant behavior. It is a temporal validation question, not evidence of causality.",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "daily_visual",
+        "type": "chart",
+        "chartId": "daily_chart"
+      },
+      {
+        "id": "quality_finding",
+        "type": "markdown",
+        "body": "## Structural quality is high, but provenance is the gating issue\n\n**The files pass the documented structural checks:** all schemas match, no cells are missing, session IDs are unique, participant filenames agree, numeric ranges are valid, and no participant sessions overlap. **Naturalness is the concern:** every row has a binary reflection and 92.1% of starts land exactly on a quarter-hour. Those patterns are plausible for generated fixtures or a curated schedule but unusual for unconstrained in-the-wild telemetry. Until provenance is confirmed, the safest use is pipeline and analysis validation\u2014not empirical claims in the paper.",
+        "sourceId": "aggregate_analysis"
+      },
+      {
+        "id": "quality_evidence",
+        "type": "table",
+        "tableId": "quality_table"
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. **Confirm provenance in writing.** Mark the files as synthetic, pilot, curated, or real participant exports; do not mix categories in one empirical result.\n2. **Add activity-window exports.** Final session totals cannot support the required 1-, 3-, and 5-minute evaluation.\n3. **Freeze the preprocessing and split plan.** Keep participant-held-out results separate from known-participant chronological results, and retain all required baselines.\n4. **Calibrate thresholds only after model selection.** The exploratory F1 thresholds favor recall and create many false positives; threshold choice must reflect the intended reflective intervention cost.\n5. **Investigate the later-half increase.** Check intention mix, participant composition, reflection behavior, and collection procedures before treating it as behavioral change."
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- Are these sessions synthetic fixtures, scheduled pilot data, or consented field exports?\n- Where are the per-minute activity-window records needed for early prediction?\n- Was full binary label completion enforced by construction, or were unlabeled/non-binary sessions excluded before this folder was created?\n- What collection or study event changed between participants\u2019 first and second chronological halves?"
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "body": "## Caveats and assumptions\n\n- Results describe 633 supplied, fully labeled sessions from 18 anonymous participant codes collected from July 19\u201331, 2026 (UTC+06:00).\n- The label is a post-session self-report of intention mismatch; it is not true attention, addiction, ADHD, mental health, or emotion detection.\n- Model metrics are exploratory, use final session aggregates, and are not early-prediction or intervention-effect estimates.\n- Observational associations do not establish causality. Domain and intention cells with small counts are unstable.\n- Participant-bootstrap intervals reflect clustering in this dataset; they do not repair uncertain provenance or selection bias.",
+        "sourceId": "aggregate_analysis"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-14T19:23:55.299858+00:00",
+    "status": "ready",
+    "datasets": {
+      "overview": [
+        {
+          "sessions": 633,
+          "participants": 18,
+          "drift_rate": 0.39968404423380727,
+          "drift_ci_lower": 0.35471849122744264,
+          "drift_ci_upper": 0.44175404023495757
+        }
+      ],
+      "intentions": [
+        {
+          "intention": "Accidental open",
+          "sessions": 30,
+          "participant_coverage": 14,
+          "drift_rate": 0.7666666666666667,
+          "ci_lower": 0.6296296296296297,
+          "ci_upper": 0.88,
+          "median_duration_minutes": 4.475
+        },
+        {
+          "intention": "Open-ended browsing",
+          "sessions": 87,
+          "participant_coverage": 18,
+          "drift_rate": 0.6206896551724138,
+          "ci_lower": 0.5632183908045977,
+          "ci_upper": 0.6854012841091494,
+          "median_duration_minutes": 19.35
+        },
+        {
+          "intention": "Communication/community",
+          "sessions": 91,
+          "participant_coverage": 18,
+          "drift_rate": 0.45054945054945056,
+          "ci_lower": 0.3684210526315789,
+          "ci_upper": 0.5454545454545454,
+          "median_duration_minutes": 14.133333333333333
+        },
+        {
+          "intention": "Specific information",
+          "sessions": 107,
+          "participant_coverage": 18,
+          "drift_rate": 0.32710280373831774,
+          "ci_lower": 0.23711340206185566,
+          "ci_upper": 0.4166666666666667,
+          "median_duration_minutes": 11.916666666666666
+        },
+        {
+          "intention": "Planned entertainment/break",
+          "sessions": 87,
+          "participant_coverage": 18,
+          "drift_rate": 0.3218390804597701,
+          "ci_lower": 0.21794871794871795,
+          "ci_upper": 0.43373493975903615,
+          "median_duration_minutes": 27.216666666666665
+        },
+        {
+          "intention": "Work/study",
+          "sessions": 121,
+          "participant_coverage": 18,
+          "drift_rate": 0.3140495867768595,
+          "ci_lower": 0.21428571428571427,
+          "ci_upper": 0.4027802757793765,
+          "median_duration_minutes": 26.0
+        },
+        {
+          "intention": "Learning/tutorial",
+          "sessions": 110,
+          "participant_coverage": 18,
+          "drift_rate": 0.3090909090909091,
+          "ci_lower": 0.23076923076923078,
+          "ci_upper": 0.39090909090909093,
+          "median_duration_minutes": 24.308333333333334
+        }
+      ],
+      "models": [
+        {
+          "model": "Majority class",
+          "roc_auc": 0.5,
+          "auc_ci_lower": 0.5,
+          "auc_ci_upper": 0.5,
+          "accuracy": 0.6003159557661928,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        {
+          "model": "Time threshold",
+          "roc_auc": 0.5521583107967547,
+          "auc_ci_lower": 0.5129940756267504,
+          "auc_ci_upper": 0.594730589033122,
+          "accuracy": 0.4439178515007899,
+          "precision": 0.41421143847487,
+          "recall": 0.9446640316205533,
+          "f1": 0.5759036144578313
+        },
+        {
+          "model": "Domain",
+          "roc_auc": 0.4826919076346994,
+          "auc_ci_lower": 0.4439103871698628,
+          "auc_ci_upper": 0.5266857314864154,
+          "accuracy": 0.4186413902053712,
+          "precision": 0.3883495145631068,
+          "recall": 0.7905138339920948,
+          "f1": 0.5208333333333334
+        },
+        {
+          "model": "Intention only",
+          "roc_auc": 0.5929009777407946,
+          "auc_ci_lower": 0.5552130310942321,
+          "auc_ci_upper": 0.6366801721463355,
+          "accuracy": 0.4423380726698262,
+          "precision": 0.4042145593869732,
+          "recall": 0.83399209486166,
+          "f1": 0.5445161290322581
+        },
+        {
+          "model": "Activity only",
+          "roc_auc": 0.5479092989390473,
+          "auc_ci_lower": 0.5064909182205394,
+          "auc_ci_upper": 0.5843464706593914,
+          "accuracy": 0.47235387045813587,
+          "precision": 0.4161490683229814,
+          "recall": 0.7944664031620553,
+          "f1": 0.5461956521739131
+        },
+        {
+          "model": "Intention + activity",
+          "roc_auc": 0.626586228416892,
+          "auc_ci_lower": 0.6033165995206641,
+          "auc_ci_upper": 0.6540975468927255,
+          "accuracy": 0.5418641390205371,
+          "precision": 0.4547677261613692,
+          "recall": 0.7351778656126482,
+          "f1": 0.5619335347432024
+        }
+      ],
+      "overrun_bands": [
+        {
+          "band": "At or below intended time",
+          "sessions": 226,
+          "drift_rate": 0.3672566371681416
+        },
+        {
+          "band": "1.0-1.5x intended time",
+          "sessions": 234,
+          "drift_rate": 0.38461538461538464
+        },
+        {
+          "band": "1.5-2.0x intended time",
+          "sessions": 110,
+          "drift_rate": 0.45454545454545453
+        },
+        {
+          "band": "2.0-3.0x intended time",
+          "sessions": 53,
+          "drift_rate": 0.5283018867924528
+        },
+        {
+          "band": "More than 3x intended time",
+          "sessions": 10,
+          "drift_rate": 0.2
+        }
+      ],
+      "activity": [
+        {
+          "signal": "Session duration",
+          "relative_difference": -0.12157534246575327,
+          "aligned_median": 19.466666666666665,
+          "drift_median": 17.1,
+          "unit": "minutes"
+        },
+        {
+          "signal": "Idle share of session",
+          "relative_difference": 0.03305409674383932,
+          "aligned_median": 0.1540625317484507,
+          "drift_median": 0.1591549295774648,
+          "unit": "share"
+        },
+        {
+          "signal": "Scroll events per minute",
+          "relative_difference": 0.11970111650003253,
+          "aligned_median": 3.0165967922522405,
+          "drift_median": 3.3776867963152504,
+          "unit": "events/min"
+        },
+        {
+          "signal": "Focus losses per minute",
+          "relative_difference": 0.18985906566590763,
+          "aligned_median": 0.09378699345311323,
+          "drift_median": 0.1115933044017359,
+          "unit": "events/min"
+        },
+        {
+          "signal": "Clicks per minute",
+          "relative_difference": -0.030498914886674274,
+          "aligned_median": 1.3399610124595907,
+          "drift_median": 1.2990936555891237,
+          "unit": "events/min"
+        },
+        {
+          "signal": "Keyboard activity per minute",
+          "relative_difference": 0.09473684210526301,
+          "aligned_median": 1.2145748987854252,
+          "drift_median": 1.3296398891966759,
+          "unit": "events/min"
+        }
+      ],
+      "daily": [
+        {
+          "date": "2026-07-19",
+          "sessions": 45,
+          "drift_rate": 0.26666666666666666
+        },
+        {
+          "date": "2026-07-20",
+          "sessions": 45,
+          "drift_rate": 0.26666666666666666
+        },
+        {
+          "date": "2026-07-21",
+          "sessions": 49,
+          "drift_rate": 0.4897959183673469
+        },
+        {
+          "date": "2026-07-22",
+          "sessions": 41,
+          "drift_rate": 0.3902439024390244
+        },
+        {
+          "date": "2026-07-23",
+          "sessions": 39,
+          "drift_rate": 0.3076923076923077
+        },
+        {
+          "date": "2026-07-24",
+          "sessions": 46,
+          "drift_rate": 0.391304347826087
+        },
+        {
+          "date": "2026-07-25",
+          "sessions": 58,
+          "drift_rate": 0.3103448275862069
+        },
+        {
+          "date": "2026-07-26",
+          "sessions": 46,
+          "drift_rate": 0.5652173913043478
+        },
+        {
+          "date": "2026-07-27",
+          "sessions": 56,
+          "drift_rate": 0.4107142857142857
+        },
+        {
+          "date": "2026-07-28",
+          "sessions": 50,
+          "drift_rate": 0.44
+        },
+        {
+          "date": "2026-07-29",
+          "sessions": 56,
+          "drift_rate": 0.5
+        },
+        {
+          "date": "2026-07-30",
+          "sessions": 55,
+          "drift_rate": 0.41818181818181815
+        },
+        {
+          "date": "2026-07-31",
+          "sessions": 47,
+          "drift_rate": 0.40425531914893614
+        }
+      ],
+      "youtube_intentions": [
+        {
+          "intention": "Accidental open",
+          "sessions": 1,
+          "drift_rate": 1.0
+        },
+        {
+          "intention": "Open-ended browsing",
+          "sessions": 22,
+          "drift_rate": 0.6363636363636364
+        },
+        {
+          "intention": "Planned entertainment/break",
+          "sessions": 37,
+          "drift_rate": 0.2972972972972973
+        },
+        {
+          "intention": "Learning/tutorial",
+          "sessions": 24,
+          "drift_rate": 0.25
+        },
+        {
+          "intention": "Specific information",
+          "sessions": 5,
+          "drift_rate": 0.2
+        },
+        {
+          "intention": "Work/study",
+          "sessions": 2,
+          "drift_rate": 0.0
+        }
+      ],
+      "quality_checks": [
+        {
+          "check": "Required 13-column schema",
+          "status": "Pass",
+          "evidence": "All 18 files match"
+        },
+        {
+          "check": "Missing values",
+          "status": "Pass",
+          "evidence": "0 missing cells"
+        },
+        {
+          "check": "Session uniqueness",
+          "status": "Pass",
+          "evidence": "0 duplicate session IDs"
+        },
+        {
+          "check": "Participant-time overlaps",
+          "status": "Pass",
+          "evidence": "0 overlaps"
+        },
+        {
+          "check": "Range validity",
+          "status": "Pass",
+          "evidence": "0 negative counts; idle never exceeds duration"
+        },
+        {
+          "check": "Timestamp naturalness",
+          "status": "Review",
+          "evidence": "92.1% start exactly on a quarter-hour"
+        },
+        {
+          "check": "Label completeness",
+          "status": "Review",
+          "evidence": "633/633 sessions have binary labels"
+        }
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "participant_exports",
+      "label": "DriftSense participant session exports (18 CSV files)",
+      "path": "driftsense_data_final/participants/*.csv"
+    },
+    {
+      "id": "aggregate_analysis",
+      "label": "Reproducible aggregate analysis summary",
+      "path": "driftsense_data_final/analysis/analysis_summary.json",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT\n    session_id,\n    participant_id,\n    start_time,\n    domain,\n    declared_intention,\n    intended_duration_minutes,\n    duration_seconds,\n    click_count,\n    scroll_count,\n    keyboard_activity_count,\n    idle_seconds,\n    focus_loss_count,\n    drift_label,\n    source_file\nFROM session_exports\nORDER BY participant_id, start_time, session_id",
+        "description": "Selects validated session rows from an in-memory SQLite table loaded from the 18 CSV exports; the reviewed Python script then computes the aggregate report datasets.",
+        "executed_at": "2026-08-14T19:23:55.299858+00:00",
+        "tables_used": [
+          "driftsense_data_final/participants/*.csv"
+        ],
+        "filters": [
+          "All rows in the 18 supplied participant CSV files",
+          "Binary post-session labels only; the supplied files contain no missing/non-binary labels",
+          "Participant-grouped folds for exploratory model evaluation"
+        ],
+        "metric_definitions": [
+          "Self-reported drift rate = sessions with drift_label = 1 divided by labeled sessions.",
+          "ROC-AUC = threshold-independent ranking performance on held-out participants.",
+          "Confidence intervals = percentile intervals from participant-clustered bootstrap resamples."
+        ]
+      }
+    },
+    {
+      "id": "analysis_code",
+      "label": "Standard-library analysis code",
+      "path": "driftsense_data_final/analysis/analyze_dataset.py"
+    }
+  ],
+  "package_info": {
+    "controls": {
+      "edit": false,
+      "refresh": false
+    }
+  }
+}

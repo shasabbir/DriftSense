@@ -1,0 +1,89 @@
+{
+  "audience": "product stakeholders",
+  "delivery_mode": "html",
+  "required_structure_mapping": {
+    "Title": "title",
+    "Executive summary": "executive_summary",
+    "Key findings with visual evidence": [
+      "intention_finding",
+      "domain_finding",
+      "model_finding",
+      "time_activity_finding",
+      "chronology_finding",
+      "quality_finding"
+    ],
+    "Recommended next steps": "next_steps",
+    "Further questions": "further_questions",
+    "Caveats and assumptions": "caveats"
+  },
+  "chart_map": [
+    {
+      "section": "intention_finding",
+      "question": "How does drift vary by declared intention?",
+      "family": "Comparison & Ranking",
+      "type": "bar",
+      "fields": [
+        "intention",
+        "drift_rate",
+        "sessions",
+        "participant_coverage"
+      ],
+      "claim": "Accidental and open-ended intentions have the highest drift rates."
+    },
+    {
+      "section": "model_finding",
+      "question": "Which feature family ranks held-out sessions best?",
+      "family": "Comparison & Ranking",
+      "type": "bar",
+      "fields": [
+        "model",
+        "roc_auc",
+        "auc_ci_lower",
+        "auc_ci_upper"
+      ],
+      "claim": "Combined intention and activity has the highest exploratory AUC."
+    },
+    {
+      "section": "time_activity_finding",
+      "question": "Does duration overrun map monotonically to drift?",
+      "family": "Comparison",
+      "type": "bar",
+      "fields": [
+        "band",
+        "drift_rate",
+        "sessions"
+      ],
+      "claim": "Time overrun is associated but not sufficient as a label."
+    },
+    {
+      "section": "time_activity_finding",
+      "question": "Which activity medians differ by outcome?",
+      "family": "Comparison",
+      "type": "bar",
+      "fields": [
+        "signal",
+        "relative_difference"
+      ],
+      "claim": "Activity differences are mixed and individually weak."
+    },
+    {
+      "section": "chronology_finding",
+      "question": "How does drift vary across collection dates?",
+      "family": "Trend",
+      "type": "line",
+      "fields": [
+        "date",
+        "drift_rate",
+        "sessions"
+      ],
+      "claim": "Daily rates are volatile and later sessions are higher overall."
+    }
+  ],
+  "palette_policy": "single-root preferred for each chart; neutral reference styling; color is not used as the sole semantic channel",
+  "omissions": {
+    "early_prediction": "No activity-window records were supplied.",
+    "intervention_effect": "No randomized intervention log was supplied.",
+    "causal_language": "Observational data cannot establish causality."
+  },
+  "privacy": "Only aggregate datasets are embedded in the report; no participant IDs or row-level sessions are exposed."
+}

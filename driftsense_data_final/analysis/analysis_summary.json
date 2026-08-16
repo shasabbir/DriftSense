@@ -1,0 +1,615 @@
+{
+  "source": {
+    "path": "driftsense_data_final/participants/*.csv",
+    "file_count": 18,
+    "session_count": 633,
+    "participant_count": 18,
+    "start": "2026-07-19T08:00:00+06:00",
+    "end": "2026-07-31T23:30:00+06:00",
+    "timezone": "UTC+06:00 (from source timestamps)",
+    "generated_at": "2026-08-14T19:23:55.299858+00:00"
+  },
+  "data_quality": {
+    "all_files_match_schema": true,
+    "missing_cells": 0,
+    "duplicate_session_ids": 0,
+    "exact_duplicate_rows": 0,
+    "filename_participant_mismatches": 0,
+    "overlapping_sessions": 0,
+    "negative_numeric_values": 0,
+    "idle_exceeds_duration": 0,
+    "non_binary_labels": 0,
+    "quarter_hour_start_share": 0.9210110584518167,
+    "zero_second_start_share": 0.9241706161137441,
+    "assessment": "Structurally clean, but the complete labels and highly rounded timestamps indicate synthetic or heavily curated data. Confirm provenance before treating this as field evidence."
+  },
+  "outcome": {
+    "drift_sessions": 253,
+    "aligned_sessions": 380,
+    "drift_rate": 0.39968404423380727,
+    "drift_rate_ci_95_participant_bootstrap": [
+      0.35471849122744264,
+      0.44175404023495757
+    ],
+    "participant_session_count": {
+      "min": 21,
+      "median": 33.5,
+      "max": 56
+    },
+    "participant_drift_rate": {
+      "min": 0.23809523809523808,
+      "median": 0.3920807453416149,
+      "max": 0.5757575757575758
+    }
+  },
+  "intentions": [
+    {
+      "intention": "accidental_open",
+      "label": "Accidental open",
+      "sessions": 30,
+      "participant_coverage": 14,
+      "drift_rate": 0.7666666666666667,
+      "ci_95": [
+        0.6296296296296297,
+        0.88
+      ],
+      "median_duration_minutes": 4.475
+    },
+    {
+      "intention": "open_ended_browsing",
+      "label": "Open-ended browsing",
+      "sessions": 87,
+      "participant_coverage": 18,
+      "drift_rate": 0.6206896551724138,
+      "ci_95": [
+        0.5632183908045977,
+        0.6854012841091494
+      ],
+      "median_duration_minutes": 19.35
+    },
+    {
+      "intention": "communication_or_community",
+      "label": "Communication/community",
+      "sessions": 91,
+      "participant_coverage": 18,
+      "drift_rate": 0.45054945054945056,
+      "ci_95": [
+        0.3684210526315789,
+        0.5454545454545454
+      ],
+      "median_duration_minutes": 14.133333333333333
+    },
+    {
+      "intention": "specific_information",
+      "label": "Specific information",
+      "sessions": 107,
+      "participant_coverage": 18,
+      "drift_rate": 0.32710280373831774,
+      "ci_95": [
+        0.23711340206185566,
+        0.4166666666666667
+      ],
+      "median_duration_minutes": 11.916666666666666
+    },
+    {
+      "intention": "planned_entertainment_or_break",
+      "label": "Planned entertainment/break",
+      "sessions": 87,
+      "participant_coverage": 18,
+      "drift_rate": 0.3218390804597701,
+      "ci_95": [
+        0.21794871794871795,
+        0.43373493975903615
+      ],
+      "median_duration_minutes": 27.216666666666665
+    },
+    {
+      "intention": "work_or_study",
+      "label": "Work/study",
+      "sessions": 121,
+      "participant_coverage": 18,
+      "drift_rate": 0.3140495867768595,
+      "ci_95": [
+        0.21428571428571427,
+        0.4027802757793765
+      ],
+      "median_duration_minutes": 26.0
+    },
+    {
+      "intention": "learning_or_tutorial",
+      "label": "Learning/tutorial",
+      "sessions": 110,
+      "participant_coverage": 18,
+      "drift_rate": 0.3090909090909091,
+      "ci_95": [
+        0.23076923076923078,
+        0.39090909090909093
+      ],
+      "median_duration_minutes": 24.308333333333334
+    }
+  ],
+  "intention_contrasts": {
+    "open_ended_minus_task_directed": {
+      "difference": 0.3041216078351357,
+      "ci_95_participant_bootstrap": [
+        0.24233788966587289,
+        0.37496184081048445
+      ],
+      "definition": "Open-ended browsing minus work/study, learning/tutorial, and specific-information sessions."
+    },
+    "accidental_minus_other": {
+      "difference": 0.385240464344942,
+      "ci_95_participant_bootstrap": [
+        0.25147732240584536,
+        0.5123191546365756
+      ]
+    }
+  },
+  "overrun_bands": [
+    {
+      "band": "At or below intended time",
+      "sessions": 226,
+      "drift_rate": 0.3672566371681416
+    },
+    {
+      "band": "1.0-1.5x intended time",
+      "sessions": 234,
+      "drift_rate": 0.38461538461538464
+    },
+    {
+      "band": "1.5-2.0x intended time",
+      "sessions": 110,
+      "drift_rate": 0.45454545454545453
+    },
+    {
+      "band": "2.0-3.0x intended time",
+      "sessions": 53,
+      "drift_rate": 0.5283018867924528
+    },
+    {
+      "band": "More than 3x intended time",
+      "sessions": 10,
+      "drift_rate": 0.2
+    }
+  ],
+  "activity_medians": [
+    {
+      "signal": "Session duration",
+      "unit": "minutes",
+      "aligned_median": 19.466666666666665,
+      "drift_median": 17.1,
+      "relative_difference": -0.12157534246575327
+    },
+    {
+      "signal": "Idle share of session",
+      "unit": "share",
+      "aligned_median": 0.1540625317484507,
+      "drift_median": 0.1591549295774648,
+      "relative_difference": 0.03305409674383932
+    },
+    {
+      "signal": "Scroll events per minute",
+      "unit": "events/min",
+      "aligned_median": 3.0165967922522405,
+      "drift_median": 3.3776867963152504,
+      "relative_difference": 0.11970111650003253
+    },
+    {
+      "signal": "Focus losses per minute",
+      "unit": "events/min",
+      "aligned_median": 0.09378699345311323,
+      "drift_median": 0.1115933044017359,
+      "relative_difference": 0.18985906566590763
+    },
+    {
+      "signal": "Clicks per minute",
+      "unit": "events/min",
+      "aligned_median": 1.3399610124595907,
+      "drift_median": 1.2990936555891237,
+      "relative_difference": -0.030498914886674274
+    },
+    {
+      "signal": "Keyboard activity per minute",
+      "unit": "events/min",
+      "aligned_median": 1.2145748987854252,
+      "drift_median": 1.3296398891966759,
+      "relative_difference": 0.09473684210526301
+    }
+  ],
+  "domains_with_at_least_10_sessions": [
+    {
+      "domain": "somewhereinblog.net",
+      "sessions": 12,
+      "drift_rate": 0.6666666666666666
+    },
+    {
+      "domain": "netflix.com",
+      "sessions": 12,
+      "drift_rate": 0.6666666666666666
+    },
+    {
+      "domain": "facebook.com",
+      "sessions": 37,
+      "drift_rate": 0.5405405405405406
+    },
+    {
+      "domain": "reddit.com",
+      "sessions": 19,
+      "drift_rate": 0.47368421052631576
+    },
+    {
+      "domain": "prothomalo.com",
+      "sessions": 13,
+      "drift_rate": 0.46153846153846156
+    },
+    {
+      "domain": "outlook.live.com",
+      "sessions": 11,
+      "drift_rate": 0.45454545454545453
+    },
+    {
+      "domain": "drive.google.com",
+      "sessions": 11,
+      "drift_rate": 0.45454545454545453
+    },
+    {
+      "domain": "coursera.org",
+      "sessions": 11,
+      "drift_rate": 0.45454545454545453
+    },
+    {
+      "domain": "github.com",
+      "sessions": 16,
+      "drift_rate": 0.4375
+    },
+    {
+      "domain": "instagram.com",
+      "sessions": 28,
+      "drift_rate": 0.42857142857142855
+    },
+    {
+      "domain": "chatgpt.com",
+      "sessions": 12,
+      "drift_rate": 0.4166666666666667
+    },
+    {
+      "domain": "linkedin.com",
+      "sessions": 10,
+      "drift_rate": 0.4
+    },
+    {
+      "domain": "rokomari.com",
+      "sessions": 10,
+      "drift_rate": 0.4
+    },
+    {
+      "domain": "10minuteschool.com",
+      "sessions": 36,
+      "drift_rate": 0.3888888888888889
+    },
+    {
+      "domain": "messenger.com",
+      "sessions": 13,
+      "drift_rate": 0.38461538461538464
+    },
+    {
+      "domain": "youtube.com",
+      "sessions": 91,
+      "drift_rate": 0.3626373626373626
+    },
+    {
+      "domain": "web.whatsapp.com",
+      "sessions": 31,
+      "drift_rate": 0.3548387096774194
+    },
+    {
+      "domain": "docs.google.com",
+      "sessions": 23,
+      "drift_rate": 0.34782608695652173
+    },
+    {
+      "domain": "daraz.com",
+      "sessions": 12,
+      "drift_rate": 0.3333333333333333
+    },
+    {
+      "domain": "stackoverflow.com",
+      "sessions": 16,
+      "drift_rate": 0.3125
+    },
+    {
+      "domain": "wikipedia.org",
+      "sessions": 33,
+      "drift_rate": 0.30303030303030304
+    },
+    {
+      "domain": "mail.google.com",
+      "sessions": 18,
+      "drift_rate": 0.2777777777777778
+    },
+    {
+      "domain": "notion.so",
+      "sessions": 11,
+      "drift_rate": 0.2727272727272727
+    },
+    {
+      "domain": "figma.com",
+      "sessions": 12,
+      "drift_rate": 0.25
+    },
+    {
+      "domain": "khanacademy.org",
+      "sessions": 13,
+      "drift_rate": 0.23076923076923078
+    }
+  ],
+  "youtube_by_intention": [
+    {
+      "intention": "Accidental open",
+      "sessions": 1,
+      "drift_rate": 1.0
+    },
+    {
+      "intention": "Open-ended browsing",
+      "sessions": 22,
+      "drift_rate": 0.6363636363636364
+    },
+    {
+      "intention": "Planned entertainment/break",
+      "sessions": 37,
+      "drift_rate": 0.2972972972972973
+    },
+    {
+      "intention": "Learning/tutorial",
+      "sessions": 24,
+      "drift_rate": 0.25
+    },
+    {
+      "intention": "Specific information",
+      "sessions": 5,
+      "drift_rate": 0.2
+    },
+    {
+      "intention": "Work/study",
+      "sessions": 2,
+      "drift_rate": 0.0
+    }
+  ],
+  "chronology": {
+    "first_half_sessions": 313,
+    "first_half_drift_rate": 0.34185303514376997,
+    "second_half_sessions": 320,
+    "second_half_drift_rate": 0.45625,
+    "difference": 0.11439696485623002,
+    "difference_ci_95_participant_bootstrap": [
+      0.0428771288430447,
+      0.1740821412944701
+    ],
+    "daily": [
+      {
+        "date": "2026-07-19",
+        "sessions": 45,
+        "drift_rate": 0.26666666666666666
+      },
+      {
+        "date": "2026-07-20",
+        "sessions": 45,
+        "drift_rate": 0.26666666666666666
+      },
+      {
+        "date": "2026-07-21",
+        "sessions": 49,
+        "drift_rate": 0.4897959183673469
+      },
+      {
+        "date": "2026-07-22",
+        "sessions": 41,
+        "drift_rate": 0.3902439024390244
+      },
+      {
+        "date": "2026-07-23",
+        "sessions": 39,
+        "drift_rate": 0.3076923076923077
+      },
+      {
+        "date": "2026-07-24",
+        "sessions": 46,
+        "drift_rate": 0.391304347826087
+      },
+      {
+        "date": "2026-07-25",
+        "sessions": 58,
+        "drift_rate": 0.3103448275862069
+      },
+      {
+        "date": "2026-07-26",
+        "sessions": 46,
+        "drift_rate": 0.5652173913043478
+      },
+      {
+        "date": "2026-07-27",
+        "sessions": 56,
+        "drift_rate": 0.4107142857142857
+      },
+      {
+        "date": "2026-07-28",
+        "sessions": 50,
+        "drift_rate": 0.44
+      },
+      {
+        "date": "2026-07-29",
+        "sessions": 56,
+        "drift_rate": 0.5
+      },
+      {
+        "date": "2026-07-30",
+        "sessions": 55,
+        "drift_rate": 0.41818181818181815
+      },
+      {
+        "date": "2026-07-31",
+        "sessions": 47,
+        "drift_rate": 0.40425531914893614
+      }
+    ]
+  },
+  "exploratory_models": {
+    "majority": {
+      "accuracy": 0.6003159557661928,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 380,
+        "false_positive": 0,
+        "false_negative": 253
+      },
+      "roc_auc_ci_95_participant_bootstrap": [
+        0.5,
+        0.5
+      ]
+    },
+    "time_threshold": {
+      "accuracy": 0.4439178515007899,
+      "precision": 0.41421143847487,
+      "recall": 0.9446640316205533,
+      "f1": 0.5759036144578313,
+      "roc_auc": 0.5521583107967547,
+      "confusion": {
+        "true_positive": 239,
+        "true_negative": 42,
+        "false_positive": 338,
+        "false_negative": 14
+      },
+      "roc_auc_ci_95_participant_bootstrap": [
+        0.5129940756267504,
+        0.594730589033122
+      ]
+    },
+    "domain": {
+      "accuracy": 0.4186413902053712,
+      "precision": 0.3883495145631068,
+      "recall": 0.7905138339920948,
+      "f1": 0.5208333333333334,
+      "roc_auc": 0.4826919076346994,
+      "confusion": {
+        "true_positive": 200,
+        "true_negative": 65,
+        "false_positive": 315,
+        "false_negative": 53
+      },
+      "roc_auc_ci_95_participant_bootstrap": [
+        0.4439103871698628,
+        0.5266857314864154
+      ]
+    },
+    "intention": {
+      "accuracy": 0.4423380726698262,
+      "precision": 0.4042145593869732,
+      "recall": 0.83399209486166,
+      "f1": 0.5445161290322581,
+      "roc_auc": 0.5929009777407946,
+      "confusion": {
+        "true_positive": 211,
+        "true_negative": 69,
+        "false_positive": 311,
+        "false_negative": 42
+      },
+      "roc_auc_ci_95_participant_bootstrap": [
+        0.5552130310942321,
+        0.6366801721463355
+      ]
+    },
+    "activity": {
+      "accuracy": 0.47235387045813587,
+      "precision": 0.4161490683229814,
+      "recall": 0.7944664031620553,
+      "f1": 0.5461956521739131,
+      "roc_auc": 0.5479092989390473,
+      "confusion": {
+        "true_positive": 201,
+        "true_negative": 98,
+        "false_positive": 282,
+        "false_negative": 52
+      },
+      "roc_auc_ci_95_participant_bootstrap": [
+        0.5064909182205394,
+        0.5843464706593914
+      ]
+    },
+    "combined": {
+      "accuracy": 0.5418641390205371,
+      "precision": 0.4547677261613692,
+      "recall": 0.7351778656126482,
+      "f1": 0.5619335347432024,
+      "roc_auc": 0.626586228416892,
+      "confusion": {
+        "true_positive": 186,
+        "true_negative": 157,
+        "false_positive": 223,
+        "false_negative": 67
+      },
+      "roc_auc_ci_95_participant_bootstrap": [
+        0.6033165995206641,
+        0.6540975468927255
+      ]
+    },
+    "roc_auc_contrasts": {
+      "combined_minus_intention": {
+        "difference": 0.0336852506760974,
+        "ci_95_participant_bootstrap": [
+          0.0007652408857823291,
+          0.0627192819865852
+        ]
+      },
+      "combined_minus_activity": {
+        "difference": 0.07867692947784477,
+        "ci_95_participant_bootstrap": [
+          0.042498491561499756,
+          0.12535865283447645
+        ]
+      },
+      "combined_minus_domain": {
+        "difference": 0.14389432078219266,
+        "ci_95_participant_bootstrap": [
+          0.09879442330508333,
+          0.18238710203565175
+        ]
+      },
+      "combined_minus_time_threshold": {
+        "difference": 0.07442791762013734,
+        "ci_95_participant_bootstrap": [
+          0.03554712525479299,
+          0.1144542932253608
+        ]
+      }
+    },
+    "method": {
+      "folds": 6,
+      "participants_per_fold": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "sessions_per_fold": [
+        108,
+        106,
+        104,
+        106,
+        105,
+        104
+      ],
+      "thresholding": "Threshold selected within each training fold to maximize F1, then applied to held-out participants.",
+      "scope": "Exploratory full-session evaluation; not a preregistered or final model result."
+    }
+  },
+  "unavailable": {
+    "early_prediction_1_3_5_minutes": "Unavailable: the provided files contain only final session totals and no activity-window records.",
+    "causal_claims": "Unsupported: this is observational session data with self-reported outcomes."
+  }
+}
