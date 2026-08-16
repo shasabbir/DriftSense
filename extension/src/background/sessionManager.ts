@@ -87,7 +87,11 @@ export async function recordActivityWindow(
 ): Promise<InternalSession | null> {
   return runStorageOperation(async () => {
     const sessions = await getSessions()
-    const index = sessions.findIndex((session) => session.sessionId === sessionId && session.status === 'active')
+    const index = sessions.findIndex((session) =>
+      session.sessionId === sessionId
+      && session.status === 'active'
+      && session.reflectionRequestedAt === null,
+    )
     if (index < 0) return null
     const session = sessions[index]
     if (session.tabId !== tabId || !domainMatches(input.domain, session.domain)) return null
@@ -135,14 +139,16 @@ export async function recordActivityWindow(
 
 export async function submitReflection(sessionId: string, answer: PostSessionAnswer): Promise<InternalSession | null> {
   const result = await updateSession(sessionId, (session) => {
+    if (session.status !== 'active') return session
     const now = new Date().toISOString()
-    const duration = Math.max(0, Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000))
+    const sessionEndedAt = session.reflectionRequestedAt ?? now
+    const duration = Math.max(0, Math.round((new Date(sessionEndedAt).getTime() - new Date(session.startTime).getTime()) / 1000))
     return {
       ...session,
       postSessionAnswer: answer,
       driftLabel: driftLabelForAnswer(answer),
       labelSource: 'post_session_self_report',
-      endTime: now,
+      endTime: sessionEndedAt,
       durationSeconds: Math.max(session.durationSeconds, duration),
       actualDurationSeconds: Math.max(session.actualDurationSeconds, duration),
       status: 'completed',
@@ -161,7 +167,7 @@ export async function closeSessionForTab(tabId: number): Promise<void> {
     const next = sessions.map((session) => {
       if (session.tabId !== tabId || session.status !== 'active') return session
       changed = true
-      return closeRecord(session, 'abandoned', now)
+      return closeRecord(session, 'abandoned', session.reflectionRequestedAt ?? now)
     })
     if (changed) await setSessions(next)
   })
@@ -172,7 +178,7 @@ export async function noteTabSwitch(tabId: number): Promise<void> {
     const sessions = await getSessions()
     let changed = false
     const next = sessions.map((session) => {
-      if (session.tabId !== tabId || session.status !== 'active') return session
+      if (session.tabId !== tabId || session.status !== 'active' || session.reflectionRequestedAt !== null) return session
       changed = true
       return {
         ...session,
@@ -186,12 +192,18 @@ export async function noteTabSwitch(tabId: number): Promise<void> {
 }
 
 export async function markReflectionRequested(sessionId: string): Promise<InternalSession | null> {
-  return updateSession(sessionId, (session) => ({
-    ...session,
-    checkinCount: session.checkinCount + 1,
-    reflectionRequestedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }))
+  const result = await updateSession(sessionId, (session) => {
+    if (session.status !== 'active' || session.reflectionRequestedAt !== null) return session
+    const now = new Date().toISOString()
+    return {
+      ...session,
+      checkinCount: session.checkinCount + 1,
+      reflectionRequestedAt: now,
+      updatedAt: now,
+    }
+  })
+  await chrome.alarms.clear(`reflection:${sessionId}`)
+  return result
 }
 
 export async function getActiveSessionForTab(tabId: number): Promise<InternalSession | null> {
@@ -214,7 +226,11 @@ async function updateSession(
   })
 }
 
-function closeRecord(session: InternalSession, status: 'abandoned', endTime = new Date().toISOString()): InternalSession {
+function closeRecord(
+  session: InternalSession,
+  status: 'abandoned',
+  endTime = session.reflectionRequestedAt ?? new Date().toISOString(),
+): InternalSession {
   const duration = Math.max(0, Math.round((new Date(endTime).getTime() - new Date(session.startTime).getTime()) / 1000))
   return {
     ...session,

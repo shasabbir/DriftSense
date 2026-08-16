@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowRight, Check, Clock3, Database, ShieldCheck, X } from 'lucide-react'
 import { INTENTION_OPTIONS } from '../shared/constants'
 import { sendRuntimeMessage } from '../shared/runtime'
@@ -27,10 +27,11 @@ export function PromptApp({
   const [duration, setDuration] = useState('10')
   const [submitting, setSubmitting] = useState(false)
 
-  if (reflectionSignal !== lastSignal) {
+  useEffect(() => {
+    if (reflectionSignal === lastSignal) return
     setLastSignal(reflectionSignal)
     setMode('reflection')
-  }
+  }, [lastSignal, reflectionSignal])
 
   if (mode === 'hidden') return null
 
@@ -108,10 +109,10 @@ export function PromptApp({
               <p>Your answer is a self-report. DriftSense does not infer attention or intent.</p>
             </div>
             <div className="ds-reflection-grid">
-              <button type="button" onClick={() => answerReflection('yes_matched')}><strong>Yes, it matched</strong><small>I stayed with the reason I came</small></button>
-              <button type="button" onClick={() => answerReflection('no_drifted')}><strong>No, I drifted</strong><small>The visit moved away from my intention</small></button>
-              <button type="button" onClick={() => answerReflection('continue_intentionally')}><strong>Continue intentionally</strong><small>I still want to be here</small></button>
-              <button type="button" onClick={() => answerReflection('save_for_later')}><strong>Save for later</strong><small>I will return another time</small></button>
+              <button disabled={submitting} type="button" onClick={() => answerReflection('yes_matched')}><strong>Yes, it matched</strong><small>I stayed with the reason I came</small></button>
+              <button disabled={submitting} type="button" onClick={() => answerReflection('no_drifted')}><strong>No, I drifted</strong><small>The visit moved away from my intention</small></button>
+              <button disabled={submitting} type="button" onClick={() => answerReflection('continue_intentionally')}><strong>Continue intentionally</strong><small>I still want to be here</small></button>
+              <button disabled={submitting} type="button" onClick={() => answerReflection('save_for_later')}><strong>Save for later</strong><small>I will return another time</small></button>
             </div>
           </>
         )}

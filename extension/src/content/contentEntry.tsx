@@ -36,10 +36,15 @@ async function initialize(currentDomain: string): Promise<void> {
     })
   }
 
-  if (response.session.declaredIntention) beginTracking()
+  const stopTracking = () => {
+    stopTracker?.()
+    stopTracker = null
+  }
+
+  if (response.session.declaredIntention && !response.session.reflectionRequestedAt) beginTracking()
 
   const root = createRoot(mount)
-  const render = (mode: 'intention' | 'hidden') => {
+  const render = (mode: 'intention' | 'reflection' | 'hidden') => {
     root.render(
       <PromptApp
         initialMode={mode}
@@ -47,17 +52,18 @@ async function initialize(currentDomain: string): Promise<void> {
         domain={response.session!.domain}
         reflectionSignal={reflectionSignal}
         onIntentionCaptured={beginTracking}
-        onClose={() => undefined}
+        onClose={stopTracking}
       />,
     )
   }
-  render(response.shouldPromptIntention ? 'intention' : 'hidden')
+  render(response.session.reflectionRequestedAt ? 'reflection' : response.shouldPromptIntention ? 'intention' : 'hidden')
 
   chrome.runtime.onMessage.addListener((message: { type?: string; sessionId?: string }) => {
     if (message.type !== 'SHOW_REFLECTION' || message.sessionId !== response.session?.sessionId) return
+    stopTracking()
     reflectionSignal += 1
-    render('hidden')
+    render('reflection')
   })
 
-  window.addEventListener('pagehide', () => stopTracker?.(), { once: true })
+  window.addEventListener('pagehide', stopTracking, { once: true })
 }

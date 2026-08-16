@@ -84,6 +84,8 @@ The icon source is deterministic. Regenerate the PNG sizes with:
 
 Closing or navigating away from a session before reflection preserves it as an unlabeled, abandoned session. It is not silently treated as non-drift.
 
+Opening the reflection prompt ends activity collection for that session immediately. The recorded duration is frozen at that cutoff while the participant answers; reopening the popup on the same tab shows **Show reflection** instead of restarting the session.
+
 ## Architecture
 
 ```text

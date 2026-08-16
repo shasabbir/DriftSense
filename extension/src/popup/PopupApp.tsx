@@ -1,4 +1,5 @@
-import { BarChart3, ChevronRight, Clock3, Database, Pause, Play, Settings2, ShieldCheck, Square } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { BarChart3, ChevronRight, Clock3, Database, Settings2, ShieldCheck, Square } from 'lucide-react'
 import { sendRuntimeMessage } from '../shared/runtime'
 import { patchSettings } from '../shared/storage'
 import type { InternalSession } from '../shared/types'
@@ -12,10 +13,25 @@ function extensionUrl(path: string): string {
 
 export function PopupApp() {
   const { data, loading } = useAppData()
-  if (loading || !data) return <div className="popup-shell"><div className="popup-loading skeleton" /></div>
+  const [activeSessionId, setActiveSessionId] = useState<string | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (!data) return
+    let cancelled = false
+    void sendRuntimeMessage<{ ok: boolean; activeSession: InternalSession | null }>({ type: 'GET_POPUP_STATE' })
+      .then((response) => {
+        if (!cancelled) setActiveSessionId(response.ok ? response.activeSession?.sessionId ?? null : null)
+      })
+      .catch(() => {
+        if (!cancelled) setActiveSessionId(null)
+      })
+    return () => { cancelled = true }
+  }, [data])
+
+  if (loading || !data || activeSessionId === undefined) return <div className="popup-shell"><div className="popup-loading skeleton" /></div>
 
   const { settings, sessions } = data
-  const activeSession = sessions.find((session) => session.status === 'active') ?? null
+  const activeSession = sessions.find((session) => session.sessionId === activeSessionId && session.status === 'active') ?? null
   const completed = sessions.filter((session) => session.status === 'completed')
   const labeled = completed.filter((session) => session.driftLabel !== null)
   const drift = labeled.filter((session) => session.driftLabel === 1).length
@@ -75,7 +91,9 @@ export function PopupApp() {
 }
 
 function ActiveSession({ session }: { session: InternalSession }) {
-  const duration = Math.max(session.durationSeconds, Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000))
+  const pendingReflection = session.reflectionRequestedAt !== null
+  const durationEnd = pendingReflection ? new Date(session.reflectionRequestedAt!).getTime() : Date.now()
+  const duration = Math.max(session.durationSeconds, Math.round((durationEnd - new Date(session.startTime).getTime()) / 1000))
   const requestReflection = async () => {
     await sendRuntimeMessage({ type: 'REQUEST_REFLECTION', sessionId: session.sessionId })
     window.close()
@@ -83,10 +101,10 @@ function ActiveSession({ session }: { session: InternalSession }) {
 
   return (
     <section className="active-session">
-      <div className="active-session-top"><span>Active visit</span><span className="live-label"><span /> Live</span></div>
+      <div className="active-session-top"><span>{pendingReflection ? 'Reflection pending' : 'Active visit'}</span><span className="live-label"><span /> {pendingReflection ? 'Ended' : 'Live'}</span></div>
       <div className="active-domain"><span>{session.domain[0].toUpperCase()}</span><div><strong>{session.domain}</strong><small>{intentionLabel(session.declaredIntention)}</small></div></div>
       <div className="active-meta"><span><Clock3 size={14} /> {formatDuration(duration)}</span><span><Database size={14} /> {session.scrollCount + session.clickCount} events</span></div>
-      <button className="button end-button" type="button" onClick={requestReflection}><Square size={14} /> End and reflect</button>
+      <button className="button end-button" type="button" onClick={requestReflection}><Square size={14} /> {pendingReflection ? 'Show reflection' : 'End and reflect'}</button>
     </section>
   )
 }

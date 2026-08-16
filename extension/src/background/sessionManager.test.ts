@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDefaultSettings } from '../shared/constants'
 import { getActivityWindows, getSessions, initializeStorage, setSettings } from '../shared/storage'
-import { ensureSession, recordActivityWindow, submitIntention, submitReflection } from './sessionManager'
+import { ensureSession, markReflectionRequested, recordActivityWindow, submitIntention, submitReflection } from './sessionManager'
 
 beforeEach(async () => {
   vi.stubGlobal('chrome', {
@@ -70,5 +70,44 @@ describe('session collection lifecycle', () => {
     expect(stored?.domainCategory).toBe('work')
     expect(stored?.driftLabel).toBe(0)
     expect(stored?.labelSource).toBe('post_session_self_report')
+  })
+
+  it('freezes collection and duration when reflection is requested', async () => {
+    vi.useFakeTimers()
+    const startedAt = new Date('2026-08-16T10:00:00.000Z')
+    vi.setSystemTime(startedAt)
+
+    const settings = createDefaultSettings()
+    const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: item.domain === 'youtube.com' }))
+    await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains })
+    const session = await ensureSession(10, 'youtube.com')
+    await submitIntention(session!.sessionId, 'learning_or_tutorial', 10)
+
+    vi.setSystemTime(new Date(startedAt.getTime() + 60_000))
+    await markReflectionRequested(session!.sessionId)
+    await markReflectionRequested(session!.sessionId)
+
+    vi.setSystemTime(new Date(startedAt.getTime() + 120_000))
+    const ignoredWindow = await recordActivityWindow(session!.sessionId, 10, {
+      domain: 'youtube.com',
+      observedAt: new Date().toISOString(),
+      windowDurationSeconds: 10,
+      clicksInWindow: 4,
+      scrollEventsInWindow: 3,
+      keyboardActivityInWindow: 2,
+      idleInWindow: false,
+      tabFocused: true,
+      videoPlaying: true,
+    })
+    expect(ignoredWindow).toBeNull()
+
+    await submitReflection(session!.sessionId, 'yes_matched')
+    const stored = (await getSessions()).find((item) => item.sessionId === session!.sessionId)
+    expect(stored?.checkinCount).toBe(1)
+    expect(stored?.durationSeconds).toBe(60)
+    expect(stored?.endTime).toBe('2026-08-16T10:01:00.000Z')
+    expect((await getActivityWindows()).filter((item) => item.sessionId === session!.sessionId)).toHaveLength(0)
+
+    vi.useRealTimers()
   })
 })
