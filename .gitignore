@@ -36,6 +36,8 @@ extension/vite-dev*.log
 # Python generated files
 __pycache__/
 *.py[cod]
+.pytest_cache/
+ml/artifacts/
 
 # Real participant data must stay outside version control
 data.csv
