@@ -1,5 +1,6 @@
 import {
   ACTIVITY_EXPORT_FIELDS,
+  CHECKPOINT_EXPORT_FIELDS,
   assertPrivacySafeRecord,
   MODELING_SESSION_EXPORT_FIELDS,
   sanitizeActivityWindow,
@@ -62,9 +63,13 @@ export async function exportActivityWindowsCsv(): Promise<void> {
   const safe = activityWindows.map(sanitizeActivityWindow) as unknown as Record<string, unknown>[]
   download(recordsToCsv(safe, ACTIVITY_EXPORT_FIELDS), `driftsense-activity-windows-${dateStamp()}.csv`, 'text/csv;charset=utf-8')
 }
+export async function exportCheckpointSnapshotsCsv(): Promise<void> {
+  const { checkpointSnapshots } = await getAllData()
+  download(recordsToCsv(checkpointSnapshots as unknown as Record<string, unknown>[], CHECKPOINT_EXPORT_FIELDS), `driftsense-checkpoints-${dateStamp()}.csv`, 'text/csv;charset=utf-8')
+}
 
 export async function exportJsonBundle(): Promise<void> {
-  const { settings, sessions, activityWindows } = await getAllData()
+  const { settings, sessions, activityWindows, checkpointSnapshots } = await getAllData()
   const payload = {
     schemaVersion: settings.schemaVersion,
     exportedAt: new Date().toISOString(),
@@ -73,8 +78,10 @@ export async function exportJsonBundle(): Promise<void> {
     condition: settings.condition,
     sessions: sessions.map(sanitizeSession),
     activityWindows: activityWindows.map(sanitizeActivityWindow),
+    checkpointSnapshots,
   }
   payload.sessions.forEach((record) => assertPrivacySafeRecord(record as unknown as Record<string, unknown>))
   payload.activityWindows.forEach((record) => assertPrivacySafeRecord(record as unknown as Record<string, unknown>))
+  payload.checkpointSnapshots.forEach((record) => assertPrivacySafeRecord(record as unknown as Record<string, unknown>))
   download(JSON.stringify(payload, null, 2), `driftsense-export-${dateStamp()}.json`, 'application/json')
 }

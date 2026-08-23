@@ -1,66 +1,39 @@
-export type DomainCategory =
-  | 'video'
-  | 'social'
-  | 'news'
-  | 'shopping'
-  | 'learning'
-  | 'work'
-  | 'other'
+export type DomainCategory = 'video' | 'social' | 'news' | 'shopping' | 'learning' | 'work' | 'other'
 
-export type CurrentDeclaredIntention =
-  | 'work_or_study'
-  | 'learning_or_tutorial'
-  | 'specific_information'
-  | 'communication_or_community'
-  | 'planned_entertainment_or_break'
-  | 'open_ended_browsing'
-  | 'accidental_open'
-
-export type LegacyDeclaredIntention =
-  | 'intentional_break'
-  | 'boredom'
-  | 'avoiding_work'
-  | 'accidental_click'
-
-export type DeclaredIntention = CurrentDeclaredIntention | LegacyDeclaredIntention
-
-export type StudyCondition = 'static_intention_prompt'
+export type TaskType = 'writing_creating' | 'coding_problem_solving' | 'reading_research' | 'learning_tutorial' | 'communication_coordination' | 'other_planned_task'
+export type StudyCondition = 'phase_1_observational'
 export type DriftLabel = 0 | 1 | null
-export type SessionStatus = 'active' | 'completed' | 'abandoned'
+export type SessionStatus = 'active' | 'pending_reflection' | 'completed' | 'abandoned'
+export type PostSessionAnswer = 'aligned' | 'moved_away' | 'not_sure'
+export type ReflectionAction = 'dismissed' | 'remind_later' | null
 
-export interface MonitoredDomain {
-  domain: string
-  category: DomainCategory
-  enabled: boolean
-  createdAt: string
-}
+export interface MonitoredDomain { domain: string; category: DomainCategory; enabled: boolean; createdAt: string }
 
 export interface AppSettings {
-  schemaVersion: 2
-  domainPresetsVersion: 2
+  schemaVersion: 3
+  domainPresetsVersion: 3
   participantId: string
   consentAccepted: boolean
   consentedAt: string | null
   monitoringEnabled: boolean
-  studyStage: 'stage_1_training'
+  studyStage: 'phase_1_collection'
   condition: StudyCondition
   monitoredDomains: MonitoredDomain[]
   activityWindowSeconds: 10
   idleThresholdSeconds: number
-  reflectionAfterMinutes: number
   onboardingComplete: boolean
 }
 
 export interface SessionRecord {
   sessionId: string
+  protocolVersion: 3
   anonymousUserId: string
-  studyStage: 'stage_1_training'
+  studyStage: 'phase_1_collection'
   condition: StudyCondition
-  domain: string
-  domainCategory: DomainCategory
-  declaredIntention: DeclaredIntention | null
+  taskType: TaskType
   intendedDurationMinutes: number | null
-  intentionCapturedAt: string | null
+  taskSites: string[]
+  initialTaskSite: string
   startTime: string
   endTime: string | null
   durationSeconds: number
@@ -69,13 +42,14 @@ export interface SessionRecord {
   keyboardActivityCount: number
   idleSeconds: number
   activeSeconds: number
+  awaySeconds: number
   tabFocusLossCount: number
   tabSwitchCount: number
   videoPlayingSeconds: number
-  checkinCount: number
+  reflectionRequestedAt: string | null
+  reflectionAction: ReflectionAction
   postSessionAnswer: PostSessionAnswer | null
   driftLabel: DriftLabel
-  actualDurationSeconds: number
   status: SessionStatus
   labelSource: 'post_session_self_report' | null
   createdAt: string
@@ -83,84 +57,50 @@ export interface SessionRecord {
 }
 
 export interface ModelingSessionRecord {
-  session_id: string
-  participant_id: string
-  start_time: string
-  domain: string
-  declared_intention: DeclaredIntention | null
-  intended_duration_minutes: number | null
-  duration_seconds: number
-  click_count: number
-  scroll_count: number
-  keyboard_activity_count: number
-  idle_seconds: number
-  focus_loss_count: number
-  drift_label: DriftLabel
+  session_id: string; participant_id: string; start_time: string; task_type: TaskType
+  intended_duration_minutes: number | null; initial_task_site: string; task_site_count: number
+  duration_seconds: number; click_count: number; scroll_count: number; keyboard_activity_count: number
+  idle_seconds: number; active_seconds: number; away_seconds: number; tab_switch_count: number
+  video_playing_seconds: number; post_session_answer: PostSessionAnswer | null; drift_label: DriftLabel
 }
 
 export interface InternalSession extends SessionRecord {
-  tabId: number
+  activeTabId: number | null
+  currentContext: 'task_site' | 'away'
+  contextChangedAt: string
   lastWindowAt: string | null
-  reflectionRequestedAt: string | null
+  contextEvents: ContextEvent[]
 }
 
-export type PostSessionAnswer =
-  | 'yes_matched'
-  | 'no_drifted'
-  | 'continue_intentionally'
-  | 'save_for_later'
+export interface ContextEvent { timestampOffsetSeconds: number; previousContext: 'task_site' | 'away'; nextContext: 'task_site' | 'away'; previousContextSeconds: number; tabSwitched: boolean }
+export interface CheckpointSnapshot { sessionId: string; anonymousUserId: string; cutoffSeconds: 180 | 300 | 600; capturedAt: string; observable: boolean; clickCount: number; scrollCount: number; keyboardActivityCount: number; idleSeconds: number; activeSeconds: number; awaySeconds: number; tabSwitchCount: number; videoPlayingSeconds: number }
 
 export interface ActivityWindow {
-  windowId: string
-  sessionId: string
-  anonymousUserId: string
-  timestamp: string
-  timestampOffsetSeconds: number
-  windowDurationSeconds: number
-  clicksInWindow: number
-  scrollEventsInWindow: number
-  keyboardActivityInWindow: number
-  idleInWindow: boolean
-  tabFocused: boolean
-  videoPlaying: boolean
-  urlDomainOnly: string
+  windowId: string; sessionId: string; anonymousUserId: string; timestamp: string; timestampOffsetSeconds: number
+  windowDurationSeconds: number; clicksInWindow: number; scrollEventsInWindow: number; keyboardActivityInWindow: number
+  idleInWindow: boolean; tabFocused: boolean; videoPlaying: boolean; taskSiteHostname: string
 }
-
 export interface ActivityWindowInput {
-  domain: string
-  observedAt: string
-  windowDurationSeconds: number
-  clicksInWindow: number
-  scrollEventsInWindow: number
-  keyboardActivityInWindow: number
-  idleInWindow: boolean
-  tabFocused: boolean
-  videoPlaying: boolean
+  domain: string; observedAt: string; windowDurationSeconds: number; clicksInWindow: number; scrollEventsInWindow: number
+  keyboardActivityInWindow: number; idleInWindow: boolean; tabFocused: boolean; videoPlaying: boolean
 }
-
-export interface StoredData {
-  settings: AppSettings
-  sessions: InternalSession[]
-  activityWindows: ActivityWindow[]
-}
+export interface StoredData { settings: AppSettings; sessions: InternalSession[]; activityWindows: ActivityWindow[]; checkpointSnapshots: CheckpointSnapshot[] }
 
 export type RuntimeRequest =
   | { type: 'GET_PAGE_CONTEXT'; domain: string }
-  | { type: 'SUBMIT_INTENTION'; sessionId: string; intention: CurrentDeclaredIntention; intendedDurationMinutes: number | null }
-  | { type: 'SKIP_INTENTION'; sessionId: string }
+  | { type: 'START_TASK_SESSION'; tabId?: number; domain: string; taskType: TaskType; intendedDurationMinutes: number | null }
   | { type: 'RECORD_ACTIVITY_WINDOW'; sessionId: string; window: ActivityWindowInput }
   | { type: 'SUBMIT_REFLECTION'; sessionId: string; answer: PostSessionAnswer }
   | { type: 'REQUEST_REFLECTION'; sessionId: string }
-  | { type: 'END_ACTIVE_SESSION'; tabId?: number }
+  | { type: 'DISMISS_REFLECTION'; sessionId: string; action: Exclude<ReflectionAction, null> }
   | { type: 'SET_MONITORING'; enabled: boolean }
   | { type: 'SYNC_COLLECTOR' }
   | { type: 'GET_POPUP_STATE' }
 
 export interface PageContextResponse {
   monitored: boolean
-  reason?: 'consent_required' | 'monitoring_paused' | 'domain_not_monitored'
+  reason?: 'consent_required' | 'monitoring_paused' | 'domain_not_approved' | 'no_active_task'
   session?: InternalSession
-  shouldPromptIntention?: boolean
   idleThresholdSeconds?: number
   activityWindowSeconds?: number
 }

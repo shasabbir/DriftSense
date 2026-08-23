@@ -13,7 +13,8 @@ Complete this checklist before collecting participant data.
 
 ## Collected Data
 
-- [ ] A monitored page path and query never appear in extension storage or exports.
+- [ ] A task-site page path and query never appear in extension storage or exports.
+- [ ] Outside-site destinations never appear in storage or exports; only aggregate away seconds are retained.
 - [ ] Keyboard values are not read, logged, messaged, or exported.
 - [ ] Page titles and page text do not appear in storage or exports.
 - [ ] Passwords, private messages, screenshots, and source code are not collected.
@@ -23,30 +24,29 @@ Complete this checklist before collecting participant data.
 ## Participant Control
 
 - [ ] Consent text matches the implemented fields.
-- [ ] The anonymous participant code contains no name or email.
+- [ ] The anonymous local ID is generated automatically and contains no name or email.
 - [ ] Pause prevents new collection.
 - [ ] Per-session deletion removes linked activity windows.
 - [ ] Delete-all removes all sessions and activity windows.
 - [ ] Participant CSV, activity-window CSV, and JSON exports contain only documented allowlisted fields.
-- [ ] Each participant receives a unique anonymous code such as `P01` before the first session is collected.
+- [ ] Onboarding never asks the participant to create or enter an identifier.
 
 ## Study Interpretation
 
-- [ ] The participant-approved domain set includes work/learning and mixed-use contexts.
+- [ ] Every session begins through an explicit participant action on an approved task site.
+- [ ] Closing, navigating, or reaching the intended duration does not silently end or label a session.
+- [ ] A pending post-session reflection survives popup closure and remains recoverable.
+- [ ] The participant-approved task-site set may include mixed-use sites when relevant.
 - [ ] Domain categories are treated as context only and never used as ground-truth drift labels.
-- [ ] Intention choices use neutral activity language and do not frame work as good or leisure as bad.
+- [ ] Structured task types use neutral language and no free-text task description is collected.
 - [ ] Labels are described as self-report.
-- [ ] Missing, continued, and deferred outcomes are not coded as non-drift.
+- [ ] `not_sure`, missing, and action-only outcomes are not coded as non-drift.
 - [ ] Dashboard text makes no claim about attention, addiction, diagnosis, emotion, or general productivity.
 - [ ] No model-risk language appears in this data-collection-only build.
 
-## Additional Phase 2 Checks
+## Phase 1 Protocol Checks
 
-- [ ] The packaged model runs locally without a remote inference endpoint.
-- [ ] Three-minute features contain no final-session or post-cutoff values.
-- [ ] Only eligible elevated-risk sessions receive a persisted 1:1 assignment.
-- [ ] Silent-control assignment renders no mid-session interface.
-- [ ] Prompt assignment renders at most once per session and three times per day.
-- [ ] Both assignments use the same post-session reflection question.
-- [ ] The intervention log contains only documented allowlisted fields.
-- [ ] Participants are told that elevated-risk sessions may be randomized.
+- [ ] Ten-second activity rows are accepted only from focused approved task-site tabs.
+- [ ] 3-, 5-, and 10-minute features can be reconstructed without post-cutoff fields.
+- [ ] Intended duration is stored as context and never schedules a reflection.
+- [ ] No model, risk score, eligibility decision, or mid-session reflective prompt is active.

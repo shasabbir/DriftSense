@@ -20,7 +20,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { assessDomainCoverage, DOMAIN_CATEGORIES, normalizeParticipantId } from '../shared/constants'
+import { assessDomainCoverage, DOMAIN_CATEGORIES } from '../shared/constants'
 import { normalizeDomain } from '../shared/domainUtils'
 import { missingPermissionDomains, removeUnusedDomainPermissions, requestDomainPermissions } from '../shared/permissions'
 import { sendRuntimeMessage } from '../shared/runtime'
@@ -55,9 +55,6 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
   const [step, setStep] = useState(0)
   const [consent, setConsent] = useState(false)
   const [domains, setDomains] = useState(settings.monitoredDomains)
-  const [reflectionMinutes, setReflectionMinutes] = useState(settings.reflectionAfterMinutes)
-  const [participantId, setParticipantId] = useState(settings.participantId.startsWith('DS-') ? '' : settings.participantId)
-  const [participantError, setParticipantError] = useState('')
   const [saving, setSaving] = useState(false)
   const [permissionError, setPermissionError] = useState('')
   const [newDomain, setNewDomain] = useState('')
@@ -74,11 +71,6 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
     setDomainError('')
   }
   const finish = async () => {
-    const normalizedParticipantId = normalizeParticipantId(participantId)
-    if (!normalizedParticipantId) {
-      setParticipantError('Use 2–24 letters, numbers, underscores, or hyphens; for example, P01.')
-      return
-    }
     setSaving(true)
     const granted = await requestDomainPermissions(domains)
     if (!granted) {
@@ -91,9 +83,8 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
       consentAccepted: true,
       consentedAt: new Date().toISOString(),
       monitoringEnabled: true,
-      participantId: normalizedParticipantId,
+      participantId: settings.participantId,
       monitoredDomains: domains,
-      reflectionAfterMinutes: reflectionMinutes,
       onboardingComplete: true,
     })
     if (typeof chrome !== 'undefined' && chrome.runtime) await sendRuntimeMessage({ type: 'SYNC_COLLECTOR' })
@@ -115,12 +106,12 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
             <span className="onboarding-icon"><ShieldCheck size={25} /></span>
             <span className="eyebrow">Research consent</span>
             <h1>Your browsing content stays yours.</h1>
-            <p className="onboarding-lead">DriftSense records lightweight counts on domains you choose, then asks you to reflect on whether each visit matched your intention.</p>
+            <p className="onboarding-lead">DriftSense records lightweight counts during tasks you explicitly start, then asks whether the session stayed aligned with that task.</p>
             <div className="privacy-grid">
               <div><Database size={19} /><strong>Collected locally</strong><span>Domain, timing, aggregate activity counts, intention, and your session reflection.</span></div>
               <div><EyeOff size={19} /><strong>Never collected</strong><span>Page text, full URLs, passwords, messages, screenshots, key values, or browser history.</span></div>
               <div><LockKeyhole size={19} /><strong>You stay in control</strong><span>Pause collection, inspect records, export them, or delete everything at any time.</span></div>
-              <div><FileKey2 size={19} /><strong>Anonymous identity</strong><span>Your local participant code is not derived from your name, email, or account.</span></div>
+              <div><FileKey2 size={19} /><strong>Anonymous identity</strong><span>A random local ID is generated automatically and is not derived from your name, email, or account.</span></div>
             </div>
             <label className={consent ? 'consent-check consent-check-on' : 'consent-check'}>
               <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
@@ -134,8 +125,8 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
           <div className="onboarding-panel">
             <span className="onboarding-icon"><Globe2 size={25} /></span>
             <span className="eyebrow">Research coverage</span>
-            <h1>Choose a balanced set of domains.</h1>
-            <p className="onboarding-lead">Select sites you actually use across work or learning and mixed-use contexts. A domain is never treated as drift by itself.</p>
+            <h1>Choose your task sites.</h1>
+            <p className="onboarding-lead">Select sites you use for planned browser tasks, including mixed-use sites when relevant. A hostname is context, never evidence of drift.</p>
             <CoverageSummary coverage={coverage} />
             <div className="domain-chooser">
               {domains.map((item) => (
@@ -157,7 +148,7 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
               <button className="button button-secondary add-domain-button" type="button" onClick={addDomain}><Plus size={16} /> Add</button>
             </div>
             {domainError && <p className="field-error onboarding-field-error">{domainError}</p>}
-            <div className="notice"><Info size={17} />Only selected hostnames and privacy-safe aggregate signals are recorded. Choose at least one work or learning domain and one mixed-use domain.</div>
+            <div className="notice"><Info size={17} />Only participant-approved task-site hostnames and privacy-safe aggregate signals are recorded. Choose at least one task site.</div>
           </div>
         )}
 
@@ -165,16 +156,11 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
           <div className="onboarding-panel">
             <span className="onboarding-icon"><Clock3 size={25} /></span>
             <span className="eyebrow">Collection rhythm</span>
-            <h1>Set the reflection timing.</h1>
-            <p className="onboarding-lead">A reflection appears after the intended duration you select for a visit. This fallback is used when no duration is available.</p>
+            <h1>Confirm Phase 1 collection.</h1>
+            <p className="onboarding-lead">You explicitly start and finish each task. Intended duration is context only and never ends a session automatically.</p>
             <div className="setup-summary">
-              <label className="field">
-                <span>Fallback reflection time</span>
-                <div className="number-field"><input className="input" type="number" min="1" max="120" value={reflectionMinutes} onChange={(event) => setReflectionMinutes(Math.min(120, Math.max(1, Number(event.target.value))))} /><span>minutes</span></div>
-              </label>
-              <label className="field"><span>Anonymous participant code</span><input className="input" value={participantId} placeholder="P01" onChange={(event) => { setParticipantId(event.target.value.toUpperCase()); setParticipantError('') }} /><small className="field-help">Assign a unique code such as P01 before collection. The CSV will use this filename.</small></label>
+              <div className="field"><span>Anonymous local ID</span><div className="read-only-field">Generated automatically <LockKeyhole size={14} /></div><small className="field-help">No participant input or identifying information is required.</small></div>
             </div>
-            {participantError && <p className="field-error onboarding-field-error">{participantError}</p>}
             <div className="ready-checks">
               <span><CheckCircle2 size={17} /> Consent recorded on this device</span>
               <span><CheckCircle2 size={17} /> {coverage.enabledCount} domains across {coverage.categoryCount} research contexts</span>
@@ -191,7 +177,7 @@ function Onboarding({ settings, onComplete }: { settings: AppSettings; onComplet
         {step < 2 ? (
           <button className="button button-primary" disabled={(step === 0 && !consent) || (step === 1 && !coverage.balanced)} type="button" onClick={() => setStep((current) => current + 1)}>Continue <ArrowRight size={17} /></button>
         ) : (
-          <button className="button button-green" disabled={saving || !normalizeParticipantId(participantId)} type="button" onClick={finish}><Play size={16} /> Start collecting</button>
+          <button className="button button-green" disabled={saving} type="button" onClick={finish}><Play size={16} /> Start collecting</button>
         )}
       </footer>
     </main>
@@ -204,7 +190,6 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
   const [newDomain, setNewDomain] = useState('')
   const [newCategory, setNewCategory] = useState<DomainCategory>('other')
   const [domainError, setDomainError] = useState('')
-  const [participantError, setParticipantError] = useState('')
   const [permissionError, setPermissionError] = useState('')
   const [missingPermissions, setMissingPermissions] = useState<string[]>([])
 
@@ -224,22 +209,16 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
     await refreshPermissionStatus()
   }
   const save = async () => {
-    const normalizedParticipantId = normalizeParticipantId(draft.participantId)
-    if (!normalizedParticipantId) {
-      setParticipantError('Use 2–24 letters, numbers, underscores, or hyphens; for example, P01.')
-      return
-    }
     const granted = await requestDomainPermissions(draft.monitoredDomains)
     if (!granted) {
       setPermissionError('Chrome did not grant access to every enabled domain. Disable the unapproved domain or try saving again.')
       return
     }
     await removeUnusedDomainPermissions(settings.monitoredDomains, draft.monitoredDomains)
-    await setSettings({ ...draft, participantId: normalizedParticipantId })
+    await setSettings(draft)
     if (typeof chrome !== 'undefined' && chrome.runtime) await sendRuntimeMessage({ type: 'SYNC_COLLECTOR' })
     await refreshPermissionStatus()
     setPermissionError('')
-    setParticipantError('')
     setSaved(true)
     window.setTimeout(() => setSaved(false), 1800)
   }
@@ -281,12 +260,12 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
               <div className="settings-section-head"><div><h2>Collection status</h2><p>Pause immediately without changing your domain list or stored records.</p></div><button aria-label="Toggle monitoring" className={draft.monitoringEnabled ? 'toggle toggle-on' : 'toggle'} type="button" onClick={() => setDraft((current) => ({ ...current, monitoringEnabled: !current.monitoringEnabled }))} /></div>
               <div className={draft.monitoringEnabled ? 'collection-state collection-state-live' : 'collection-state'}>
                 {draft.monitoringEnabled ? <Play size={18} /> : <Pause size={18} />}
-                <div><strong>{draft.monitoringEnabled ? 'Monitoring enabled' : 'Monitoring paused'}</strong><span>{draft.monitoringEnabled ? 'Enabled domains can start intention-labeled sessions.' : 'No new sessions or activity windows will be recorded.'}</span></div>
+                <div><strong>{draft.monitoringEnabled ? 'Collection enabled' : 'Collection paused'}</strong><span>{draft.monitoringEnabled ? 'Use the popup to explicitly start a task on an approved site.' : 'No new sessions or activity windows will be recorded.'}</span></div>
               </div>
             </section>
 
             <section className="panel panel-pad settings-section">
-              <div className="settings-section-head"><div><h2>Research domains</h2><p>Domains provide study context, not a predefined drift label. DriftSense stores the configured hostname only.</p></div><span className="count-label">{coverage.enabledCount} enabled</span></div>
+              <div className="settings-section-head"><div><h2>Participant-approved task sites</h2><p>Hostnames provide task context, never a predefined drift label. DriftSense stores only approved hostnames.</p></div><span className="count-label">{coverage.enabledCount} enabled</span></div>
               <CoverageSummary coverage={coverage} compact />
               <div className="domain-list">
                 {draft.monitoredDomains.map((item) => (
@@ -308,9 +287,8 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
             </section>
 
             <section className="panel panel-pad settings-section">
-              <div className="settings-section-head"><div><h2>Session timing</h2><p>Aggregate signals are recorded in fixed windows; no interaction content is retained.</p></div></div>
+              <div className="settings-section-head"><div><h2>Session sensing</h2><p>Aggregate signals are recorded in fixed windows; no interaction content is retained.</p></div></div>
               <div className="timing-grid">
-                <label className="field"><span>Fallback reflection</span><div className="number-field"><input className="input" type="number" min="1" max="120" value={draft.reflectionAfterMinutes} onChange={(event) => setDraft((current) => ({ ...current, reflectionAfterMinutes: Math.min(120, Math.max(1, Number(event.target.value))) }))} /><span>minutes</span></div><small className="field-help">Used when a session has no intended duration.</small></label>
                 <label className="field"><span>Idle threshold</span><div className="number-field"><input className="input" type="number" min="15" max="300" value={draft.idleThresholdSeconds} onChange={(event) => setDraft((current) => ({ ...current, idleThresholdSeconds: Math.min(300, Math.max(15, Number(event.target.value))) }))} /><span>seconds</span></div><small className="field-help">Marks a window idle after no counted interaction.</small></label>
                 <div className="field"><span>Activity window</span><div className="read-only-field">10 seconds <LockKeyhole size={14} /></div><small className="field-help">Fixed for consistent research rows.</small></div>
               </div>
@@ -319,10 +297,9 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
 
           <aside className="settings-side">
             <section className="panel panel-pad identity-panel">
-              <span className="side-icon"><FileKey2 size={19} /></span><h2>Participant identity</h2>
-              {sessionCount === 0 && windowCount === 0 ? <input className="input" value={draft.participantId} placeholder="P01" onChange={(event) => { setDraft((current) => ({ ...current, participantId: event.target.value.toUpperCase() })); setParticipantError('') }} /> : <strong>{draft.participantId}</strong>}
-              <p>{sessionCount === 0 && windowCount === 0 ? 'Assign a unique anonymous code before collection; the participant CSV uses this filename.' : 'Locked because collected records already use this participant code.'}</p>
-              {participantError && <p className="field-error">{participantError}</p>}
+              <span className="side-icon"><FileKey2 size={19} /></span><h2>Anonymous local identity</h2>
+              <strong>{draft.participantId}</strong>
+              <p>Generated automatically on this device. It cannot be edited and contains no name or email.</p>
             </section>
             <section className="panel panel-pad data-panel">
               <span className="side-icon side-icon-blue"><Database size={19} /></span><h2>Local data</h2>
@@ -330,7 +307,7 @@ function SettingsPage({ settings, sessionCount, windowCount }: { settings: AppSe
               <a className="button button-secondary full-button" href={dashboardUrl()}><Download size={16} /> Review and export</a>
               <button className="button button-danger full-button" type="button" disabled={sessionCount === 0 && windowCount === 0} onClick={deleteData}><Trash2 size={16} /> Delete research data</button>
             </section>
-            <section className="panel panel-pad protocol-panel"><span className="eyebrow">Active protocol</span><h2>Stage 1 training</h2><p>Static intention prompt with post-session self-report. Model assistance is not active in this build.</p></section>
+            <section className="panel panel-pad protocol-panel"><span className="eyebrow">Active protocol</span><h2>Phase 1 observational collection</h2><p>User-initiated task sessions with a post-session alignment self-report. No model-assisted prompt is active.</p></section>
           </aside>
         </div>
       </main>

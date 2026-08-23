@@ -1,116 +1,44 @@
-# DriftSense Data-Collection Extension
+# DriftSense extension
 
-DriftSense is a local-first Chrome Manifest V3 research extension for collecting intention-labeled browser sessions. This build implements data collection only. It does not run a drift-prediction model or show model-assisted interventions.
+This Chrome Manifest V3 build implements Phase 1 observational data collection. It does not run a prediction model or show a model-assisted mid-session prompt.
 
-## Included
+## Phase 1 flow
 
-- consent-led onboarding and anonymous participant ID
-- optional per-domain Chrome permissions
-- balanced, editable research-domain selection across work/learning and mixed-use contexts
-- neutral pre-session intended-activity prompt with work, learning, information, communication, planned leisure, open-ended browsing, and accidental-open choices
-- privacy-safe 10-second activity windows
-- post-session self-report and label mapping
-- local session and activity-window storage
-- popup for collection state and active-session reflection
-- dashboard for delayed summaries, intention alignment, session inspection, export, and deletion
-- a 13-column participant CSV compatible with the modeling `data.csv`, plus optional activity-window CSV and JSON exports
+1. The participant records consent; the extension generates a random anonymous local ID automatically.
+2. The participant enables hostnames they use for planned browser tasks. These are task sites, not productive-site classifications.
+   A new hostname can also be approved directly from the popup with **Add this domain**; Chrome still asks for host permission.
+3. On an approved task site, the participant opens the extension popup, selects one structured task type and an intended duration, and explicitly starts the task.
+4. The task may continue across any enabled task site. DriftSense stores 10-second, content-free activity windows only while an approved task-site tab is focused and creates leakage-safe snapshots at 3, 5, and 10 minutes.
+5. Time outside the approved set is stored only as aggregate away seconds. Destination identity is never stored.
+6. Intended duration is context only. The participant chooses **Finish and reflect** at the real task boundary.
+7. The pending reflection remains recoverable in the popup until answered. `Aligned` maps to `0`, `No, I moved away` maps to `1`, and `Not sure` remains unlabeled.
 
-## Privacy Boundary
+Only one task session can be open at a time. Closing or navigating away from a tab does not silently end or label the task.
 
-DriftSense collects only the configured hostname, timestamps, aggregate click/scroll/keyboard-activity counts, idle/focus state, accessible video-playing status, declared intention, intended duration, and post-session reflection. Keyboard events are counted without reading or storing key values.
+## Privacy boundary
 
-It does not collect page paths, query strings, page titles, page text, passwords, messages, screenshots, source code, full browsing history, webcam data, identity, emotion, or clinical information. Export records pass through an explicit field allowlist in `src/shared/privacyGuard.ts`.
+Collected fields include the participant-approved task-site hostname, structured task type, intended duration, timing, aggregate clicks/scrolls/keyboard-activity counts, idle/active state, tab switches, aggregate away time, accessible video state, and post-session self-report.
 
-## Install for Development
+The extension does not collect page titles, paths, query strings, text, free-text task descriptions, key values, passwords, messages, screenshots, source code, full browsing history, or destination hostnames outside the approved task-site set.
 
-Requirements: Node.js 20 or newer and a current Chrome or Chromium browser.
+## Development
 
-```powershell
-cd extension
+```bash
 npm install
 npm test
 npm run build
 ```
 
-Then load the production bundle:
+Load `dist/` as an unpacked extension after building. Chrome may require reloading already-open task-site tabs after host permissions or the extension build changes.
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Select **Load unpacked**.
-4. Choose `extension/dist`.
-5. Pin DriftSense from the extensions menu.
-6. Complete the consent and monitored-domain setup page that opens automatically.
+## Manual pilot check
 
-After source changes, run `npm run build`, then select **Reload** on the DriftSense card in `chrome://extensions`.
+1. Complete onboarding and enable at least two relevant task sites. The extension generates its anonymous local ID automatically.
+2. Open an enabled site and start a task from the popup.
+3. Interact normally and move between enabled task sites and an outside site.
+4. Return to the popup, finish the task, close and reopen the popup, and verify the reflection remains available.
+5. Record each of the three reflection outcomes across isolated test sessions.
+6. Export the session CSV, activity-window CSV, checkpoint CSV, and JSON audit bundle.
+7. Verify activity rows are 10 seconds, checkpoint offsets contain no future activity, and outside destinations never appear.
 
-If an enabled domain displays no intention prompt, open DriftSense settings and use **Grant domain access** when shown, then reload the extension and refresh any already-open domain tabs. Chrome does not inject a newly registered collector into pages that were loaded before registration.
-
-## Development Commands
-
-```powershell
-npm run dev        # Vite UI development server
-npm run typecheck  # TypeScript validation
-npm test           # privacy, labels, domains, permissions, and exports
-npm run build      # build dist/ and verify the collector can load on approved domains
-```
-
-For the local UI regression captures, keep `npm run dev` running and use:
-
-```powershell
-npm run visual-check -- http://127.0.0.1:5173
-```
-
-The isolated prompt preview is available at `/src/content/preview.html`; append
-`?mode=reflection` to render the implemented post-session reflection state.
-
-The icon source is deterministic. Regenerate the PNG sizes with:
-
-```powershell
-.\scripts\generate-icons.ps1
-```
-
-## First Pilot Walkthrough
-
-1. Complete consent and choose participant-used domains from both work/learning and mixed-use contexts.
-2. Approve Chrome access only to those selected domains; no suggested domain is enabled automatically.
-3. Set the fallback reflection time to one minute for a short test.
-4. Open an enabled domain in a new tab.
-5. Select an intention and intended visit length.
-6. Click, scroll, or type normally. Only aggregate counts are retained.
-7. Wait for the reflection prompt, or choose **End and reflect** from the popup.
-8. Submit both aligned and drift reflections across separate test sessions and inspect them in the dashboard.
-9. Assign a unique participant code such as `P01` before collection, then export `P01.csv`; optionally export activity windows and the JSON audit bundle.
-10. Verify that exported URL data contains hostnames only.
-
-Closing or navigating away from a session before reflection preserves it as an unlabeled, abandoned session. It is not silently treated as non-drift.
-
-Opening the reflection prompt ends activity collection for that session immediately. The recorded duration is frozen at that cutoff while the participant answers; reopening the popup on the same tab shows **Show reflection** instead of restarting the session.
-
-## Architecture
-
-```text
-src/background/   service worker, session lifecycle, alarms, aggregation
-src/content/      intention/reflection overlay and activity-window counter
-src/popup/        compact collection status and active-session controls
-src/options/      consent, domain permissions, timing, and privacy settings
-src/dashboard/    delayed summaries, records, export, and deletion
-src/shared/       types, storage, labels, permissions, privacy guard
-src/ui/           shared visual system and formatting
-```
-
-`chrome.storage.local` is the source of truth. The service worker reconstructs state from storage after suspension, and the collector is dynamically registered only on enabled domains for which the participant granted Chrome host access.
-
-## Current Scope
-
-This version supports the 10-day Phase 1 intention-labeled collection protocol.
-It does not implement a passive condition. Local three-minute inference,
-elevated-risk eligibility, 1:1 prompt-versus-silent-control randomization, prompt
-caps, and the separate intervention log are reserved for the Phase 2 build.
-
-Domain categories are sampling context only. They are never used to assign drift labels: both aligned (`0`) and drift (`1`) outcomes come exclusively from the participant's post-session reflection.
-
-Intention choices are also descriptive rather than evaluative. Work is not automatically aligned, and entertainment is not automatically drift.
-
-See [docs/data-schema.md](docs/data-schema.md) for exact exports and [docs/privacy-checklist.md](docs/privacy-checklist.md) before beginning a participant pilot.
-
-To combine participant files after collection, keep them in a private, consent-approved directory outside the repository and run `python ../ml/combine_participant_csv.py --input D:\private\driftsense --output D:\private\driftsense\data.csv` from this directory.
+See [docs/data-schema.md](docs/data-schema.md) and [docs/privacy-checklist.md](docs/privacy-checklist.md) before a participant pilot.

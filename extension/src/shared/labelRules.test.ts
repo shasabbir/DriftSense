@@ -3,12 +3,11 @@ import { driftLabelForAnswer } from './labelRules'
 
 describe('post-session label rules', () => {
   it('maps explicit self-reports to the binary label', () => {
-    expect(driftLabelForAnswer('yes_matched')).toBe(0)
-    expect(driftLabelForAnswer('no_drifted')).toBe(1)
+    expect(driftLabelForAnswer('aligned')).toBe(0)
+    expect(driftLabelForAnswer('moved_away')).toBe(1)
   })
 
-  it('keeps continued and deferred outcomes outside the binary label', () => {
-    expect(driftLabelForAnswer('continue_intentionally')).toBeNull()
-    expect(driftLabelForAnswer('save_for_later')).toBeNull()
+  it('keeps uncertainty outside the binary label', () => {
+    expect(driftLabelForAnswer('not_sure')).toBeNull()
   })
 })

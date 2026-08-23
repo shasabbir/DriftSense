@@ -1,162 +1,55 @@
-# DriftSense Export Schema
+# Phase 1 data schema
 
-Schema version: `2`
+Schema version: `3`
 
-All times use ISO 8601 strings. Durations use seconds unless the field explicitly says minutes. Binary drift labels come only from post-session self-report.
+Real participant exports must remain outside the repository and Git history.
 
-Domain categories describe sampling context only. Work, learning, social, video, and other categories may each contain aligned, drift, or unlabeled sessions.
+## Session export
 
-## Primary participant CSV (`P01.csv`)
-
-The dashboard's primary export uses the anonymous participant code as the
-filename. For example, participant `P01` exports `P01.csv`. Assign a unique code
-before collection; the extension locks the code after the first session is
-stored.
-
-| Field | Type | Meaning |
-|---|---|---|
-| `session_id` | string | Random session identifier |
-| `participant_id` | string | Anonymous participant code, matching the filename |
-| `start_time` | timestamp | Session creation time with timezone |
-| `domain` | string | Configured hostname only |
-| `declared_intention` | enum/null | Participant-selected neutral intended-activity category |
-| `intended_duration_minutes` | integer/null | Participant-provided intended duration |
-| `duration_seconds` | integer | Final observed session duration |
-| `click_count` | integer | Aggregate click count |
-| `scroll_count` | integer | Aggregate scroll-event count |
-| `keyboard_activity_count` | integer | Keydown count without key values |
-| `idle_seconds` | integer | Seconds in idle activity windows |
-| `focus_loss_count` | integer | Count of tab focus departures |
-| `drift_label` | 0/1/null | `0` aligned, `1` drift, blank for non-binary or missing reflection |
-
-The primary export deliberately omits page content, full URLs, domain category,
-condition bookkeeping, duplicated timestamps, and supporting activity-window
-fields. Keep real participant exports in a private, consent-approved directory
-outside the repository and run `python ml/combine_participant_csv.py --input
-<private-directory> --output <private-directory>/data.csv` to produce the
-combined modeling table. The combiner reports and excludes incomplete or
-non-binary rows without changing the participant source files.
-
-## Full session records in the optional JSON bundle
-
-| Field | Type | Meaning |
-|---|---|---|
-| `sessionId` | string | Random UUID-based session identifier |
-| `anonymousUserId` | string | Locally generated participant code |
-| `studyStage` | string | `stage_1_training` in this build |
-| `condition` | string | `static_intention_prompt` in this build |
-| `domain` | string | Configured hostname only |
-| `domainCategory` | enum | video, social, news, shopping, learning, work, or other |
-| `declaredIntention` | enum/null | Participant-selected neutral intended-activity category |
-| `intendedDurationMinutes` | integer/null | Participant-provided duration |
-| `intentionCapturedAt` | timestamp/null | Time the intention was submitted |
-| `startTime` | timestamp | Session creation time |
-| `endTime` | timestamp/null | Completion, navigation, or closure time |
-| `durationSeconds` | integer | Observed session duration |
-| `clickCount` | integer | Aggregate click count |
-| `scrollCount` | integer | Aggregate scroll event count |
-| `keyboardActivityCount` | integer | Keydown count without key values |
-| `idleSeconds` | integer | Seconds in idle activity windows |
-| `activeSeconds` | integer | Seconds in focused, non-idle activity windows |
-| `tabFocusLossCount` | integer | Count of tab focus departures |
-| `tabSwitchCount` | integer | Count of tab switches away from the session |
-| `videoPlayingSeconds` | integer | Seconds where an accessible video was playing |
-| `checkinCount` | integer | Number of post-session reflection requests |
-| `postSessionAnswer` | enum/null | Participant-selected reflection answer |
-| `driftLabel` | 0/1/null | `0` aligned, `1` drift, null for non-binary or missing answer |
-| `actualDurationSeconds` | integer | Final observed duration |
-| `status` | enum | active, completed, or abandoned |
-| `labelSource` | string/null | `post_session_self_report` when labeled |
-| `createdAt` | timestamp | Record creation time |
-| `updatedAt` | timestamp | Last record update time |
-
-Internal fields such as Chrome tab ID, alarm state, and last-window bookkeeping are removed before export.
-
-## Optional activity-windows CSV
-
-| Field | Type | Meaning |
-|---|---|---|
-| `windowId` | string | Random UUID-based window identifier |
-| `sessionId` | string | Parent session identifier |
-| `anonymousUserId` | string | Locally generated participant code |
-| `timestamp` | timestamp | End of the activity window |
-| `timestampOffsetSeconds` | integer | Seconds since session start |
-| `windowDurationSeconds` | integer | Window duration; fixed to 10 in this build |
-| `clicksInWindow` | integer | Click count during the window |
-| `scrollEventsInWindow` | integer | Scroll event count during the window |
-| `keyboardActivityInWindow` | integer | Keydown count without key values |
-| `idleInWindow` | boolean | Whether the idle threshold was reached |
-| `tabFocused` | boolean | Whether the document was visible and focused |
-| `videoPlaying` | boolean | Whether an accessible video element was playing |
-| `urlDomainOnly` | string | Configured hostname only; no path or query |
-
-## JSON Bundle
-
-The bundle contains:
-
-```json
-{
-  "schemaVersion": 2,
-  "exportedAt": "ISO-8601 timestamp",
-  "participantId": "P01",
-  "studyStage": "stage_1_training",
-  "condition": "static_intention_prompt",
-  "sessions": [],
-  "activityWindows": []
-}
-```
-
-The JSON `sessions` array uses the full allowlisted camelCase session record
-documented above. The `activityWindows` array uses the same allowlisted fields as
-the optional activity-windows CSV. The JSON bundle is an audit/reproducibility
-export rather than the primary modeling table.
-
-## Intention Values
-
-New schema-version-2 sessions use:
-
-| Value | Display label |
-|---|---|
-| `work_or_study` | Work or study task |
-| `learning_or_tutorial` | Learning or tutorial |
-| `specific_information` | Specific information |
-| `communication_or_community` | Communication or community |
-| `planned_entertainment_or_break` | Planned entertainment or break |
-| `open_ended_browsing` | Open-ended browsing |
-| `accidental_open` | Opened accidentally |
-
-These values describe intended activity and do not determine whether a session is drift. Existing pilot records may retain the retired schema-version-1 values `intentional_break`, `boredom`, `avoiding_work`, or `accidental_click`; the dashboard keeps readable labels for them, but they should not be mixed into the formal study dataset without an explicit preprocessing decision.
-
-## Label Mapping
-
-| Reflection answer | `driftLabel` | Treatment |
-|---|---:|---|
-| Yes, it matched | 0 | Binary non-drift/aligned outcome |
-| No, I drifted | 1 | Binary drift outcome |
-| Continue intentionally | null | Retained as a separate non-binary outcome |
-| Save for later | null | Retained as a separate non-binary outcome |
-| Missing reflection | null | Unlabeled; never treated as non-drift |
-
-## Planned Phase 2 Intervention Log
-
-The seven-day intervention build will export a separate allowlisted CSV rather
-than changing the stable participant CSV. The planned fields are:
+The primary modeling CSV contains one row per explicitly started task session:
 
 | Field | Meaning |
 |---|---|
-| `session_id` | Parent session identifier |
-| `participant_id` | Anonymous participant code |
-| `model_version` | Frozen local model identifier |
-| `prediction_offset_seconds` | Fixed at 180 for the deployed model |
-| `risk_probability` | Local model estimate used for eligibility |
-| `risk_threshold` | Frozen eligibility threshold |
-| `eligible` | Whether all intervention eligibility rules passed |
-| `randomized_assignment` | `reflective_prompt`, `silent_control`, or blank when ineligible |
-| `prompt_shown` | Whether the assigned prompt rendered successfully |
-| `prompt_response` | `continue_intentionally`, `finish_now`, or blank |
-| `suppression_reason` | Reason an otherwise evaluated session was not randomized or shown |
-| `assigned_at` | Local ISO 8601 assignment timestamp |
+| `session_id` | Random local session identifier |
+| `participant_id` | Random anonymous local ID generated automatically by the extension |
+| `start_time` | ISO task-start timestamp |
+| `task_type` | One of the six structured task types |
+| `intended_duration_minutes` | Participant estimate; context only |
+| `initial_task_site` | Approved hostname where the task began |
+| `task_site_count` | Number of approved task sites snapshotted at start |
+| `duration_seconds` | Elapsed time frozen when reflection was requested |
+| `click_count` | Aggregate focused task-site clicks |
+| `scroll_count` | Aggregate focused task-site scroll events |
+| `keyboard_activity_count` | Count only; no key values |
+| `idle_seconds` / `active_seconds` | Aggregate focused task-site state |
+| `away_seconds` | Aggregate time outside the approved task-site set; no destination identity |
+| `tab_switch_count` | Tab activation changes during the task |
+| `video_playing_seconds` | Accessible playback state duration |
+| `post_session_answer` | `aligned`, `moved_away`, `not_sure`, or blank |
+| `drift_label` | `0`, `1`, or blank according to the explicit self-report |
 
-Assignment must be stored before prompt rendering and must survive extension
-suspension without rerandomization. The risk estimate remains an audit field and
-is not shown to participants as proof of drift.
+The JSON session audit record additionally includes protocol/study identifiers, the snapshotted `taskSites` allowlist, reflection state/action, label source, timestamps, and status. Service-worker-only tab and context bookkeeping is excluded.
+
+## Activity-window export
+
+Each accepted row represents a focused 10-second window on a participant-approved task site:
+
+`windowId`, `sessionId`, `anonymousUserId`, `timestamp`, `timestampOffsetSeconds`, `windowDurationSeconds`, `clicksInWindow`, `scrollEventsInWindow`, `keyboardActivityInWindow`, `idleInWindow`, `tabFocused`, `videoPlaying`, `taskSiteHostname`.
+
+Rows from unapproved sites and unfocused tabs are rejected. Activity at 3, 5, and 10 minutes must be derived only from rows whose observed offsets fall at or before the relevant cutoff.
+
+## Checkpoint export
+
+The extension schedules snapshots at 180, 300, and 600 seconds. Each row stores its cutoff, capture time, observability, cumulative activity derived only from windows at or before that cutoff, and away/tab-switch features derived only from timestamped context transitions at or before the cutoff. A delayed service-worker alarm therefore cannot add post-cutoff activity.
+
+## Label rules
+
+- `aligned` -> `0`
+- `moved_away` -> `1`
+- `not_sure`, missing, or action-only -> unlabeled
+
+An intended duration, hostname, activity pattern, dismissal, or missing answer never supplies a drift label.
+
+## Prohibited data
+
+Exports must not contain page text/title, URL paths or queries, free-text task content, passwords, messages, screenshots, source code, key values, browsing history, outside-site destination identity, webcam/face data, emotion, or inferred mental state.

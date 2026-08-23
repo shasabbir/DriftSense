@@ -1,5 +1,5 @@
 import { createDefaultSettings, migrateDomainPresets, STORAGE_KEYS } from './constants'
-import type { ActivityWindow, AppSettings, InternalSession, StoredData } from './types'
+import type { ActivityWindow, AppSettings, CheckpointSnapshot, InternalSession, StoredData } from './types'
 
 const fallbackEventName = 'driftsense-storage-change'
 let operationQueue: Promise<unknown> = Promise.resolve()
@@ -29,10 +29,11 @@ async function writeKey<T>(key: string, value: T): Promise<void> {
 }
 
 export async function initializeStorage(): Promise<StoredData> {
-  const [settings, sessions, activityWindows] = await Promise.all([
+  const [settings, sessions, activityWindows, checkpointSnapshots] = await Promise.all([
     readKey<AppSettings>(STORAGE_KEYS.settings),
     readKey<InternalSession[]>(STORAGE_KEYS.sessions),
     readKey<ActivityWindow[]>(STORAGE_KEYS.activityWindows),
+    readKey<CheckpointSnapshot[]>(STORAGE_KEYS.checkpointSnapshots),
   ])
 
   const initializedSettings = settings ? migrateDomainPresets(settings) : createDefaultSettings()
@@ -40,12 +41,14 @@ export async function initializeStorage(): Promise<StoredData> {
     settings: initializedSettings,
     sessions: sessions ?? [],
     activityWindows: activityWindows ?? [],
+    checkpointSnapshots: checkpointSnapshots ?? [],
   }
 
   await Promise.all([
     settings === initializedSettings ? Promise.resolve() : writeKey(STORAGE_KEYS.settings, initialized.settings),
     sessions ? Promise.resolve() : writeKey(STORAGE_KEYS.sessions, initialized.sessions),
     activityWindows ? Promise.resolve() : writeKey(STORAGE_KEYS.activityWindows, initialized.activityWindows),
+    checkpointSnapshots ? Promise.resolve() : writeKey(STORAGE_KEYS.checkpointSnapshots, initialized.checkpointSnapshots),
   ])
 
   return initialized
@@ -87,24 +90,27 @@ export async function getActivityWindows(): Promise<ActivityWindow[]> {
 export async function setActivityWindows(windows: ActivityWindow[]): Promise<void> {
   await writeKey(STORAGE_KEYS.activityWindows, windows)
 }
+export async function getCheckpointSnapshots(): Promise<CheckpointSnapshot[]> { return (await readKey<CheckpointSnapshot[]>(STORAGE_KEYS.checkpointSnapshots)) ?? [] }
+export async function setCheckpointSnapshots(snapshots: CheckpointSnapshot[]): Promise<void> { await writeKey(STORAGE_KEYS.checkpointSnapshots, snapshots) }
 
 export async function getAllData(): Promise<StoredData> {
-  const [settings, sessions, activityWindows] = await Promise.all([getSettings(), getSessions(), getActivityWindows()])
-  return { settings, sessions, activityWindows }
+  const [settings, sessions, activityWindows, checkpointSnapshots] = await Promise.all([getSettings(), getSessions(), getActivityWindows(), getCheckpointSnapshots()])
+  return { settings, sessions, activityWindows, checkpointSnapshots }
 }
 
 export async function clearResearchData(): Promise<void> {
   await runStorageOperation(async () => {
-    await Promise.all([setSessions([]), setActivityWindows([])])
+    await Promise.all([setSessions([]), setActivityWindows([]), setCheckpointSnapshots([])])
   })
 }
 
 export async function deleteSessionData(sessionId: string): Promise<void> {
   await runStorageOperation(async () => {
-    const [sessions, windows] = await Promise.all([getSessions(), getActivityWindows()])
+    const [sessions, windows, snapshots] = await Promise.all([getSessions(), getActivityWindows(), getCheckpointSnapshots()])
     await Promise.all([
       setSessions(sessions.filter((session) => session.sessionId !== sessionId)),
       setActivityWindows(windows.filter((window) => window.sessionId !== sessionId)),
+      setCheckpointSnapshots(snapshots.filter((snapshot) => snapshot.sessionId !== sessionId)),
     ])
   })
 }

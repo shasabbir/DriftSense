@@ -1,19 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { INTENTION_OPTIONS } from './constants'
+import { TASK_TYPE_OPTIONS } from './constants'
 
-describe('intention options', () => {
-  it('covers productive and leisure contexts with neutral current values', () => {
-    const values = INTENTION_OPTIONS.map((option) => option.value)
+describe('structured task types', () => {
+  it('uses the six protocol task types without free text', () => {
+    const values = TASK_TYPE_OPTIONS.map((option) => option.value)
     expect(values).toEqual([
-      'work_or_study',
-      'learning_or_tutorial',
-      'specific_information',
-      'communication_or_community',
-      'planned_entertainment_or_break',
-      'open_ended_browsing',
-      'accidental_open',
+      'writing_creating',
+      'coding_problem_solving',
+      'reading_research',
+      'learning_tutorial',
+      'communication_coordination',
+      'other_planned_task',
     ])
-    expect(values).not.toContain('boredom')
-    expect(values).not.toContain('avoiding_work')
+    expect(values).not.toContain('free_text')
   })
 })

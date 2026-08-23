@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assessDomainCoverage, createDefaultSettings, migrateDomainPresets, normalizeParticipantId } from './constants'
+import { assessDomainCoverage, createDefaultSettings, migrateDomainPresets } from './constants'
 import type { AppSettings, MonitoredDomain } from './types'
 
 function domain(domain: string, category: MonitoredDomain['category'], enabled = true): MonitoredDomain {
@@ -11,10 +11,10 @@ describe('research domain coverage', () => {
     expect(createDefaultSettings().monitoredDomains.every((item) => !item.enabled)).toBe(true)
   })
 
-  it('requires both work or learning and mixed-use context', () => {
-    expect(assessDomainCoverage([domain('github.com', 'work')]).balanced).toBe(false)
-    expect(assessDomainCoverage([domain('youtube.com', 'video')]).balanced).toBe(false)
-    expect(assessDomainCoverage([domain('github.com', 'work'), domain('youtube.com', 'video')]).balanced).toBe(true)
+  it('requires at least one explicitly selected task site', () => {
+    expect(assessDomainCoverage([]).balanced).toBe(false)
+    expect(assessDomainCoverage([domain('github.com', 'work')]).balanced).toBe(true)
+    expect(assessDomainCoverage([domain('youtube.com', 'video', false)]).balanced).toBe(false)
   })
 
   it('adds new balanced candidates to old settings without enabling them', () => {
@@ -26,16 +26,10 @@ describe('research domain coverage', () => {
       monitoredDomains: [domain('youtube.com', 'video')],
     } as unknown as AppSettings
     const migrated = migrateDomainPresets(old)
-    expect(migrated.schemaVersion).toBe(2)
-    expect(migrated.domainPresetsVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.domainPresetsVersion).toBe(3)
     expect(migrated.monitoredDomains.find((item) => item.domain === 'youtube.com')?.enabled).toBe(true)
     expect(migrated.monitoredDomains.find((item) => item.domain === 'github.com')?.enabled).toBe(false)
   })
 
-  it('normalizes privacy-safe participant codes used as CSV filenames', () => {
-    expect(normalizeParticipantId(' p01 ')).toBe('P01')
-    expect(normalizeParticipantId('study_18')).toBe('STUDY_18')
-    expect(normalizeParticipantId('../P01')).toBeNull()
-    expect(normalizeParticipantId('P')).toBeNull()
-  })
 })

@@ -6,7 +6,7 @@ export default defineManifest({
   name: 'DriftSense',
   short_name: 'DriftSense',
   version: packageJson.version,
-  description: 'Privacy-preserving, intention-aware browser session data collection for research.',
+  description: 'Privacy-preserving Phase 1 browser task-session data collection for research.',
   minimum_chrome_version: '111',
   permissions: ['storage', 'tabs', 'idle', 'alarms', 'unlimitedStorage', 'sidePanel', 'scripting'],
   optional_host_permissions: ['http://*/*', 'https://*/*'],

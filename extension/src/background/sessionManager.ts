@@ -1,134 +1,72 @@
 import { domainMatches } from '../shared/domainUtils'
 import { driftLabelForAnswer } from '../shared/labelRules'
-import { getActivityWindows, getSessions, getSettings, runStorageOperation, setActivityWindows, setSessions } from '../shared/storage'
-import type { ActivityWindow, ActivityWindowInput, CurrentDeclaredIntention, InternalSession, PostSessionAnswer } from '../shared/types'
+import { getActivityWindows, getCheckpointSnapshots, getSessions, getSettings, runStorageOperation, setActivityWindows, setCheckpointSnapshots, setSessions } from '../shared/storage'
+import type { ActivityWindow, ActivityWindowInput, CheckpointSnapshot, InternalSession, PostSessionAnswer, ReflectionAction, TaskType } from '../shared/types'
 
-function randomId(prefix: string): string {
-  return `${prefix}_${crypto.randomUUID()}`
-}
+const randomId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`
+const isOpen = (session: InternalSession) => session.status === 'active' || session.status === 'pending_reflection'
 
-export async function ensureSession(tabId: number, domain: string): Promise<InternalSession | null> {
+export async function startTaskSession(tabId: number, domain: string, taskType: TaskType, intendedDurationMinutes: number | null): Promise<InternalSession | null> {
   return runStorageOperation(async () => {
     const settings = await getSettings()
     const configured = settings.monitoredDomains.find((item) => item.enabled && domainMatches(domain, item.domain))
     if (!settings.consentAccepted || !settings.monitoringEnabled || !configured) return null
-
     const sessions = await getSessions()
-    const existing = sessions.find((session) => session.tabId === tabId && session.status === 'active' && session.domain === configured.domain)
-    if (existing) return existing
-
+    if (sessions.some(isOpen)) throw new Error('Finish the current task session before starting another.')
     const now = new Date().toISOString()
+    const taskSites = settings.monitoredDomains.filter((item) => item.enabled).map((item) => item.domain)
     const next: InternalSession = {
-      sessionId: randomId('session'),
-      anonymousUserId: settings.participantId,
-      studyStage: settings.studyStage,
-      condition: settings.condition,
-      domain: configured.domain,
-      domainCategory: configured.category,
-      declaredIntention: null,
-      intendedDurationMinutes: null,
-      intentionCapturedAt: null,
-      startTime: now,
-      endTime: null,
-      durationSeconds: 0,
-      clickCount: 0,
-      scrollCount: 0,
-      keyboardActivityCount: 0,
-      idleSeconds: 0,
-      activeSeconds: 0,
-      tabFocusLossCount: 0,
-      tabSwitchCount: 0,
-      videoPlayingSeconds: 0,
-      checkinCount: 0,
-      postSessionAnswer: null,
-      driftLabel: null,
-      actualDurationSeconds: 0,
-      status: 'active',
-      labelSource: null,
-      createdAt: now,
-      updatedAt: now,
-      tabId,
-      lastWindowAt: null,
-      reflectionRequestedAt: null,
+      sessionId: randomId('session'), protocolVersion: 3, anonymousUserId: settings.participantId,
+      studyStage: settings.studyStage, condition: settings.condition, taskType,
+      intendedDurationMinutes, taskSites, initialTaskSite: configured.domain,
+      startTime: now, endTime: null, durationSeconds: 0, clickCount: 0, scrollCount: 0,
+      keyboardActivityCount: 0, idleSeconds: 0, activeSeconds: 0, awaySeconds: 0,
+      tabFocusLossCount: 0, tabSwitchCount: 0, videoPlayingSeconds: 0,
+      reflectionRequestedAt: null, reflectionAction: null, postSessionAnswer: null, driftLabel: null,
+      status: 'active', labelSource: null, createdAt: now, updatedAt: now,
+      activeTabId: tabId, currentContext: 'task_site', contextChangedAt: now, lastWindowAt: null, contextEvents: [],
     }
-
-    const closed = sessions.map((session) =>
-      session.tabId === tabId && session.status === 'active'
-        ? closeRecord(session, 'abandoned')
-        : session,
-    )
-    await setSessions([...closed, next])
-    scheduleReflection(next.sessionId, settings.reflectionAfterMinutes)
+    await setSessions([...sessions, next])
+    for (const seconds of [180, 300, 600]) chrome.alarms.create(`checkpoint:${next.sessionId}:${seconds}`, { when: Date.now() + seconds * 1000 })
     return next
   })
 }
 
-export async function submitIntention(
-  sessionId: string,
-  intention: CurrentDeclaredIntention,
-  intendedDurationMinutes: number | null,
-): Promise<InternalSession | null> {
-  return updateSession(sessionId, (session) => ({
-    ...session,
-    declaredIntention: intention,
-    intendedDurationMinutes,
-    intentionCapturedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  })).then((session) => {
-    if (session) scheduleReflection(session.sessionId, intendedDurationMinutes ?? undefined)
-    return session
-  })
+export async function getOpenSession(): Promise<InternalSession | null> {
+  return (await getSessions()).find(isOpen) ?? null
 }
 
-export async function recordActivityWindow(
-  sessionId: string,
-  tabId: number,
-  input: ActivityWindowInput,
-): Promise<InternalSession | null> {
+export async function getSessionForTaskSite(domain: string): Promise<InternalSession | null> {
+  const session = await getOpenSession()
+  return session && session.status === 'active' && session.taskSites.some((site) => domainMatches(domain, site)) ? session : null
+}
+
+export async function recordActivityWindow(sessionId: string, input: ActivityWindowInput): Promise<InternalSession | null> {
   return runStorageOperation(async () => {
     const sessions = await getSessions()
-    const index = sessions.findIndex((session) =>
-      session.sessionId === sessionId
-      && session.status === 'active'
-      && session.reflectionRequestedAt === null,
-    )
+    const index = sessions.findIndex((session) => session.sessionId === sessionId && session.status === 'active')
     if (index < 0) return null
     const session = sessions[index]
-    if (session.tabId !== tabId || !domainMatches(input.domain, session.domain)) return null
-
+    const taskSite = session.taskSites.find((site) => domainMatches(input.domain, site))
+    if (!taskSite || !input.tabFocused) return session
     const observedAt = new Date(input.observedAt)
-    const startedAt = new Date(session.startTime)
-    const offsetSeconds = Math.max(0, Math.round((observedAt.getTime() - startedAt.getTime()) / 1000))
-    const safeWindowSeconds = Math.max(1, Math.min(60, Math.round(input.windowDurationSeconds)))
+    const offsetSeconds = Math.max(0, Math.round((observedAt.getTime() - new Date(session.startTime).getTime()) / 1000))
+    const seconds = Math.max(1, Math.min(10, Math.round(input.windowDurationSeconds)))
     const window: ActivityWindow = {
-      windowId: randomId('window'),
-      sessionId,
-      anonymousUserId: session.anonymousUserId,
-      timestamp: observedAt.toISOString(),
-      timestampOffsetSeconds: offsetSeconds,
-      windowDurationSeconds: safeWindowSeconds,
-      clicksInWindow: Math.max(0, Math.round(input.clicksInWindow)),
-      scrollEventsInWindow: Math.max(0, Math.round(input.scrollEventsInWindow)),
-      keyboardActivityInWindow: Math.max(0, Math.round(input.keyboardActivityInWindow)),
-      idleInWindow: Boolean(input.idleInWindow),
-      tabFocused: Boolean(input.tabFocused),
-      videoPlaying: Boolean(input.videoPlaying),
-      urlDomainOnly: session.domain,
+      windowId: randomId('window'), sessionId, anonymousUserId: session.anonymousUserId,
+      timestamp: observedAt.toISOString(), timestampOffsetSeconds: offsetSeconds, windowDurationSeconds: seconds,
+      clicksInWindow: Math.max(0, Math.round(input.clicksInWindow)), scrollEventsInWindow: Math.max(0, Math.round(input.scrollEventsInWindow)),
+      keyboardActivityInWindow: Math.max(0, Math.round(input.keyboardActivityInWindow)), idleInWindow: Boolean(input.idleInWindow),
+      tabFocused: true, videoPlaying: Boolean(input.videoPlaying), taskSiteHostname: taskSite,
     }
-
-    const durationSeconds = Math.max(session.durationSeconds, offsetSeconds)
     const updated: InternalSession = {
-      ...session,
-      durationSeconds,
-      actualDurationSeconds: durationSeconds,
-      clickCount: session.clickCount + window.clicksInWindow,
-      scrollCount: session.scrollCount + window.scrollEventsInWindow,
+      ...session, durationSeconds: Math.max(session.durationSeconds, offsetSeconds),
+      clickCount: session.clickCount + window.clicksInWindow, scrollCount: session.scrollCount + window.scrollEventsInWindow,
       keyboardActivityCount: session.keyboardActivityCount + window.keyboardActivityInWindow,
-      idleSeconds: session.idleSeconds + (window.idleInWindow ? safeWindowSeconds : 0),
-      activeSeconds: session.activeSeconds + (!window.idleInWindow && window.tabFocused ? safeWindowSeconds : 0),
-      videoPlayingSeconds: session.videoPlayingSeconds + (window.videoPlaying ? safeWindowSeconds : 0),
-      lastWindowAt: window.timestamp,
-      updatedAt: window.timestamp,
+      idleSeconds: session.idleSeconds + (window.idleInWindow ? seconds : 0),
+      activeSeconds: session.activeSeconds + (window.idleInWindow ? 0 : seconds),
+      videoPlayingSeconds: session.videoPlayingSeconds + (window.videoPlaying ? seconds : 0),
+      lastWindowAt: window.timestamp, updatedAt: window.timestamp,
     }
     sessions[index] = updated
     const windows = await getActivityWindows()
@@ -137,114 +75,72 @@ export async function recordActivityWindow(
   })
 }
 
-export async function submitReflection(sessionId: string, answer: PostSessionAnswer): Promise<InternalSession | null> {
-  const result = await updateSession(sessionId, (session) => {
-    if (session.status !== 'active') return session
-    const now = new Date().toISOString()
-    const sessionEndedAt = session.reflectionRequestedAt ?? now
-    const duration = Math.max(0, Math.round((new Date(sessionEndedAt).getTime() - new Date(session.startTime).getTime()) / 1000))
-    return {
+export async function noteActiveContext(tabId: number, domain: string | null): Promise<void> {
+  await runStorageOperation(async () => {
+    const sessions = await getSessions()
+    const index = sessions.findIndex((session) => session.status === 'active')
+    if (index < 0) return
+    const session = sessions[index]
+    const now = new Date()
+    const elapsed = Math.max(0, Math.round((now.getTime() - new Date(session.contextChangedAt).getTime()) / 1000))
+    const nextContext = domain && session.taskSites.some((site) => domainMatches(domain, site)) ? 'task_site' : 'away'
+    const tabSwitched = session.activeTabId !== null && session.activeTabId !== tabId
+    sessions[index] = {
       ...session,
-      postSessionAnswer: answer,
-      driftLabel: driftLabelForAnswer(answer),
-      labelSource: 'post_session_self_report',
-      endTime: sessionEndedAt,
-      durationSeconds: Math.max(session.durationSeconds, duration),
-      actualDurationSeconds: Math.max(session.actualDurationSeconds, duration),
-      status: 'completed',
-      updatedAt: now,
+      awaySeconds: session.awaySeconds + (session.currentContext === 'away' ? elapsed : 0),
+      tabFocusLossCount: session.tabFocusLossCount + (session.currentContext === 'task_site' && nextContext === 'away' ? 1 : 0),
+      tabSwitchCount: tabSwitched ? session.tabSwitchCount + 1 : session.tabSwitchCount,
+      activeTabId: tabId, currentContext: nextContext, contextChangedAt: now.toISOString(), updatedAt: now.toISOString(),
+      contextEvents: [...session.contextEvents, { timestampOffsetSeconds: Math.max(0, Math.round((now.getTime() - new Date(session.startTime).getTime()) / 1000)), previousContext: session.currentContext, nextContext, previousContextSeconds: elapsed, tabSwitched }],
     }
-  })
-  await chrome.alarms.clear(`reflection:${sessionId}`)
-  return result
-}
-
-export async function closeSessionForTab(tabId: number): Promise<void> {
-  await runStorageOperation(async () => {
-    const sessions = await getSessions()
-    const now = new Date().toISOString()
-    let changed = false
-    const next = sessions.map((session) => {
-      if (session.tabId !== tabId || session.status !== 'active') return session
-      changed = true
-      return closeRecord(session, 'abandoned', session.reflectionRequestedAt ?? now)
-    })
-    if (changed) await setSessions(next)
+    await setSessions(sessions)
   })
 }
 
-export async function noteTabSwitch(tabId: number): Promise<void> {
-  await runStorageOperation(async () => {
-    const sessions = await getSessions()
-    let changed = false
-    const next = sessions.map((session) => {
-      if (session.tabId !== tabId || session.status !== 'active' || session.reflectionRequestedAt !== null) return session
-      changed = true
-      return {
-        ...session,
-        tabFocusLossCount: session.tabFocusLossCount + 1,
-        tabSwitchCount: session.tabSwitchCount + 1,
-        updatedAt: new Date().toISOString(),
-      }
-    })
-    if (changed) await setSessions(next)
+export async function captureCheckpoint(sessionId: string, cutoffSeconds: 180 | 300 | 600): Promise<CheckpointSnapshot | null> {
+  return runStorageOperation(async () => {
+    const sessions = await getSessions(); const session = sessions.find((item) => item.sessionId === sessionId)
+    const observedDuration = session ? Math.max(session.durationSeconds, session.status === 'active' ? Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000) : 0) : 0
+    if (!session || observedDuration < cutoffSeconds) return null
+    const windows = (await getActivityWindows()).filter((window) => window.sessionId === sessionId && window.timestampOffsetSeconds <= cutoffSeconds)
+    const sum = (field: 'clicksInWindow' | 'scrollEventsInWindow' | 'keyboardActivityInWindow') => windows.reduce((total, window) => total + window[field], 0)
+    let awaySeconds = session.contextEvents.filter((event) => event.previousContext === 'away' && event.timestampOffsetSeconds <= cutoffSeconds).reduce((total, event) => total + event.previousContextSeconds, 0)
+    const lastEvent = [...session.contextEvents].reverse().find((event) => event.timestampOffsetSeconds <= cutoffSeconds)
+    const contextAtCutoff = lastEvent?.nextContext ?? 'task_site'
+    const contextStarted = lastEvent?.timestampOffsetSeconds ?? 0
+    if (contextAtCutoff === 'away') awaySeconds += Math.max(0, cutoffSeconds - contextStarted)
+    const snapshot: CheckpointSnapshot = { sessionId, anonymousUserId: session.anonymousUserId, cutoffSeconds, capturedAt: new Date().toISOString(), observable: true, clickCount: sum('clicksInWindow'), scrollCount: sum('scrollEventsInWindow'), keyboardActivityCount: sum('keyboardActivityInWindow'), idleSeconds: windows.filter((window) => window.idleInWindow).reduce((total, window) => total + window.windowDurationSeconds, 0), activeSeconds: windows.filter((window) => !window.idleInWindow).reduce((total, window) => total + window.windowDurationSeconds, 0), awaySeconds, tabSwitchCount: session.contextEvents.filter((event) => event.tabSwitched && event.timestampOffsetSeconds <= cutoffSeconds).length, videoPlayingSeconds: windows.filter((window) => window.videoPlaying).reduce((total, window) => total + window.windowDurationSeconds, 0) }
+    const snapshots = await getCheckpointSnapshots(); await setCheckpointSnapshots([...snapshots.filter((item) => !(item.sessionId === sessionId && item.cutoffSeconds === cutoffSeconds)), snapshot]); return snapshot
   })
 }
 
 export async function markReflectionRequested(sessionId: string): Promise<InternalSession | null> {
   const result = await updateSession(sessionId, (session) => {
-    if (session.status !== 'active' || session.reflectionRequestedAt !== null) return session
+    if (session.status !== 'active') return session
     const now = new Date().toISOString()
-    return {
-      ...session,
-      checkinCount: session.checkinCount + 1,
-      reflectionRequestedAt: now,
-      updatedAt: now,
-    }
+    const contextElapsed = Math.max(0, Math.round((Date.now() - new Date(session.contextChangedAt).getTime()) / 1000))
+    return { ...session, status: 'pending_reflection', reflectionRequestedAt: now, endTime: now, durationSeconds: Math.max(session.durationSeconds, Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000)), awaySeconds: session.awaySeconds + (session.currentContext === 'away' ? contextElapsed : 0), contextChangedAt: now, updatedAt: now }
   })
-  await chrome.alarms.clear(`reflection:${sessionId}`)
+  if (result) for (const seconds of [180, 300, 600] as const) if (result.durationSeconds >= seconds) await captureCheckpoint(sessionId, seconds)
+  for (const seconds of [180, 300, 600]) await chrome.alarms.clear(`checkpoint:${sessionId}:${seconds}`)
   return result
 }
 
-export async function getActiveSessionForTab(tabId: number): Promise<InternalSession | null> {
-  const sessions = await getSessions()
-  return sessions.find((session) => session.tabId === tabId && session.status === 'active') ?? null
+export async function dismissReflection(sessionId: string, action: Exclude<ReflectionAction, null>): Promise<InternalSession | null> {
+  return updateSession(sessionId, (session) => session.status === 'pending_reflection' ? { ...session, reflectionAction: action, updatedAt: new Date().toISOString() } : session)
 }
 
-async function updateSession(
-  sessionId: string,
-  updater: (session: InternalSession) => InternalSession,
-): Promise<InternalSession | null> {
-  return runStorageOperation(async () => {
-    const sessions = await getSessions()
-    const index = sessions.findIndex((session) => session.sessionId === sessionId)
-    if (index < 0) return null
-    const updated = updater(sessions[index])
-    sessions[index] = updated
-    await setSessions(sessions)
-    return updated
+export async function submitReflection(sessionId: string, answer: PostSessionAnswer): Promise<InternalSession | null> {
+  return updateSession(sessionId, (session) => {
+    if (session.status !== 'pending_reflection') return session
+    return { ...session, postSessionAnswer: answer, driftLabel: driftLabelForAnswer(answer), labelSource: answer === 'not_sure' ? null : 'post_session_self_report', status: 'completed', updatedAt: new Date().toISOString() }
   })
 }
 
-function closeRecord(
-  session: InternalSession,
-  status: 'abandoned',
-  endTime = session.reflectionRequestedAt ?? new Date().toISOString(),
-): InternalSession {
-  const duration = Math.max(0, Math.round((new Date(endTime).getTime() - new Date(session.startTime).getTime()) / 1000))
-  return {
-    ...session,
-    endTime,
-    durationSeconds: Math.max(session.durationSeconds, duration),
-    actualDurationSeconds: Math.max(session.actualDurationSeconds, duration),
-    status,
-    updatedAt: endTime,
-  }
-}
-
-function scheduleReflection(sessionId: string, minutes?: number): void {
-  const delayInMinutes = Math.max(1, minutes ?? 5)
-  void chrome.alarms.clear(`reflection:${sessionId}`).then(() => {
-    chrome.alarms.create(`reflection:${sessionId}`, { delayInMinutes })
+async function updateSession(sessionId: string, updater: (session: InternalSession) => InternalSession): Promise<InternalSession | null> {
+  return runStorageOperation(async () => {
+    const sessions = await getSessions(); const index = sessions.findIndex((session) => session.sessionId === sessionId)
+    if (index < 0) return null
+    sessions[index] = updater(sessions[index]); await setSessions(sessions); return sessions[index]
   })
 }

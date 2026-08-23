@@ -41,11 +41,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { exportActivityWindowsCsv, exportJsonBundle, exportSessionsCsv } from '../shared/exportService'
+import { exportActivityWindowsCsv, exportCheckpointSnapshotsCsv, exportJsonBundle, exportSessionsCsv } from '../shared/exportService'
 import { clearResearchData, deleteSessionData, patchSettings } from '../shared/storage'
 import type { AppSettings, InternalSession, StoredData } from '../shared/types'
 import { AppLogo } from '../ui/AppLogo'
-import { formatDate, formatDuration, formatTime, intentionLabel, sessionOutcome } from '../ui/format'
+import { formatDate, formatDuration, formatTime, taskTypeLabel, sessionOutcome } from '../ui/format'
 import { useAppData } from '../ui/useAppData'
 
 type View = 'overview' | 'trends' | 'intentions' | 'sessions' | 'data'
@@ -53,7 +53,7 @@ type View = 'overview' | 'trends' | 'intentions' | 'sessions' | 'data'
 const navItems = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'trends', label: 'Trends', icon: Activity },
-  { id: 'intentions', label: 'Intention alignment', icon: Target },
+  { id: 'intentions', label: 'Task-type alignment', icon: Target },
   { id: 'sessions', label: 'Session history', icon: Layers3 },
   { id: 'data', label: 'Data & privacy', icon: ShieldCheck },
 ] as const
@@ -90,7 +90,7 @@ export function DashboardApp() {
         </nav>
         <div className="sidebar-study">
           <span className="sidebar-study-icon"><Database size={17} /></span>
-          <div><strong>Stage 1 collection</strong><span>Static intention prompt</span></div>
+          <div><strong>Phase 1 collection</strong><span>No mid-session prompt</span></div>
         </div>
         <div className="sidebar-footer">
           <span className={data.settings.monitoringEnabled ? 'status-pill' : 'status-pill status-pill-paused'}><span className="status-dot" />{data.settings.monitoringEnabled ? 'Collecting' : 'Paused'}</span>
@@ -172,7 +172,7 @@ function Overview({ data, onNavigate }: { data: StoredData; onNavigate: (view: V
 
       <section className="dashboard-grid dashboard-grid-even">
         <article className="panel table-panel">
-          <PanelHeader title="Recent sessions" detail="Latest completed visits" action={<button className="text-link" type="button" onClick={() => onNavigate('sessions')}>View all <ChevronRight size={14} /></button>} />
+          <PanelHeader title="Recent sessions" detail="Latest completed tasks" action={<button className="text-link" type="button" onClick={() => onNavigate('sessions')}>View all <ChevronRight size={14} /></button>} />
           <SessionTable sessions={[...data.sessions].sort((a, b) => b.startTime.localeCompare(a.startTime)).slice(0, 5)} compact />
         </article>
         <article className="panel top-domain-panel">
@@ -218,10 +218,10 @@ function Intentions({ data }: { data: StoredData }) {
   const rows = intentionSeries(data.sessions)
   return (
     <>
-      <PageTitle eyebrow="Declared purpose" title="Intention alignment" subtitle="Compare participant-provided intentions with participant-provided session outcomes." />
+      <PageTitle eyebrow="Declared task" title="Task-type alignment" subtitle="Compare structured task types with participant-provided session outcomes." />
       <section className="panel chart-panel intention-chart-panel">
-        <PanelHeader title="Sessions by declared intention" detail="Aligned and drift-labeled sessions" />
-        {rows.length ? <div className="chart-wrap chart-wrap-large"><ResponsiveContainer width="100%" height="100%"><BarChart data={rows} layout="vertical" margin={{ top: 4, right: 12, left: 32, bottom: 0 }}><CartesianGrid horizontal={false} stroke="#e8ecea" /><XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#78847e', fontSize: 10 }} /><YAxis type="category" dataKey="shortLabel" width={105} axisLine={false} tickLine={false} tick={{ fill: '#5f6b65', fontSize: 10 }} /><Tooltip /><Bar dataKey="aligned" stackId="a" fill="#167b5a" isAnimationActive={false} /><Bar dataKey="drift" stackId="a" fill="#c7553d" isAnimationActive={false} /><Bar dataKey="other" stackId="a" fill="#cbd4cf" radius={[0,3,3,0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div> : <SimpleEmpty title="No intentions yet" text="Intention summaries appear after monitored visits are labeled." />}
+        <PanelHeader title="Sessions by task type" detail="Aligned and drift-labeled sessions" />
+        {rows.length ? <div className="chart-wrap chart-wrap-large"><ResponsiveContainer width="100%" height="100%"><BarChart data={rows} layout="vertical" margin={{ top: 4, right: 12, left: 32, bottom: 0 }}><CartesianGrid horizontal={false} stroke="#e8ecea" /><XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#78847e', fontSize: 10 }} /><YAxis type="category" dataKey="shortLabel" width={105} axisLine={false} tickLine={false} tick={{ fill: '#5f6b65', fontSize: 10 }} /><Tooltip /><Bar dataKey="aligned" stackId="a" fill="#167b5a" isAnimationActive={false} /><Bar dataKey="drift" stackId="a" fill="#c7553d" isAnimationActive={false} /><Bar dataKey="other" stackId="a" fill="#cbd4cf" radius={[0,3,3,0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div> : <SimpleEmpty title="No task sessions yet" text="Task-type summaries appear after sessions are labeled." />}
       </section>
       <section className="intention-cards">
         {rows.map((row) => (
@@ -241,7 +241,7 @@ function Sessions({ data }: { data: StoredData }) {
   const [selected, setSelected] = useState<InternalSession | null>(null)
   const filtered = useMemo(() => [...data.sessions]
     .sort((a, b) => b.startTime.localeCompare(a.startTime))
-    .filter((session) => session.domain.includes(query.toLowerCase()) || intentionLabel(session.declaredIntention).toLowerCase().includes(query.toLowerCase()))
+    .filter((session) => session.initialTaskSite.includes(query.toLowerCase()) || taskTypeLabel(session.taskType).toLowerCase().includes(query.toLowerCase()))
     .filter((session) => outcome === 'all' || sessionOutcome(session).toLowerCase() === outcome), [data.sessions, query, outcome])
 
   return (
@@ -271,7 +271,7 @@ function DataPrivacy({ data }: { data: StoredData }) {
       <PageTitle eyebrow="Participant control" title="Data and privacy" subtitle="Inspect the local dataset, export allowlisted fields, or remove stored research records." />
       <section className="data-hero panel">
         <div><span className="data-hero-icon"><ShieldCheck size={25} /></span><span className="eyebrow">Local storage</span><h2>Your records have not been uploaded.</h2><p>Exports are created only when you choose a format below. The extension contains no analytics service or cloud backend.</p></div>
-        <div className="data-hero-stats"><span><strong>{data.sessions.length}</strong> session records</span><span><strong>{data.activityWindows.length}</strong> activity windows</span><span><strong>{data.settings.monitoredDomains.filter((item) => item.enabled).length}</strong> enabled domains</span></div>
+        <div className="data-hero-stats"><span><strong>{data.sessions.length}</strong> session records</span><span><strong>{data.activityWindows.length}</strong> activity windows</span><span><strong>{data.settings.monitoredDomains.filter((item) => item.enabled).length}</strong> task sites</span></div>
       </section>
       <section className="dashboard-grid dashboard-grid-even data-grid">
         <article className="panel panel-pad">
@@ -279,12 +279,13 @@ function DataPrivacy({ data }: { data: StoredData }) {
           <div className="export-list">
             <button type="button" onClick={exportSessionsCsv}><span className="export-icon green"><FileSpreadsheet size={19} /></span><span><strong>Participant CSV</strong><small>{data.settings.participantId}.csv, compatible with the modeling data</small></span><Download size={16} /></button>
             <button type="button" onClick={exportActivityWindowsCsv}><span className="export-icon blue"><FileSpreadsheet size={19} /></span><span><strong>Activity windows CSV</strong><small>Optional ten-second rows for early prediction</small></span><Download size={16} /></button>
+            <button type="button" onClick={exportCheckpointSnapshotsCsv}><span className="export-icon green"><FileSpreadsheet size={19} /></span><span><strong>Checkpoint snapshots CSV</strong><small>Leakage-safe 3-, 5-, and 10-minute features</small></span><Download size={16} /></button>
             <button type="button" onClick={exportJsonBundle}><span className="export-icon amber"><FileJson size={19} /></span><span><strong>Complete JSON bundle</strong><small>Optional audit copy of sessions and activity windows</small></span><Download size={16} /></button>
           </div>
         </article>
         <article className="panel panel-pad schema-panel">
           <PanelHeader title="Privacy boundary" detail={`Schema version ${data.settings.schemaVersion}`} />
-          <div className="privacy-boundary"><span><CheckCircle2 size={16} /> Domain hostname</span><span><CheckCircle2 size={16} /> Timing and aggregate counts</span><span><CheckCircle2 size={16} /> Declared intention</span><span><CheckCircle2 size={16} /> Self-reported outcome</span><span className="not-collected"><X size={16} /> Page text or full URL</span><span className="not-collected"><X size={16} /> Messages, screenshots, key values</span></div>
+          <div className="privacy-boundary"><span><CheckCircle2 size={16} /> Approved task-site hostname</span><span><CheckCircle2 size={16} /> Timing and aggregate counts</span><span><CheckCircle2 size={16} /> Structured task type</span><span><CheckCircle2 size={16} /> Self-reported outcome</span><span className="not-collected"><X size={16} /> Page text or full URL</span><span className="not-collected"><X size={16} /> Outside destination identity</span></div>
         </article>
       </section>
       <section className="panel panel-pad danger-zone">
@@ -313,7 +314,7 @@ function PanelHeader({ title, detail, action }: { title: string; detail?: string
 }
 
 function SessionTable({ sessions, compact = false, onSelect }: { sessions: InternalSession[]; compact?: boolean; onSelect?: (session: InternalSession) => void }) {
-  return <div className="table-scroll"><table className="session-table"><thead><tr><th>Domain</th><th>Intention</th><th>Started</th><th>Duration</th><th>Outcome</th>{!compact && <th aria-label="View" />}</tr></thead><tbody>{sessions.map((session) => <tr key={session.sessionId} onClick={() => onSelect?.(session)} className={onSelect ? 'clickable-row' : ''}><td><span className="table-domain-icon">{session.domain[0].toUpperCase()}</span><strong>{session.domain}</strong></td><td>{intentionLabel(session.declaredIntention)}</td><td><strong>{formatDate(session.startTime)}</strong><small>{formatTime(session.startTime)}</small></td><td>{formatDuration(session.durationSeconds)}</td><td><OutcomeBadge session={session} /></td>{!compact && <td><ChevronRight size={15} /></td>}</tr>)}</tbody></table></div>
+  return <div className="table-scroll"><table className="session-table"><thead><tr><th>Task site</th><th>Task type</th><th>Started</th><th>Duration</th><th>Outcome</th>{!compact && <th aria-label="View" />}</tr></thead><tbody>{sessions.map((session) => <tr key={session.sessionId} onClick={() => onSelect?.(session)} className={onSelect ? 'clickable-row' : ''}><td><span className="table-domain-icon">{session.initialTaskSite[0].toUpperCase()}</span><strong>{session.initialTaskSite}</strong></td><td>{taskTypeLabel(session.taskType)}</td><td><strong>{formatDate(session.startTime)}</strong><small>{formatTime(session.startTime)}</small></td><td>{formatDuration(session.durationSeconds)}</td><td><OutcomeBadge session={session} /></td>{!compact && <td><ChevronRight size={15} /></td>}</tr>)}</tbody></table></div>
 }
 
 function OutcomeBadge({ session }: { session: InternalSession }) {
@@ -322,19 +323,19 @@ function OutcomeBadge({ session }: { session: InternalSession }) {
 }
 
 function DomainSummary({ sessions }: { sessions: InternalSession[] }) {
-  const counts = Object.entries(sessions.reduce<Record<string, { total: number; aligned: number; drift: number }>>((acc, session) => { const current = acc[session.domain] ?? { total: 0, aligned: 0, drift: 0 }; current.total += 1; current.aligned += session.driftLabel === 0 ? 1 : 0; current.drift += session.driftLabel === 1 ? 1 : 0; acc[session.domain] = current; return acc }, {})).sort((a, b) => b[1].total - a[1].total).slice(0, 5)
+  const counts = Object.entries(sessions.reduce<Record<string, { total: number; aligned: number; drift: number }>>((acc, session) => { const current = acc[session.initialTaskSite] ?? { total: 0, aligned: 0, drift: 0 }; current.total += 1; current.aligned += session.driftLabel === 0 ? 1 : 0; current.drift += session.driftLabel === 1 ? 1 : 0; acc[session.initialTaskSite] = current; return acc }, {})).sort((a, b) => b[1].total - a[1].total).slice(0, 5)
   const max = Math.max(1, ...counts.map(([, value]) => value.total))
   return <div className="domain-summary-list">{counts.map(([domain, value]) => <div key={domain}><span className="table-domain-icon">{domain[0].toUpperCase()}</span><div><strong>{domain}</strong><span className="domain-bar"><i style={{ width: `${(value.total / max) * 100}%` }} /></span></div><span><strong>{value.total}</strong><small>{value.aligned} aligned, {value.drift} drift</small></span></div>)}</div>
 }
 
 function SessionDrawer({ session, windowCount, onClose }: { session: InternalSession; windowCount: number; onClose: () => void }) {
   const remove = async () => { if (!window.confirm('Delete this session and its linked activity windows?')) return; await deleteSessionData(session.sessionId); onClose() }
-  return <div className="drawer-backdrop" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose() }}><aside className="session-drawer"><header><div><span className="eyebrow">Session detail</span><h2>{session.domain}</h2></div><button className="button button-icon button-quiet" type="button" aria-label="Close session detail" onClick={onClose}><X size={19} /></button></header><div className="drawer-outcome"><OutcomeBadge session={session} /><span>{formatDate(session.startTime)} at {formatTime(session.startTime)}</span></div><div className="drawer-section"><h3>Intention and reflection</h3><DetailRow label="Declared intention" value={intentionLabel(session.declaredIntention)} /><DetailRow label="Intended duration" value={session.intendedDurationMinutes ? `${session.intendedDurationMinutes} minutes` : 'Not provided'} /><DetailRow label="Post-session answer" value={sessionOutcome(session)} /></div><div className="drawer-section"><h3>Aggregate activity</h3><div className="drawer-metrics"><span><strong>{formatDuration(session.durationSeconds)}</strong>duration</span><span><strong>{session.clickCount}</strong>clicks</span><span><strong>{session.scrollCount}</strong>scrolls</span><span><strong>{session.keyboardActivityCount}</strong>keyboard events</span><span><strong>{formatDuration(session.idleSeconds)}</strong>idle</span><span><strong>{windowCount}</strong>windows</span></div></div><div className="drawer-section"><h3>Record identity</h3><DetailRow label="Session ID" value={session.sessionId} mono /><DetailRow label="Label source" value={session.labelSource ?? 'None'} /></div><div className="drawer-privacy"><LockKeyhole size={15} />This record contains no page title, path, query, text, screenshot, message, or key value.</div><footer><button className="button button-danger" type="button" onClick={remove}><Trash2 size={15} /> Delete session</button></footer></aside></div>
+  return <div className="drawer-backdrop" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose() }}><aside className="session-drawer"><header><div><span className="eyebrow">Session detail</span><h2>{session.initialTaskSite}</h2></div><button className="button button-icon button-quiet" type="button" aria-label="Close session detail" onClick={onClose}><X size={19} /></button></header><div className="drawer-outcome"><OutcomeBadge session={session} /><span>{formatDate(session.startTime)} at {formatTime(session.startTime)}</span></div><div className="drawer-section"><h3>Task and reflection</h3><DetailRow label="Task type" value={taskTypeLabel(session.taskType)} /><DetailRow label="Intended duration" value={session.intendedDurationMinutes ? `${session.intendedDurationMinutes} minutes` : 'Not provided'} /><DetailRow label="Post-session answer" value={sessionOutcome(session)} /></div><div className="drawer-section"><h3>Aggregate activity</h3><div className="drawer-metrics"><span><strong>{formatDuration(session.durationSeconds)}</strong>duration</span><span><strong>{session.clickCount}</strong>clicks</span><span><strong>{session.scrollCount}</strong>scrolls</span><span><strong>{session.keyboardActivityCount}</strong>keyboard events</span><span><strong>{formatDuration(session.awaySeconds)}</strong>away</span><span><strong>{windowCount}</strong>windows</span></div></div><div className="drawer-section"><h3>Record identity</h3><DetailRow label="Session ID" value={session.sessionId} mono /><DetailRow label="Label source" value={session.labelSource ?? 'None'} /></div><div className="drawer-privacy"><LockKeyhole size={15} />This record contains no page title, path, query, text, destination hostname, screenshot, message, or key value.</div><footer><button className="button button-danger" type="button" onClick={remove}><Trash2 size={15} /> Delete session</button></footer></aside></div>
 }
 
 function DetailRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) { return <div className="detail-row"><span>{label}</span><strong className={mono ? 'mono-value' : ''}>{value}</strong></div> }
 function SimpleEmpty({ title, text }: { title: string; text: string }) { return <div className="simple-empty"><CircleHelp size={24} /><strong>{title}</strong><span>{text}</span></div> }
-function EmptyDashboard() { return <><PageTitle eyebrow="Study snapshot" title="Collection overview" subtitle="Delayed summaries from locally stored, self-reported sessions." /><section className="panel empty-state"><div><span className="empty-state-icon"><Database size={22} /></span><h3>No sessions collected yet</h3><p>Enable monitoring and visit one of your configured domains. The intention prompt will begin the first session.</p><a className="button button-secondary" href={extensionUrl('src/options/index.html')}><Settings2 size={16} /> Review monitored domains</a></div></section></> }
+function EmptyDashboard() { return <><PageTitle eyebrow="Study snapshot" title="Collection overview" subtitle="Delayed summaries from locally stored, self-reported sessions." /><section className="panel empty-state"><div><span className="empty-state-icon"><Database size={22} /></span><h3>No sessions collected yet</h3><p>Open an approved task site, then use the popup to explicitly start a task.</p><a className="button button-secondary" href={extensionUrl('src/options/index.html')}><Settings2 size={16} /> Review task sites</a></div></section></> }
 
 function dailySeries(sessions: InternalSession[], days: number) {
   const values = Array.from({ length: days }, (_, index) => { const date = new Date(); date.setHours(0,0,0,0); date.setDate(date.getDate() - (days - 1 - index)); const key = date.toISOString().slice(0,10); return { key, label: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date), sessions: 0, drift: 0 } })
@@ -345,6 +346,6 @@ function dailySeries(sessions: InternalSession[], days: number) {
 function hourlySeries(sessions: InternalSession[]) { const labels = ['12a-4a','4a-8a','8a-12p','12p-4p','4p-8p','8p-12a']; return labels.map((label, index) => ({ label, sessions: sessions.filter((session) => Math.floor(new Date(session.startTime).getHours() / 4) === index).length })) }
 
 function intentionSeries(sessions: InternalSession[]) {
-  const keys = ['work_or_study','learning_or_tutorial','specific_information','communication_or_community','planned_entertainment_or_break','open_ended_browsing','accidental_open'] as const
-  return keys.map((key) => { const matching = sessions.filter((session) => session.declaredIntention === key); const aligned = matching.filter((session) => session.driftLabel === 0).length; const drift = matching.filter((session) => session.driftLabel === 1).length; return { key, label: intentionLabel(key), shortLabel: intentionLabel(key), total: matching.length, aligned, drift, other: matching.length - aligned - drift, labeled: aligned + drift } }).filter((row) => row.total > 0)
+  const keys = ['writing_creating','coding_problem_solving','reading_research','learning_tutorial','communication_coordination','other_planned_task'] as const
+  return keys.map((key) => { const matching = sessions.filter((session) => session.taskType === key); const aligned = matching.filter((session) => session.driftLabel === 0).length; const drift = matching.filter((session) => session.driftLabel === 1).length; return { key, label: taskTypeLabel(key), shortLabel: taskTypeLabel(key), total: matching.length, aligned, drift, other: matching.length - aligned - drift, labeled: aligned + drift } }).filter((row) => row.total > 0)
 }
