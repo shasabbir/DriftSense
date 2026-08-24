@@ -45,6 +45,24 @@ table, participant-bootstrap intervals for the selected chronological-holdout
 result, and either a blocked freeze decision or a JSON/joblib frozen candidate.
 Generated outputs under `ml/artifacts/` are ignored by Git.
 
+### Complete session-end model
+
+To train and package the strongest leakage-safe model supported by the session
+CSV alone:
+
+```powershell
+python ml/full_session_model.py `
+  --sessions D:\private\driftsense\driftsense_merged.csv `
+  --output D:\private\driftsense\full_session_model
+```
+
+This command tunes regularized logistic feature families with repeated
+participant-grouped validation, evaluates the fixed selection on later
+participant sessions, refits on every usable label, and writes JSON and joblib
+models, shared probability test vectors, coefficient and calibration tables,
+and a model card. It is a session-end classifier and is not interchangeable
+with the separate checkpoint model.
+
 ## Analysis workflow
 
 Phase 1 uses participant-relative days 1-7 for participant-grouped development
