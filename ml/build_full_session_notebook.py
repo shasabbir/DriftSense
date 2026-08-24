@@ -100,10 +100,11 @@ display(pd.DataFrame([summary["chronological_holdout"]]))
         nbf.v4.new_markdown_cell(
             """## Takeaways
 
-1. Activity provides more grouped-development discrimination than task context alone, but uncertainty across participants remains material.
-2. The threshold trades accuracy for recall and must be reported together with its false-positive burden.
-3. The final artifact is appropriate for session-end research use. A separate cutoff feature export and validation run are required for an in-session intervention model.
-4. The participant-resampled confidence interval and calibration table should accompany any paper claim; a single accuracy value would be misleading for this class balance.
+1. Aggregate activity provides substantially more grouped-development discrimination than task context alone in this dataset.
+2. Active time is represented by both active share and log-transformed active seconds; coefficient magnitude is associative, not causal importance.
+3. The frozen threshold must be reported together with recall, positive-decision rate, and false-positive burden.
+4. The artifact is appropriate for session-end research use. A separate cutoff feature export and validation run are required for a 3-, 5-, or 10-minute intervention model.
+5. Participant-resampled intervals and calibration should accompany paper claims; a single accuracy value is insufficient.
 """
         ),
     ]
