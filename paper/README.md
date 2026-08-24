@@ -17,6 +17,8 @@ Files:
 - `main_humanized.pdf`: compiled humanized manuscript.
 - `references.bib`: BibTeX references, prioritizing recent peer-reviewed HCI and journal work where possible.
 - `related.md`: evidence summaries that support the study gap and evaluation.
+- `post_study_interview_questionnaire.md`: short Phase 1 and Phase 2 Likert
+  questionnaires for perceived impact, usability, and prompt burden.
 - `figures/`: editable SVG figure masters, vector-PDF exports, and the two implemented-UI captures used by LaTeX.
 - `figure_list.md`: current and planned figures, including result placeholders.
 - `table_list.md`: current and planned tables, including result placeholders.

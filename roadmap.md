@@ -200,19 +200,19 @@ Secondary outcomes:
 Phase 1 versus Phase 2 differences are descriptive only. They are not the causal
 test of the prompt because the phases occur in a fixed order.
 
-## Exit Survey
+## Post-Phase Questionnaires
 
-Use five agreement items:
+Administer one short five-point Likert questionnaire after Phase 1 and another
+after Phase 2. Phase 1 measures perceived effects of task declaration and
+end-of-session reflection, ease of use, burden, privacy comfort, and willingness
+to continue. Phase 2 measures the timing, usefulness, clarity, frequency, and
+burden of the occasional model-assisted check-in, plus version preference and
+willingness to continue.
 
-1. The prompts appeared at appropriate times.
-2. The prompts helped me reconsider my intention.
-3. The prompts were annoying.
-4. The extension was easy to use.
-5. I would continue using the extension.
-
-Open question:
-
-> What should be changed about the prompts or their timing?
+Use the complete items in `paper/post_study_interview_questionnaire.md`. Treat
+the ratings as descriptive evidence of perceived impact. The randomized
+eligible-session comparison, not the fixed-order Phase 1--Phase 2 ratings, is
+the causal test of prompt impact.
 
 ## Execution Checklist
 
