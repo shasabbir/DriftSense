@@ -9,6 +9,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         dashboard: 'src/dashboard/index.html',
+        device: 'src/device/index.html',
       },
     },
   },

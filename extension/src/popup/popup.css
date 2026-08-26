@@ -42,6 +42,7 @@ body { background: #f6f8f7; }
 .popup-link-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; }
 .popup-link-icon.green { color: var(--green); background: var(--green-soft); }
 .popup-link-icon.blue { color: var(--blue); background: var(--blue-soft); }
+.popup-link-icon.amber { color: var(--amber); background: var(--amber-soft); }
 .popup-links > a > svg { color: #9ba59f; }
 .popup-footer { min-height: 50px; padding: 0 18px; display: flex; align-items: center; gap: 6px; color: #78837e; font-size: 9px; }
 .popup-footer svg { color: var(--green); }

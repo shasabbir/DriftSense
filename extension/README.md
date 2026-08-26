@@ -42,3 +42,33 @@ Load `dist/` as an unpacked extension after building. Chrome may require reloadi
 7. Verify activity rows are 10 seconds, checkpoint offsets contain no future activity, and outside destinations never appear.
 
 See [docs/data-schema.md](docs/data-schema.md) and [docs/privacy-checklist.md](docs/privacy-checklist.md) before a participant pilot.
+
+## ESP32 USB serial prototype
+
+The ESP32 integration is intentionally simple: keep the browser extension as the
+source of truth and use the ESP32 only for three buttons, a 16x2 LCD countdown,
+red LED, and buzzer output.
+
+1. Upload [`../hardware/esp32_usb_serial/esp32_usb_serial.ino`](../hardware/esp32_usb_serial/esp32_usb_serial.ino) to the ESP32.
+2. Build and load the extension from `dist/`.
+3. Open the popup and choose **ESP32 device**.
+4. Connect the board with a USB data cable.
+5. Click **Connect ESP32** and choose the ESP32 serial port.
+6. Select a task type in the device page, focus an approved task-site tab, then use the hardware buttons.
+
+Button mapping:
+
+| State | Button 1 | Button 2 | Button 3 |
+|---|---|---|---|
+| Idle | Start setup/reset | Add 10 minutes | - |
+| Selecting duration | Reset to 0 | Add 10 minutes | Start task |
+| Running | - | - | Finish and reflect |
+| Reflection | Aligned | Moved away | Not sure |
+
+The serial protocol is newline-delimited text. The ESP32 sends `BUTTON:1`,
+`BUTTON:2`, or `BUTTON:3`; the extension sends commands such as `DURATION:30`,
+`START`, `TIME:1785`, `REFLECTION`, and `COMPLETE`.
+
+The current implementation does not use the session-end JSON model for hardware
+alerts. Early alerting still requires a separately trained and frozen checkpoint
+model before Phase 2.
