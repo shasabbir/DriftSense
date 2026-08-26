@@ -1,6 +1,6 @@
 # DriftSense Study Roadmap
 
-## Research Direction
+## Research Directions
 
 DriftSense studies whether a privacy-preserving browser model can predict
 self-reported intention drift and whether a lightweight reflective prompt can
