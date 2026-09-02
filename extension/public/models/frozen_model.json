@@ -1,0 +1,71 @@
+{
+  "artifact_status": "frozen_phase2_candidate",
+  "model_version": "phase1-logistic-600s-v1",
+  "checkpoint_policy": "single_600_seconds",
+  "prediction_offsets_seconds": [
+    600
+  ],
+  "selected_model": "intended_duration",
+  "source_columns": {
+    "numeric": [
+      "intended_duration_minutes",
+      "elapsed_to_intended_ratio"
+    ],
+    "categorical": []
+  },
+  "feature_order": [
+    "intended_duration_minutes",
+    "elapsed_to_intended_ratio"
+  ],
+  "numeric_preprocessing": {
+    "intended_duration_minutes": {
+      "impute_median": 30.0,
+      "mean": 37.36742424242424,
+      "scale": 23.860021070541514
+    },
+    "elapsed_to_intended_ratio": {
+      "impute_median": 0.3333333333333333,
+      "mean": 0.3940446127946128,
+      "scale": 0.23448953775083317
+    }
+  },
+  "categorical_encoding": {},
+  "participant_calibration": {
+    "uses_prior_sessions_only": false,
+    "fallback": "training_median_and_baseline_available_0"
+  },
+  "coefficients": [
+    0.13796023465263962,
+    0.3942368198026329
+  ],
+  "intercept": -0.23039210405277777,
+  "risk_threshold": 0.44724021523281665,
+  "prompt_probability": 0.5,
+  "daily_prompt_cap": 3,
+  "training_rows": 528,
+  "training_source_sha256": "8f13d48c63a4d5b824ad52e8f663787ea962671bcc994f80cad7823e8c630a12",
+  "model_scope": "10_minute_intended_duration_baseline",
+  "activity_features_used": false,
+  "deployment_note": "ML integration baseline; does not infer attention or use live activity features.",
+  "data_quality_warnings": [
+    "Repaired 20 drift labels from explicit post-session answers in memory."
+  ],
+  "chronological_holdout_metrics": {
+    "n": 166,
+    "prevalence": 0.463855421686747,
+    "accuracy": 0.5542168674698795,
+    "precision": 0.5205479452054794,
+    "recall": 0.4935064935064935,
+    "f1": 0.5066666666666667,
+    "roc_auc": 0.5742010798190573,
+    "brier": 0.24321725777179962,
+    "prompt_rate": 0.4397590361445783,
+    "false_prompt_rate_all_sessions": 0.21084337349397592,
+    "false_prompt_share_of_prompts": 0.4794520547945205,
+    "threshold": 0.44724021523281665,
+    "tn": 54,
+    "fp": 35,
+    "fn": 39,
+    "tp": 38
+  }
+}

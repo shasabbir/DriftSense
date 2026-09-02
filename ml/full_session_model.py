@@ -418,7 +418,7 @@ def serialize_pipeline(
         "training_source_sha256": source_hash,
         "chronological_holdout_metrics": metrics,
         "intended_use": "Research analysis and optional session-end risk estimation.",
-        "unsupported_use": "Do not use this artifact as a 3, 5, or 10 minute predictor.",
+        "unsupported_use": "Do not use this artifact as a mid-session checkpoint predictor.",
     }
 
 

@@ -101,6 +101,7 @@ export async function getAllData(): Promise<StoredData> {
 export async function clearResearchData(): Promise<void> {
   await runStorageOperation(async () => {
     await Promise.all([setSessions([]), setActivityWindows([]), setCheckpointSnapshots([])])
+    if (hasChromeStorage()) await chrome.storage.local.remove(['driftsense_phase2_decisions_v1', 'driftsense_device_alert_v1'])
   })
 }
 
@@ -112,6 +113,11 @@ export async function deleteSessionData(sessionId: string): Promise<void> {
       setActivityWindows(windows.filter((window) => window.sessionId !== sessionId)),
       setCheckpointSnapshots(snapshots.filter((snapshot) => snapshot.sessionId !== sessionId)),
     ])
+    if (hasChromeStorage()) {
+      const key = 'driftsense_phase2_decisions_v1'
+      const rows = ((await chrome.storage.local.get(key))[key] ?? []) as Array<{ sessionId?: string }>
+      await chrome.storage.local.set({ [key]: rows.filter((row) => row.sessionId !== sessionId) })
+    }
   })
 }
 

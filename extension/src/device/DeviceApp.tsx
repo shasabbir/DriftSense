@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Cable, CheckCircle2, Clock3, RotateCcw, Square, TimerReset, Usb, XCircle } from 'lucide-react'
+import { Bell, BellOff, Cable, CheckCircle2, Clock3, RotateCcw, Square, TimerReset, Upload, Usb, XCircle } from 'lucide-react'
 import { TASK_TYPE_OPTIONS } from '../shared/constants'
 import { domainMatches } from '../shared/domainUtils'
 import { sendRuntimeMessage } from '../shared/runtime'
@@ -7,6 +7,7 @@ import type { AppSettings, InternalSession, PostSessionAnswer, TaskType } from '
 import { AppLogo } from '../ui/AppLogo'
 import { formatDuration, taskTypeLabel } from '../ui/format'
 import { formatDeviceCommand, parseDeviceLine, type DeviceButtonEvent, type DeviceCommand } from './serialProtocol'
+import { installCheckpointModel, loadCheckpointModel, type CheckpointModelArtifact } from '../background/checkpointModel'
 
 type PopupState = { ok: boolean; settings: AppSettings; sessions: InternalSession[]; activeSession: InternalSession | null; currentTabId: number | null; currentDomain: string | null }
 type LocalMode = 'idle' | 'selecting'
@@ -40,6 +41,7 @@ export function DeviceApp() {
   const [log, setLog] = useState<string[]>([])
   const [error, setError] = useState('')
   const [tick, setTick] = useState(Date.now())
+  const [model, setModel] = useState<CheckpointModelArtifact | null>(null)
   const portRef = useRef<SerialPortLike | null>(null)
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
   const stateRef = useRef<PopupState | null>(null)
@@ -47,6 +49,7 @@ export function DeviceApp() {
   const localModeRef = useRef<LocalMode>('idle')
   const taskTypeRef = useRef<TaskType>('writing_creating')
   const timeReachedRef = useRef(false)
+  const storeConnectionState = useCallback((isConnected: boolean) => chrome.storage.local.set({ driftsense_device_connection_v1: { connected: isConnected, updatedAt: new Date().toISOString() } }), [])
 
   const appendLog = useCallback((message: string) => {
     const stamped = `${new Date().toLocaleTimeString()} ${message}`
@@ -157,8 +160,11 @@ export function DeviceApp() {
     await port.open({ baudRate: 115200 })
     portRef.current = port
     setConnected(true)
+    await storeConnectionState(true)
     appendLog('Connected at 115200 baud')
     await sendCommand({ type: 'READY' })
+    const alertState = (await chrome.storage.local.get('driftsense_device_alert_v1')).driftsense_device_alert_v1
+    if (alertState) await sendCommand({ type: 'ALERT_ON' })
 
     const reader = port.readable?.getReader()
     if (!reader) return
@@ -184,6 +190,7 @@ export function DeviceApp() {
         reader.releaseLock()
         readerRef.current = null
         setConnected(false)
+        await storeConnectionState(false)
       }
     })()
   }, [appendLog, handleButtonEvent, sendCommand])
@@ -193,10 +200,31 @@ export function DeviceApp() {
     try { await portRef.current?.close() } catch { /* already closed */ }
     portRef.current = null
     setConnected(false)
+    await storeConnectionState(false)
     appendLog('Disconnected')
-  }, [appendLog])
+  }, [appendLog, storeConnectionState])
 
   useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    if (!connected) return
+    void storeConnectionState(true)
+    const id = window.setInterval(() => void storeConnectionState(true), 2000)
+    const markDisconnected = () => void storeConnectionState(false)
+    window.addEventListener('beforeunload', markDisconnected)
+    return () => { window.clearInterval(id); window.removeEventListener('beforeunload', markDisconnected); void storeConnectionState(false) }
+  }, [connected, storeConnectionState])
+  useEffect(() => { void loadCheckpointModel().then(setModel) }, [])
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.onMessage) return
+    const listener = (message: unknown) => {
+      const candidate = message as { type?: string; command?: DeviceCommand }
+      if (candidate.type === 'DRIFTSENSE_DEVICE_COMMAND' && candidate.command) {
+        void sendCommand(candidate.command)
+      }
+    }
+    chrome.runtime.onMessage.addListener(listener)
+    return () => chrome.runtime.onMessage.removeListener(listener)
+  }, [sendCommand])
   useEffect(() => {
     const id = window.setInterval(() => { setTick(Date.now()); void refresh() }, 1000)
     return () => window.clearInterval(id)
@@ -274,6 +302,15 @@ export function DeviceApp() {
             <button className="button button-secondary" onClick={() => { setLocalMode('selecting'); setSelectedMinutes(0); void sendCommand({ type: 'DURATION', minutes: 0 }) }}><RotateCcw size={16} /> Setup/reset</button>
             <button className="button button-secondary" onClick={() => { const next = clampDuration(selectedMinutes + 10); setLocalMode('selecting'); setSelectedMinutes(next); void sendCommand({ type: 'DURATION', minutes: next }) }}><Clock3 size={16} /> Add 10 min</button>
             <button className="button button-green" disabled={!approvedCurrentSite || selectedMinutes < 1 || Boolean(active)} onClick={() => void startSession()}>Start task</button>
+          </div>
+        </div>
+
+        <div className="panel panel-pad">
+          <div className="section-heading"><h2>Phase 2 model</h2><p>{model ? `${model.model_version} · ${model.prediction_offsets_seconds[0] / 60} minute checkpoint` : 'No valid checkpoint model installed. Automatic alerts are disabled.'}</p></div>
+          <label className="button button-secondary"><Upload size={16} /> Import frozen_model.json<input hidden type="file" accept="application/json,.json" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.text().then(JSON.parse).then(installCheckpointModel).then((installed) => { setModel(installed); setError(''); appendLog(`Installed ${installed.model_version}`) }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Invalid model file.')); event.target.value = '' }} /></label>
+          <div className="device-actions">
+            <button className="button button-secondary" disabled={!connected} onClick={() => void sendCommand({ type: 'ALERT_ON' })}><Bell size={16} /> Test alert</button>
+            <button className="button button-secondary" disabled={!connected} onClick={() => void sendCommand({ type: 'ALERT_OFF' })}><BellOff size={16} /> Stop test</button>
           </div>
         </div>
 

@@ -84,14 +84,14 @@ def test_checkpoint_features_use_checkpoint_values_not_final_totals(tmp_path: Pa
             {
                 "sessionId": "s1",
                 "anonymousUserId": "p1",
-                "cutoffSeconds": 180,
-                "capturedAt": "2026-01-01T10:03:01Z",
+                "cutoffSeconds": 600,
+                "capturedAt": "2026-01-01T10:10:01Z",
                 "observable": True,
                 "clickCount": 2,
                 "scrollCount": 3,
                 "keyboardActivityCount": 4,
                 "idleSeconds": 20,
-                "activeSeconds": 140,
+                "activeSeconds": 560,
                 "awaySeconds": 20,
                 "tabSwitchCount": 1,
                 "videoPlayingSeconds": 0,
@@ -103,7 +103,7 @@ def test_checkpoint_features_use_checkpoint_values_not_final_totals(tmp_path: Pa
     features, _, mode = make_early_feature_table(sessions, checkpoints)
     assert mode == "checkpoint_activity"
     assert len(features) == 1
-    assert features.iloc[0]["click_rate_per_min"] == pytest.approx(2 / 3)
+    assert features.iloc[0]["click_rate_per_min"] == pytest.approx(2 / 10)
     assert features.iloc[0]["click_rate_per_min"] != pytest.approx(10 / 3)
 
 
@@ -115,7 +115,7 @@ def test_context_only_cutoffs_never_expose_final_activity_columns(tmp_path: Path
     assert mode == "context_only_duration_eligibility"
     assert relative == []
     assert "click_rate_per_min" not in features.columns
-    assert set(features["cutoff_seconds"]) == {180, 300, 600}
+    assert set(features["cutoff_seconds"]) == {600}
 
 
 def test_participant_relative_baseline_uses_only_prior_aligned_sessions(tmp_path: Path) -> None:
@@ -134,14 +134,14 @@ def test_participant_relative_baseline_uses_only_prior_aligned_sessions(tmp_path
             {
                 "sessionId": session_id,
                 "anonymousUserId": "p1",
-                "cutoffSeconds": 180,
-                "capturedAt": f"2026-01-0{index}T10:03:01Z",
+                "cutoffSeconds": 600,
+                "capturedAt": f"2026-01-0{index}T10:10:01Z",
                 "observable": True,
                 "clickCount": index * 3,
                 "scrollCount": 0,
                 "keyboardActivityCount": 0,
                 "idleSeconds": 0,
-                "activeSeconds": 180,
+                "activeSeconds": 600,
                 "awaySeconds": 0,
                 "tabSwitchCount": 0,
                 "videoPlayingSeconds": 0,
@@ -155,5 +155,5 @@ def test_participant_relative_baseline_uses_only_prior_aligned_sessions(tmp_path
     features = features.sort_values("start_time")
     assert "relative_click_rate_per_min" in relative
     assert pd.isna(features.iloc[0]["relative_click_rate_per_min"])
-    assert features.iloc[1]["relative_click_rate_per_min"] == pytest.approx(1.0)
-    assert features.iloc[2]["relative_click_rate_per_min"] == pytest.approx(1.5)
+    assert features.iloc[1]["relative_click_rate_per_min"] == pytest.approx(0.3)
+    assert features.iloc[2]["relative_click_rate_per_min"] == pytest.approx(0.45)

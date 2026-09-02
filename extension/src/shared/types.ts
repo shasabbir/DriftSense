@@ -6,6 +6,7 @@ export type DriftLabel = 0 | 1 | null
 export type SessionStatus = 'active' | 'pending_reflection' | 'completed' | 'abandoned'
 export type PostSessionAnswer = 'aligned' | 'moved_away' | 'not_sure'
 export type ReflectionAction = 'dismissed' | 'remind_later' | null
+export type CheckpointSeconds = 600 | 1200 | 1800 | 3600 | 5400
 
 export interface MonitoredDomain { domain: string; category: DomainCategory; enabled: boolean; createdAt: string }
 
@@ -73,7 +74,7 @@ export interface InternalSession extends SessionRecord {
 }
 
 export interface ContextEvent { timestampOffsetSeconds: number; previousContext: 'task_site' | 'away'; nextContext: 'task_site' | 'away'; previousContextSeconds: number; tabSwitched: boolean }
-export interface CheckpointSnapshot { sessionId: string; anonymousUserId: string; cutoffSeconds: 180 | 300 | 600; capturedAt: string; observable: boolean; clickCount: number; scrollCount: number; keyboardActivityCount: number; idleSeconds: number; activeSeconds: number; awaySeconds: number; tabSwitchCount: number; videoPlayingSeconds: number }
+export interface CheckpointSnapshot { sessionId: string; anonymousUserId: string; cutoffSeconds: CheckpointSeconds; capturedAt: string; observable: boolean; clickCount: number; scrollCount: number; keyboardActivityCount: number; idleSeconds: number; activeSeconds: number; awaySeconds: number; tabSwitchCount: number; videoPlayingSeconds: number }
 
 export interface ActivityWindow {
   windowId: string; sessionId: string; anonymousUserId: string; timestamp: string; timestampOffsetSeconds: number

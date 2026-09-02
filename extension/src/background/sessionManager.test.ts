@@ -54,9 +54,9 @@ describe('Phase 1 task-session lifecycle', () => {
   it('builds checkpoint features without including post-cutoff windows or context events', async () => {
     vi.useFakeTimers(); const start = new Date('2026-08-23T10:00:00Z'); vi.setSystemTime(start)
     await enableSites('github.com'); const session = await startTaskSession(1, 'github.com', 'coding_problem_solving', 30)
-    await recordActivityWindow(session!.sessionId, { domain: 'github.com', observedAt: new Date(start.getTime() + 170_000).toISOString(), windowDurationSeconds: 10, clicksInWindow: 2, scrollEventsInWindow: 1, keyboardActivityInWindow: 0, idleInWindow: false, tabFocused: true, videoPlaying: false })
-    await recordActivityWindow(session!.sessionId, { domain: 'github.com', observedAt: new Date(start.getTime() + 190_000).toISOString(), windowDurationSeconds: 10, clicksInWindow: 9, scrollEventsInWindow: 0, keyboardActivityInWindow: 0, idleInWindow: false, tabFocused: true, videoPlaying: false })
-    vi.setSystemTime(new Date(start.getTime() + 200_000)); await captureCheckpoint(session!.sessionId, 180)
-    const [snapshot] = await getCheckpointSnapshots(); expect(snapshot.clickCount).toBe(2); expect(snapshot.cutoffSeconds).toBe(180)
+    await recordActivityWindow(session!.sessionId, { domain: 'github.com', observedAt: new Date(start.getTime() + 590_000).toISOString(), windowDurationSeconds: 10, clicksInWindow: 2, scrollEventsInWindow: 1, keyboardActivityInWindow: 0, idleInWindow: false, tabFocused: true, videoPlaying: false })
+    await recordActivityWindow(session!.sessionId, { domain: 'github.com', observedAt: new Date(start.getTime() + 610_000).toISOString(), windowDurationSeconds: 10, clicksInWindow: 9, scrollEventsInWindow: 0, keyboardActivityInWindow: 0, idleInWindow: false, tabFocused: true, videoPlaying: false })
+    vi.setSystemTime(new Date(start.getTime() + 620_000)); await captureCheckpoint(session!.sessionId, 600)
+    const [snapshot] = await getCheckpointSnapshots(); expect(snapshot.clickCount).toBe(2); expect(snapshot.cutoffSeconds).toBe(600)
   })
 })

@@ -49,6 +49,16 @@ The ESP32 integration is intentionally simple: keep the browser extension as the
 source of truth and use the ESP32 only for three buttons, a 16x2 LCD countdown,
 red LED, and buzzer output.
 
+For automatic Phase 2 alerts, copy the validated checkpoint artifact generated
+by `ml/model_development.py` to `public/models/frozen_model.json` before the
+build. The extension fails closed and records `model_unavailable` when this
+file is absent; the full-session model is never used for a mid-session alert.
+
+The device page writes a short-lived USB connection heartbeat. If an
+intervention is assigned while that heartbeat is missing, DriftSense shows a
+neutral Chrome check-in notification and records `browser_notification` as the
+delivery channel instead of claiming ESP32 delivery.
+
 1. Upload [`../hardware/esp32_usb_serial/esp32_usb_serial.ino`](../hardware/esp32_usb_serial/esp32_usb_serial.ino) to the ESP32.
 2. Build and load the extension from `dist/`.
 3. Open the popup and choose **ESP32 device**.

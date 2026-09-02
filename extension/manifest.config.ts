@@ -8,7 +8,7 @@ export default defineManifest({
   version: packageJson.version,
   description: 'Privacy-preserving Phase 1 browser task-session data collection for research.',
   minimum_chrome_version: '111',
-  permissions: ['storage', 'tabs', 'idle', 'alarms', 'unlimitedStorage', 'sidePanel', 'scripting'],
+  permissions: ['storage', 'tabs', 'idle', 'alarms', 'notifications', 'unlimitedStorage', 'sidePanel', 'scripting'],
   optional_host_permissions: ['http://*/*', 'https://*/*'],
   background: {
     service_worker: 'src/background/serviceWorker.ts',

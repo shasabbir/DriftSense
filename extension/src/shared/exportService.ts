@@ -70,6 +70,9 @@ export async function exportCheckpointSnapshotsCsv(): Promise<void> {
 
 export async function exportJsonBundle(): Promise<void> {
   const { settings, sessions, activityWindows, checkpointSnapshots } = await getAllData()
+  const phase2Decisions = typeof chrome !== 'undefined' && chrome.storage?.local
+    ? ((await chrome.storage.local.get('driftsense_phase2_decisions_v1')).driftsense_phase2_decisions_v1 ?? [])
+    : []
   const payload = {
     schemaVersion: settings.schemaVersion,
     exportedAt: new Date().toISOString(),
@@ -79,9 +82,11 @@ export async function exportJsonBundle(): Promise<void> {
     sessions: sessions.map(sanitizeSession),
     activityWindows: activityWindows.map(sanitizeActivityWindow),
     checkpointSnapshots,
+    phase2Decisions,
   }
   payload.sessions.forEach((record) => assertPrivacySafeRecord(record as unknown as Record<string, unknown>))
   payload.activityWindows.forEach((record) => assertPrivacySafeRecord(record as unknown as Record<string, unknown>))
   payload.checkpointSnapshots.forEach((record) => assertPrivacySafeRecord(record as unknown as Record<string, unknown>))
+  payload.phase2Decisions.forEach((record: Record<string, unknown>) => assertPrivacySafeRecord(record))
   download(JSON.stringify(payload, null, 2), `driftsense-export-${dateStamp()}.json`, 'application/json')
 }

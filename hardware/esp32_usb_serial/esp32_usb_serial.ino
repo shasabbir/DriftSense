@@ -132,12 +132,14 @@ void handleLine(String line) {
     digitalWrite(LED_PIN, LOW);
     digitalWrite(BUZZER_PIN, LOW);
   } else if (line == "ALERT_ON") {
+    if (alertOn) return;
     modeBeforeAlert = mode;
     mode = MODE_ALERT;
     alertOn = true;
     digitalWrite(LED_PIN, HIGH);
     beepBriefly();
   } else if (line == "ALERT_OFF") {
+    if (!alertOn) return;
     alertOn = false;
     mode = modeBeforeAlert;
     digitalWrite(LED_PIN, LOW);

@@ -78,7 +78,7 @@ The activity-only model clearly outperformed the context-only baseline in groupe
 
 The appropriate conclusion is that aggregate full-session activity strongly predicts the later self-report in this dataset under the specified known-participant chronological evaluation. It does not establish causation, generalization to new participants, or intervention benefit.
 
-This artifact is valid for session-end research analysis. It should not be presented as a validated 3-, 5-, or 10-minute predictor, and its probability must not replace the participant's explicit reflection response.
+This artifact is valid for session-end research analysis. It should not be presented as a validated mid-session checkpoint predictor, and its probability must not replace the participant's explicit reflection response.
 
 ## Output files
 

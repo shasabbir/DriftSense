@@ -1,8 +1,56 @@
 import { domainMatches, hostnameFromUrl } from '../shared/domainUtils'
 import { permittedOrigins } from '../shared/permissions'
 import { getSessions, getSettings, initializeStorage, patchSettings } from '../shared/storage'
-import type { RuntimeRequest } from '../shared/types'
+import type { CheckpointSeconds, RuntimeRequest } from '../shared/types'
 import { captureCheckpoint, dismissReflection, getOpenSession, getSessionForTaskSite, markReflectionRequested, noteActiveContext, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
+import { loadCheckpointModel, predictCheckpoint } from './checkpointModel'
+
+type Phase2Decision = { sessionId: string; cutoffSeconds: number; at: string; modelVersion: string | null; probability: number | null; triggered: boolean; assignment: 'intervention' | 'silent_control' | null; delivered: boolean; deliveryChannel?: 'esp32' | 'browser_notification' | null; reason: string }
+const PHASE2_AUDIT_KEY = 'driftsense_phase2_decisions_v1'
+const DEVICE_ALERT_KEY = 'driftsense_device_alert_v1'
+const DEVICE_CONNECTION_KEY = 'driftsense_device_connection_v1'
+async function auditRows(): Promise<Phase2Decision[]> { return (await chrome.storage.local.get(PHASE2_AUDIT_KEY))[PHASE2_AUDIT_KEY] ?? [] }
+async function saveDecision(row: Phase2Decision) { const rows = await auditRows(); await chrome.storage.local.set({ [PHASE2_AUDIT_KEY]: [...rows, row] }) }
+function deviceCommand(command: 'ALERT_ON' | 'ALERT_OFF') {
+  void chrome.storage.local.set({ [DEVICE_ALERT_KEY]: command === 'ALERT_ON' })
+  void chrome.runtime.sendMessage({ type: 'DRIFTSENSE_DEVICE_COMMAND', command: { type: command } }).catch(() => undefined)
+}
+async function esp32Connected(): Promise<boolean> {
+  const state = (await chrome.storage.local.get(DEVICE_CONNECTION_KEY))[DEVICE_CONNECTION_KEY] as { connected?: boolean; updatedAt?: string } | undefined
+  return Boolean(state?.connected && state.updatedAt && Date.now() - new Date(state.updatedAt).getTime() < 6000)
+}
+async function showBrowserCheckIn(sessionId: string): Promise<void> {
+  await chrome.notifications.create(`driftsense-checkin:${sessionId}`, { type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon-128.png'), title: 'DriftSense check-in', message: 'Take a moment to reflect on whether this session still matches the task you started.', priority: 1 })
+}
+
+async function evaluateCheckpoint(sessionId: string, cutoff: CheckpointSeconds) {
+  const snapshot = await captureCheckpoint(sessionId, cutoff)
+  if (!snapshot) return
+  const model = await loadCheckpointModel()
+  const session = (await getSessions()).find((item) => item.sessionId === sessionId)
+  if (!model || !session) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: null, probability: null, triggered: false, assignment: null, delivered: false, reason: 'model_unavailable' }); return }
+  try {
+    const result = predictCheckpoint(model, session, snapshot)
+    const prior = await auditRows()
+    if (!result.triggered || prior.some((item) => item.sessionId === sessionId && item.triggered)) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: result.triggered, assignment: null, delivered: false, reason: result.triggered ? 'one_alert_per_session' : 'below_threshold' }); return }
+    const assignment = crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_0000_0000 < (model.prompt_probability ?? 0.5) ? 'intervention' : 'silent_control'
+    const today = new Date().toISOString().slice(0, 10)
+    const deliveredToday = prior.filter((item) => item.delivered && item.at.startsWith(today)).length
+    const eligibleForDelivery = assignment === 'intervention' && deliveredToday < (model.daily_prompt_cap ?? 3)
+    let delivered = false
+    let deliveryChannel: Phase2Decision['deliveryChannel'] = null
+    let reason = assignment === 'silent_control' ? 'silent_control' : 'daily_cap'
+    if (eligibleForDelivery && await esp32Connected()) { deviceCommand('ALERT_ON'); delivered = true; deliveryChannel = 'esp32'; reason = 'delivered_esp32' }
+    else if (eligibleForDelivery) { await showBrowserCheckIn(sessionId); delivered = true; deliveryChannel = 'browser_notification'; reason = 'delivered_browser_fallback_no_device' }
+    await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment, delivered, deliveryChannel, reason })
+  } catch (error) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: model.model_version, probability: null, triggered: false, assignment: null, delivered: false, reason: error instanceof Error ? error.message : 'prediction_failed' }) }
+}
+
+async function updateContextAndDevice(tabId: number, domain: string | null) {
+  await noteActiveContext(tabId, domain)
+  const session = await getOpenSession()
+  if (session?.status === 'active' && session.currentContext === 'task_site') deviceCommand('ALERT_OFF')
+}
 
 void initializeStorage().then(syncCollectorRegistration).catch(reportCollectorError)
 chrome.runtime.onInstalled.addListener((details) => { void initializeStorage().then(() => { void syncCollectorRegistration().catch(reportCollectorError); if (details.reason === 'install') void chrome.runtime.openOptionsPage() }) })
@@ -14,10 +62,10 @@ chrome.runtime.onMessage.addListener((request: RuntimeRequest, sender, sendRespo
   return true
 })
 
-chrome.tabs.onActivated.addListener(({ tabId }) => { void chrome.tabs.get(tabId).then((tab) => noteActiveContext(tabId, hostnameFromUrl(tab.url ?? ''))).catch(() => noteActiveContext(tabId, null)) })
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.url && tab.active) void noteActiveContext(tabId, hostnameFromUrl(changeInfo.url)) })
-chrome.tabs.onRemoved.addListener((tabId) => { void noteActiveContext(tabId, null) })
-chrome.alarms.onAlarm.addListener((alarm) => { const match = /^checkpoint:(.+):(180|300|600)$/.exec(alarm.name); if (match) void captureCheckpoint(match[1], Number(match[2]) as 180 | 300 | 600) })
+chrome.tabs.onActivated.addListener(({ tabId }) => { void chrome.tabs.get(tabId).then((tab) => updateContextAndDevice(tabId, hostnameFromUrl(tab.url ?? ''))).catch(() => updateContextAndDevice(tabId, null)) })
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.url && tab.active) void updateContextAndDevice(tabId, hostnameFromUrl(changeInfo.url)) })
+chrome.tabs.onRemoved.addListener((tabId) => { void updateContextAndDevice(tabId, null) })
+chrome.alarms.onAlarm.addListener((alarm) => { const match = /^checkpoint:(.+):(600|1200|1800|3600|5400)$/.exec(alarm.name); if (match) void evaluateCheckpoint(match[1], Number(match[2]) as CheckpointSeconds) })
 
 async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.MessageSender): Promise<Record<string, unknown>> {
   if (request.type === 'GET_PAGE_CONTEXT') {

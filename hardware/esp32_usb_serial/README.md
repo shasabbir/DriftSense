@@ -72,3 +72,8 @@ Install these in Arduino IDE:
 
 Select an ESP32 board, upload `esp32_usb_serial.ino`, then open the DriftSense
 extension's ESP32 device page and click `Connect ESP32`.
+
+Keep that device page open: it owns the Web Serial connection. At a configured
+checkpoint the extension evaluates only a validated frozen checkpoint model,
+records the Phase 2 assignment, and sends `ALERT_ON` only for delivered
+intervention assignments. Returning to an approved task site sends `ALERT_OFF`.

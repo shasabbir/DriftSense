@@ -2,7 +2,7 @@
 
 The command accepts the session CSV exported by the extension and, when
 available, the checkpoint and activity-window CSVs.  Final-session activity is
-never used as an early (3/5/10 minute) feature.  Without checkpoint data the
+never used as an early (10/20/30/60/90 minute) feature. Without checkpoint data the
 command still evaluates context-only early baselines and a clearly marked,
 non-deployable full-session diagnostic model.
 """
@@ -38,7 +38,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
-CHECKPOINTS = (180, 300, 600)
+CHECKPOINTS = (600, 1200, 1800, 3600, 5400)
 SESSION_COLUMNS = [
     "session_id",
     "participant_id",
@@ -192,7 +192,7 @@ def _parse_boolean(series: pd.Series, field: str) -> pd.Series:
     return parsed.astype(bool)
 
 
-def load_sessions(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
+def load_sessions(path: Path, repair_labels_from_explicit_answer: bool = False) -> tuple[pd.DataFrame, dict[str, Any]]:
     frame = pd.read_csv(path)
     _require_exact_schema(frame, SESSION_COLUMNS, path)
 
@@ -240,10 +240,13 @@ def load_sessions(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
         raise DataValidationError("drift_label contains a non-binary value")
     expected_label = frame["post_session_answer"].map({"aligned": 0.0, "moved_away": 1.0})
     inconsistent = label.notna() & (label != expected_label)
+    repaired_label_count = int(inconsistent.sum())
     if inconsistent.any():
-        raise DataValidationError(
-            f"{int(inconsistent.sum())} rows disagree between post_session_answer and drift_label"
-        )
+        if not repair_labels_from_explicit_answer:
+            raise DataValidationError(
+                f"{repaired_label_count} rows disagree between post_session_answer and drift_label"
+            )
+        label.loc[inconsistent] = expected_label.loc[inconsistent]
     invalid_unlabeled = label.isna() & frame["post_session_answer"].isin(["aligned", "moved_away"])
     if invalid_unlabeled.any():
         raise DataValidationError(
@@ -295,7 +298,7 @@ def load_sessions(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
             str(cutoff): int((labeled["duration_seconds"] >= cutoff).sum())
             for cutoff in CHECKPOINTS
         },
-        "warnings": [],
+        "warnings": ([f"Repaired {repaired_label_count} drift labels from explicit post-session answers in memory."] if repaired_label_count else []),
     }
     return frame.drop(columns=["end_time"], errors="ignore"), quality
 
@@ -307,7 +310,7 @@ def load_checkpoints(path: Path, sessions: pd.DataFrame) -> pd.DataFrame:
         raise DataValidationError("Checkpoint rows must be unique by sessionId and cutoffSeconds")
     frame["cutoffSeconds"] = pd.to_numeric(frame["cutoffSeconds"], errors="coerce")
     if not set(frame["cutoffSeconds"].dropna().astype(int)).issubset(set(CHECKPOINTS)):
-        raise DataValidationError("Checkpoint offsets must be 180, 300, or 600 seconds")
+        raise DataValidationError("Checkpoint offsets must be 600, 1200, 1800, 3600, or 5400 seconds")
     frame["observable"] = _parse_boolean(frame["observable"], "observable")
     numeric = [
         "clickCount",
@@ -973,7 +976,7 @@ def run_analysis(
     if checkpoints is None:
         quality["warnings"].append(
             "No checkpoint CSV was supplied. Early activity models and model freezing are blocked; "
-            "only context-known-at-start baselines are valid at 3/5/10 minutes."
+            "only context-known-at-start baselines are valid at the configured checkpoints."
         )
     if checkpoints is not None and windows is None:
         quality["warnings"].append(
@@ -1096,7 +1099,7 @@ def run_analysis(
             "reason": "checkpoint_csv_missing",
             "deployable_early_model_created": False,
             "diagnostic_model": model_name,
-            "diagnostic_scope": "Uses final-session totals and must not be deployed at 3/5/10 minutes.",
+            "diagnostic_scope": "Uses final-session totals and must not be deployed at a mid-session checkpoint.",
             "threshold_selection": threshold_info,
             "chronological_holdout": holdout_metrics,
             "chronological_holdout_participant_bootstrap_95_ci": participant_bootstrap_ci(
