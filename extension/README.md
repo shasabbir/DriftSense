@@ -67,13 +67,35 @@ pressing button 3 stops the alert. A two-second `PING` keeps the device watchdog
 alive; an alert is silenced after 15 seconds without a host command.
 
 The bundled `phase1-rolling-activity-logistic-v1` is a technical/usability
-pilot model. It scores live active, idle, and away shares once per minute,
-starting one third into the participant's intended duration, and requires two
-consecutive positive scores. Its reported holdout metrics are session-end
-metrics because the source CSV has completed-session aggregates. Treat rolling
-performance as unvalidated until shadow-mode predictions are compared with
-later explicit alignment answers; do not use those metrics as formal Phase 2
-early-prediction results.
+pilot model. It scores live active, idle, and away shares in duration-relative
+three-minute windows and requires two consecutive positive scores. Sessions
+shorter than 30 minutes have one window near one-third of their intended
+duration. Sessions of 30 minutes or longer have a second window near two-thirds:
+
+| Duration | Model windows | Maximum delivered alerts |
+|---|---|---|
+| 10 | minutes 4-6 | 1 |
+| 15 | minutes 5-7 | 1 |
+| 20 | minutes 7-9 | 1 |
+| 30 | minutes 10-12 and 20-22 | 2 |
+| 45 | minutes 15-17 and 30-32 | 2 |
+| 60 | minutes 20-22 and 40-42 | 2 |
+| 90 | minutes 30-32 and 60-62 | 2 |
+
+These are the durations observed in the training data, not an input whitelist.
+Phase 1 custom durations remain valid. For example, a 50-minute session uses
+minutes 17-19 and 34-36. The actual selected duration always controls the alert
+windows. The model uses duration as a numeric feature: values between 10 and 90
+minutes interpolate within the observed range, while values outside that range
+are clipped to the nearest boundary for the duration feature only. Sessions are
+never rejected because their duration was absent from the training data.
+
+The session is randomized only once; silent-control sessions remain silent in
+both windows. Reported holdout metrics are session-end metrics because the
+source CSV has completed-session aggregates. Treat rolling performance and the
+adaptive two-window policy as unvalidated until shadow-mode predictions are
+compared with later explicit alignment answers; do not present them as formal
+Phase 2 early-prediction or intervention results without revising the protocol.
 
 1. Upload [`../hardware/esp32_usb_serial/esp32_usb_serial.ino`](../hardware/esp32_usb_serial/esp32_usb_serial.ino) to the ESP32.
 2. Build and load the extension from `dist/`.

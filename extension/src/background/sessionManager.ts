@@ -2,12 +2,9 @@ import { domainMatches } from '../shared/domainUtils'
 import { driftLabelForAnswer } from '../shared/labelRules'
 import { getActivityWindows, getCheckpointSnapshots, getSessions, getSettings, runStorageOperation, setActivityWindows, setCheckpointSnapshots, setSessions } from '../shared/storage'
 import type { ActivityWindow, ActivityWindowInput, CheckpointSnapshot, InternalSession, PostSessionAnswer, ReflectionAction, TaskType } from '../shared/types'
+import { predictionOffsetsForDuration } from './phase2Policy'
 
-export function predictionOffsetsForDuration(minutes: number | null): number[] {
-  if (!minutes || minutes < 1) return []
-  const firstMinute = Math.max(3, Math.ceil(minutes / 3))
-  return Array.from({ length: minutes - firstMinute + 1 }, (_, index) => (firstMinute + index) * 60)
-}
+export { predictionOffsetsForDuration } from './phase2Policy'
 
 const randomId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`
 const isOpen = (session: InternalSession) => session.status === 'active' || session.status === 'pending_reflection'

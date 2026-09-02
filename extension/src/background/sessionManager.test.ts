@@ -7,12 +7,12 @@ beforeEach(async () => { vi.useRealTimers(); vi.stubGlobal('chrome', { alarms: {
 async function enableSites(...sites: string[]) { const settings = createDefaultSettings(); const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: sites.includes(item.domain) })); await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains }) }
 
 describe('Phase 1 task-session lifecycle', () => {
-  it('starts rolling predictions one third into the intended duration', () => {
-    expect(predictionOffsetsForDuration(10).slice(0, 2)).toEqual([240, 300])
-    expect(predictionOffsetsForDuration(20)[0]).toBe(420)
-    expect(predictionOffsetsForDuration(30).slice(0, 2)).toEqual([600, 660])
-    expect(predictionOffsetsForDuration(30).at(-1)).toBe(1800)
-    expect(predictionOffsetsForDuration(90)[0]).toBe(1800)
+  it('schedules duration-relative model windows', () => {
+    expect(predictionOffsetsForDuration(10)).toEqual([240, 300, 360])
+    expect(predictionOffsetsForDuration(20)).toEqual([420, 480, 540])
+    expect(predictionOffsetsForDuration(30)).toEqual([600, 660, 720, 1200, 1260, 1320])
+    expect(predictionOffsetsForDuration(50)).toEqual([1020, 1080, 1140, 2040, 2100, 2160])
+    expect(predictionOffsetsForDuration(90)).toEqual([1800, 1860, 1920, 3600, 3660, 3720])
   })
   it('requires an explicit start on an approved task site', async () => {
     await enableSites('youtube.com')

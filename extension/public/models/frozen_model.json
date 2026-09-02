@@ -102,8 +102,22 @@
   "training_rows": 634,
   "training_source_sha256": "8f13d48c63a4d5b824ad52e8f663787ea962671bcc994f80cad7823e8c630a12",
   "model_scope": "rolling_activity_technical_pilot",
-  "prediction_policy": "every_60_seconds_from_one_third_of_intended_duration",
+  "prediction_policy": "duration_relative_windows_at_one_third_and_two_thirds",
   "consecutive_positive_scores_required": 2,
+  "observed_intended_durations_minutes": [
+    10,
+    15,
+    20,
+    30,
+    45,
+    60,
+    90
+  ],
+  "intended_duration_range_minutes": [
+    10,
+    90
+  ],
+  "duration_feature_policy": "linear_interpolation_with_boundary_clipping",
   "activity_features_used": true,
   "chronological_holdout_metrics": {
     "n": 193,

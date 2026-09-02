@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { predictCheckpoint, type CheckpointModelArtifact } from './checkpointModel'
+import { modelIntendedDuration, predictCheckpoint, type CheckpointModelArtifact } from './checkpointModel'
 import bundledModel from '../../public/models/frozen_model.json'
 
 describe('checkpoint model inference', () => {
@@ -14,5 +14,12 @@ describe('checkpoint model inference', () => {
     const session = { taskType: 'coding_problem_solving', intendedDurationMinutes: 20, taskSites: ['example.com', 'docs.example.com', 'code.example.com'], initialTaskSite: 'example.com' } as never
     const snapshot = { cutoffSeconds: 420, activeSeconds: 168, idleSeconds: 42, awaySeconds: 210, clickCount: 0, scrollCount: 0, keyboardActivityCount: 0, tabSwitchCount: 0, videoPlayingSeconds: 0 } as never
     expect(predictCheckpoint(bundledModel as unknown as CheckpointModelArtifact, session, snapshot).probability).toBeCloseTo(0.9999999543660497, 12)
+  })
+
+  it('interpolates custom durations and clips only outside the observed training range', () => {
+    const artifact = bundledModel as unknown as CheckpointModelArtifact
+    expect(modelIntendedDuration(artifact, 50)).toBe(50)
+    expect(modelIntendedDuration(artifact, 5)).toBe(10)
+    expect(modelIntendedDuration(artifact, 120)).toBe(90)
   })
 })

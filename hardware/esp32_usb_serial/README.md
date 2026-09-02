@@ -89,5 +89,12 @@ Keep that device page open: it owns the Web Serial connection. At a configured
 checkpoint the extension evaluates only a validated frozen checkpoint model,
 records the Phase 2 assignment, and sends `ALERT_ON` only for delivered
 intervention assignments. Returning to an approved task site sends `ALERT_OFF`.
-The model can be evaluated repeatedly, but Phase 2 creates at most one alert
-episode per session.
+The extension uses one model window for 10-, 15-, and 20-minute sessions and
+two widely spaced model windows for 30-, 45-, 60-, and 90-minute sessions. Each
+window requires two consecutive positive scores. The session is randomized
+once, so silent-control sessions remain silent; an intervention session can
+receive at most one alert episode per window.
+
+The hardware duration button continues to add 10 minutes and does not restrict
+the user to durations present in the training data. A 50-minute selection, for
+example, uses model windows at minutes 17-19 and 34-36.

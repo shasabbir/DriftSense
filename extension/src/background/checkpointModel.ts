@@ -16,19 +16,32 @@ export type CheckpointModelArtifact = {
   daily_prompt_cap?: number
   prediction_policy?: string
   consecutive_positive_scores_required?: number
+  observed_intended_durations_minutes?: number[]
+  intended_duration_range_minutes?: [number, number]
+  duration_feature_policy?: string
 }
 
 export const CHECKPOINT_MODEL_STORAGE_KEY = 'driftsense_checkpoint_model_v1'
+const ROLLING_POLICIES = new Set([
+  'every_60_seconds_from_one_third_of_intended_duration',
+  'duration_relative_windows_at_one_third_and_two_thirds',
+])
+
+function isRollingPolicy(policy: string | undefined): boolean {
+  return Boolean(policy && ROLLING_POLICIES.has(policy))
+}
 
 export function validateCheckpointModel(value: unknown): CheckpointModelArtifact {
   const artifact = value as Partial<CheckpointModelArtifact>
   if (!artifact || artifact.artifact_status !== 'frozen_phase2_candidate') throw new Error('This is not a frozen Phase 2 checkpoint model.')
   if (!artifact.model_version || !Array.isArray(artifact.prediction_offsets_seconds)) throw new Error('The model prediction policy is missing.')
-  const rolling = artifact.prediction_policy === 'every_60_seconds_from_one_third_of_intended_duration'
+  const rolling = isRollingPolicy(artifact.prediction_policy)
   if (!rolling && artifact.prediction_offsets_seconds.length !== 1) throw new Error('A fixed model must define exactly one prediction checkpoint.')
   if (!artifact.source_columns || !Array.isArray(artifact.source_columns.numeric) || !Array.isArray(artifact.source_columns.categorical)) throw new Error('The model source-column specification is missing.')
   if (!Array.isArray(artifact.coefficients) || !artifact.coefficients.every(Number.isFinite) || !Number.isFinite(artifact.intercept) || !Number.isFinite(artifact.risk_threshold)) throw new Error('The model coefficients or threshold are invalid.')
   if ((artifact.risk_threshold ?? -1) < 0 || (artifact.risk_threshold ?? 2) > 1) throw new Error('The risk threshold must be between zero and one.')
+  const durationRange = artifact.intended_duration_range_minutes
+  if (durationRange && (durationRange.length !== 2 || !durationRange.every(Number.isFinite) || durationRange[0] <= 0 || durationRange[0] > durationRange[1])) throw new Error('The intended-duration model range is invalid.')
   return artifact as CheckpointModelArtifact
 }
 
@@ -39,11 +52,18 @@ export async function installCheckpointModel(value: unknown): Promise<Checkpoint
   return artifact
 }
 
-function rawFeatures(session: InternalSession, snapshot: CheckpointSnapshot): Record<string, number | string> {
+export function modelIntendedDuration(artifact: CheckpointModelArtifact, intendedDurationMinutes: number | null): number {
+  if (!intendedDurationMinutes || !Number.isFinite(intendedDurationMinutes)) return Number.NaN
+  const range = artifact.intended_duration_range_minutes
+  if (!range) return intendedDurationMinutes
+  return Math.max(range[0], Math.min(range[1], intendedDurationMinutes))
+}
+
+function rawFeatures(artifact: CheckpointModelArtifact, session: InternalSession, snapshot: CheckpointSnapshot): Record<string, number | string> {
   const minutes = snapshot.cutoffSeconds / 60
   const duration = snapshot.cutoffSeconds
   return {
-    intended_duration_minutes: session.intendedDurationMinutes ?? Number.NaN,
+    intended_duration_minutes: modelIntendedDuration(artifact, session.intendedDurationMinutes),
     elapsed_to_intended_ratio: session.intendedDurationMinutes ? minutes / session.intendedDurationMinutes : Number.NaN,
     task_site_count: session.taskSites.length,
     task_type: session.taskType,
@@ -60,9 +80,9 @@ function rawFeatures(session: InternalSession, snapshot: CheckpointSnapshot): Re
 }
 
 export function predictCheckpoint(artifact: CheckpointModelArtifact, session: InternalSession, snapshot: CheckpointSnapshot) {
-  const rolling = artifact.prediction_policy === 'every_60_seconds_from_one_third_of_intended_duration'
+  const rolling = isRollingPolicy(artifact.prediction_policy)
   if (artifact.artifact_status !== 'frozen_phase2_candidate' || (!rolling && !artifact.prediction_offsets_seconds.includes(snapshot.cutoffSeconds))) throw new Error('Model is not frozen for this checkpoint.')
-  const raw = rawFeatures(session, snapshot)
+  const raw = rawFeatures(artifact, session, snapshot)
   const vector: number[] = []
   for (const name of artifact.source_columns.numeric) {
     const rule = artifact.numeric_preprocessing[name]

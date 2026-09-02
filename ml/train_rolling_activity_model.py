@@ -40,12 +40,16 @@ def train(source: Path, output: Path, bundled: Path) -> dict:
     estimator = build_estimator(spec)
     estimator.fit(frame, frame["drift_label"].astype(int))
     artifact = _serialize_logistic_model(estimator, spec, threshold, 600, len(frame), quality["sha256"])
+    observed_durations = sorted(int(value) for value in frame["intended_duration_minutes"].dropna().unique())
     artifact.update({
         "model_version": "phase1-rolling-activity-logistic-v1",
         "model_scope": "rolling_activity_technical_pilot",
-        "prediction_policy": "every_60_seconds_from_one_third_of_intended_duration",
+        "prediction_policy": "duration_relative_windows_at_one_third_and_two_thirds",
         "prediction_offsets_seconds": [],
         "consecutive_positive_scores_required": 2,
+        "observed_intended_durations_minutes": observed_durations,
+        "intended_duration_range_minutes": [min(observed_durations), max(observed_durations)],
+        "duration_feature_policy": "linear_interpolation_with_boundary_clipping",
         "activity_features_used": True,
         "chronological_holdout_metrics": holdout_metrics,
         "data_quality_warnings": quality["warnings"],
