@@ -63,6 +63,15 @@ models, shared probability test vectors, coefficient and calibration tables,
 and a model card. It is a session-end classifier and is not interchangeable
 with the separate checkpoint model.
 
+### Rolling activity technical-pilot model
+
+`python -m ml.train_rolling_activity_model` trains and bundles a compact
+logistic model using duration context plus active, idle, and away shares. The
+source contains completed-session aggregates, so this artifact is for the
+separate technical/usability pilot and shadow-mode prospective validation. Its
+session-end holdout metrics are not evidence of rolling early-prediction
+performance.
+
 ## Analysis workflow
 
 Phase 1 uses participant-relative days 1-7 for participant-grouped development

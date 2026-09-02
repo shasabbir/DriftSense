@@ -1,7 +1,7 @@
 import { domainMatches, hostnameFromUrl } from '../shared/domainUtils'
 import { permittedOrigins } from '../shared/permissions'
 import { getSessions, getSettings, initializeStorage, patchSettings } from '../shared/storage'
-import type { CheckpointSeconds, RuntimeRequest } from '../shared/types'
+import type { RuntimeRequest } from '../shared/types'
 import { captureCheckpoint, dismissReflection, getOpenSession, getSessionForTaskSite, markReflectionRequested, noteActiveContext, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
 import { loadCheckpointModel, predictCheckpoint } from './checkpointModel'
 
@@ -23,7 +23,7 @@ async function showBrowserCheckIn(sessionId: string): Promise<void> {
   await chrome.notifications.create(`driftsense-checkin:${sessionId}`, { type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon-128.png'), title: 'DriftSense check-in', message: 'Take a moment to reflect on whether this session still matches the task you started.', priority: 1 })
 }
 
-async function evaluateCheckpoint(sessionId: string, cutoff: CheckpointSeconds) {
+async function evaluateCheckpoint(sessionId: string, cutoff: number) {
   const snapshot = await captureCheckpoint(sessionId, cutoff)
   if (!snapshot) return
   const model = await loadCheckpointModel()
@@ -32,7 +32,13 @@ async function evaluateCheckpoint(sessionId: string, cutoff: CheckpointSeconds) 
   try {
     const result = predictCheckpoint(model, session, snapshot)
     const prior = await auditRows()
-    if (!result.triggered || prior.some((item) => item.sessionId === sessionId && item.triggered)) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: result.triggered, assignment: null, delivered: false, reason: result.triggered ? 'one_alert_per_session' : 'below_threshold' }); return }
+    const sessionRows = prior.filter((item) => item.sessionId === sessionId)
+    if (sessionRows.some((item) => item.assignment !== null)) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: result.triggered, assignment: null, delivered: false, reason: 'session_already_assigned' }); return }
+    if (!result.triggered) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: false, assignment: null, delivered: false, reason: 'below_threshold' }); return }
+    const last = sessionRows.at(-1)
+    const required = model.consecutive_positive_scores_required ?? 1
+    const consecutive = last?.triggered && cutoff - last.cutoffSeconds === 60 ? 2 : 1
+    if (consecutive < required) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment: null, delivered: false, reason: 'awaiting_consecutive_score' }); return }
     const assignment = crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_0000_0000 < (model.prompt_probability ?? 0.5) ? 'intervention' : 'silent_control'
     const today = new Date().toISOString().slice(0, 10)
     const deliveredToday = prior.filter((item) => item.delivered && item.at.startsWith(today)).length
@@ -65,7 +71,7 @@ chrome.runtime.onMessage.addListener((request: RuntimeRequest, sender, sendRespo
 chrome.tabs.onActivated.addListener(({ tabId }) => { void chrome.tabs.get(tabId).then((tab) => updateContextAndDevice(tabId, hostnameFromUrl(tab.url ?? ''))).catch(() => updateContextAndDevice(tabId, null)) })
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.url && tab.active) void updateContextAndDevice(tabId, hostnameFromUrl(changeInfo.url)) })
 chrome.tabs.onRemoved.addListener((tabId) => { void updateContextAndDevice(tabId, null) })
-chrome.alarms.onAlarm.addListener((alarm) => { const match = /^checkpoint:(.+):(600|1200|1800|3600|5400)$/.exec(alarm.name); if (match) void evaluateCheckpoint(match[1], Number(match[2]) as CheckpointSeconds) })
+chrome.alarms.onAlarm.addListener((alarm) => { const match = /^model-check:(.+):(\d+)$/.exec(alarm.name); if (match) void evaluateCheckpoint(match[1], Number(match[2])) })
 
 async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.MessageSender): Promise<Record<string, unknown>> {
   if (request.type === 'GET_PAGE_CONTEXT') {

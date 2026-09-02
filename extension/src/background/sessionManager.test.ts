@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDefaultSettings } from '../shared/constants'
 import { getActivityWindows, getCheckpointSnapshots, getSessions, initializeStorage, setSettings } from '../shared/storage'
-import { captureCheckpoint, getSessionForTaskSite, markReflectionRequested, noteActiveContext, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
+import { captureCheckpoint, getSessionForTaskSite, markReflectionRequested, noteActiveContext, predictionOffsetsForDuration, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
 
-beforeEach(async () => { vi.useRealTimers(); vi.stubGlobal('chrome', { alarms: { create: vi.fn(), clear: vi.fn(async () => true) } }); await initializeStorage() })
+beforeEach(async () => { vi.useRealTimers(); vi.stubGlobal('chrome', { alarms: { create: vi.fn(), clear: vi.fn(async () => true), getAll: vi.fn(async () => []) } }); await initializeStorage() })
 async function enableSites(...sites: string[]) { const settings = createDefaultSettings(); const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: sites.includes(item.domain) })); await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains }) }
 
 describe('Phase 1 task-session lifecycle', () => {
+  it('starts rolling predictions one third into the intended duration', () => {
+    expect(predictionOffsetsForDuration(10).slice(0, 2)).toEqual([240, 300])
+    expect(predictionOffsetsForDuration(20)[0]).toBe(420)
+    expect(predictionOffsetsForDuration(90)[0]).toBe(1800)
+  })
   it('requires an explicit start on an approved task site', async () => {
     await enableSites('youtube.com')
     expect(await getSessionForTaskSite('youtube.com')).toBeNull()

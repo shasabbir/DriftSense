@@ -306,7 +306,7 @@ export function DeviceApp() {
         </div>
 
         <div className="panel panel-pad">
-          <div className="section-heading"><h2>Phase 2 model</h2><p>{model ? `${model.model_version} · ${model.prediction_offsets_seconds[0] / 60} minute checkpoint` : 'No valid checkpoint model installed. Automatic alerts are disabled.'}</p></div>
+          <div className="section-heading"><h2>Phase 2 model</h2><p>{model ? `${model.model_version} · ${model.prediction_policy?.startsWith('every_60') ? 'rolling every minute' : `${model.prediction_offsets_seconds[0] / 60} minute checkpoint`}` : 'No valid checkpoint model installed. Automatic alerts are disabled.'}</p></div>
           <label className="button button-secondary"><Upload size={16} /> Import frozen_model.json<input hidden type="file" accept="application/json,.json" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.text().then(JSON.parse).then(installCheckpointModel).then((installed) => { setModel(installed); setError(''); appendLog(`Installed ${installed.model_version}`) }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Invalid model file.')); event.target.value = '' }} /></label>
           <div className="device-actions">
             <button className="button button-secondary" disabled={!connected} onClick={() => void sendCommand({ type: 'ALERT_ON' })}><Bell size={16} /> Test alert</button>

@@ -59,6 +59,15 @@ intervention is assigned while that heartbeat is missing, DriftSense shows a
 neutral Chrome check-in notification and records `browser_notification` as the
 delivery channel instead of claiming ESP32 delivery.
 
+The bundled `phase1-rolling-activity-logistic-v1` is a technical/usability
+pilot model. It scores live active, idle, and away shares once per minute,
+starting one third into the participant's intended duration, and requires two
+consecutive positive scores. Its reported holdout metrics are session-end
+metrics because the source CSV has completed-session aggregates. Treat rolling
+performance as unvalidated until shadow-mode predictions are compared with
+later explicit alignment answers; do not use those metrics as formal Phase 2
+early-prediction results.
+
 1. Upload [`../hardware/esp32_usb_serial/esp32_usb_serial.ino`](../hardware/esp32_usb_serial/esp32_usb_serial.ino) to the ESP32.
 2. Build and load the extension from `dist/`.
 3. Open the popup and choose **ESP32 device**.

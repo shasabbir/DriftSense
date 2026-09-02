@@ -1,4 +1,4 @@
-"""Train a leakage-safe 10-minute intended-duration logistic baseline.
+"""Train a leakage-safe 10-minute task-context logistic baseline.
 
 This is a deployable ML baseline for hardware integration. It uses no activity
 totals; every predictive input is known at session start or fixed by the
@@ -31,7 +31,11 @@ def train(source: Path, output: Path, bundled: Path) -> dict:
     frame = frame[(frame["duration_seconds"] >= cutoff) & frame["drift_label"].isin([0, 1])].copy()
     frame["cutoff_seconds"] = cutoff
     frame["elapsed_to_intended_ratio"] = (cutoff / 60) / frame["intended_duration_minutes"]
-    spec = ModelSpec("intended_duration", numeric=("intended_duration_minutes", "elapsed_to_intended_ratio"))
+    spec = ModelSpec(
+        "task_context",
+        numeric=("intended_duration_minutes", "elapsed_to_intended_ratio", "task_site_count"),
+        categorical=("task_type", "initial_task_site"),
+    )
     development = frame[frame["day_index"] <= 7]
     oof = grouped_oof_predictions(development, spec)
     threshold = choose_threshold(oof["label"].to_numpy(), oof["probability"].to_numpy(), 0.35)["threshold"]
@@ -42,9 +46,10 @@ def train(source: Path, output: Path, bundled: Path) -> dict:
     estimator.fit(frame, frame["drift_label"].astype(int))
     artifact = _serialize_logistic_model(estimator, spec, threshold, cutoff, len(frame), quality["sha256"])
     artifact.update({
-        "model_scope": "10_minute_intended_duration_baseline",
+        "model_version": "phase1-task-context-logistic-600s-v2",
+        "model_scope": "10_minute_task_context_baseline",
         "activity_features_used": False,
-        "deployment_note": "ML integration baseline; does not infer attention or use live activity features.",
+        "deployment_note": "ML integration baseline using declared task context; task-site hostname is context, not a productivity label. The model does not infer attention or use live activity features.",
         "data_quality_warnings": quality["warnings"],
         "chronological_holdout_metrics": holdout_metrics,
     })

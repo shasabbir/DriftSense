@@ -1,9 +1,13 @@
 import { domainMatches } from '../shared/domainUtils'
 import { driftLabelForAnswer } from '../shared/labelRules'
 import { getActivityWindows, getCheckpointSnapshots, getSessions, getSettings, runStorageOperation, setActivityWindows, setCheckpointSnapshots, setSessions } from '../shared/storage'
-import type { ActivityWindow, ActivityWindowInput, CheckpointSeconds, CheckpointSnapshot, InternalSession, PostSessionAnswer, ReflectionAction, TaskType } from '../shared/types'
+import type { ActivityWindow, ActivityWindowInput, CheckpointSnapshot, InternalSession, PostSessionAnswer, ReflectionAction, TaskType } from '../shared/types'
 
-export const CHECKPOINT_SECONDS: readonly CheckpointSeconds[] = [600, 1200, 1800, 3600, 5400]
+export function predictionOffsetsForDuration(minutes: number | null): number[] {
+  if (!minutes || minutes < 1) return []
+  const firstMinute = Math.max(3, Math.ceil(minutes / 3))
+  return Array.from({ length: minutes - firstMinute + 1 }, (_, index) => (firstMinute + index) * 60)
+}
 
 const randomId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`
 const isOpen = (session: InternalSession) => session.status === 'active' || session.status === 'pending_reflection'
@@ -29,7 +33,7 @@ export async function startTaskSession(tabId: number, domain: string, taskType: 
       activeTabId: tabId, currentContext: 'task_site', contextChangedAt: now, lastWindowAt: null, contextEvents: [],
     }
     await setSessions([...sessions, next])
-    for (const seconds of CHECKPOINT_SECONDS) chrome.alarms.create(`checkpoint:${next.sessionId}:${seconds}`, { when: Date.now() + seconds * 1000 })
+    for (const seconds of predictionOffsetsForDuration(intendedDurationMinutes)) chrome.alarms.create(`model-check:${next.sessionId}:${seconds}`, { when: Date.now() + seconds * 1000 })
     return next
   })
 }
@@ -99,7 +103,7 @@ export async function noteActiveContext(tabId: number, domain: string | null): P
   })
 }
 
-export async function captureCheckpoint(sessionId: string, cutoffSeconds: CheckpointSeconds): Promise<CheckpointSnapshot | null> {
+export async function captureCheckpoint(sessionId: string, cutoffSeconds: number): Promise<CheckpointSnapshot | null> {
   return runStorageOperation(async () => {
     const sessions = await getSessions(); const session = sessions.find((item) => item.sessionId === sessionId)
     const observedDuration = session ? Math.max(session.durationSeconds, session.status === 'active' ? Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000) : 0) : 0
@@ -123,8 +127,7 @@ export async function markReflectionRequested(sessionId: string): Promise<Intern
     const contextElapsed = Math.max(0, Math.round((Date.now() - new Date(session.contextChangedAt).getTime()) / 1000))
     return { ...session, status: 'pending_reflection', reflectionRequestedAt: now, endTime: now, durationSeconds: Math.max(session.durationSeconds, Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000)), awaySeconds: session.awaySeconds + (session.currentContext === 'away' ? contextElapsed : 0), contextChangedAt: now, updatedAt: now }
   })
-  if (result) for (const seconds of CHECKPOINT_SECONDS) if (result.durationSeconds >= seconds) await captureCheckpoint(sessionId, seconds)
-  for (const seconds of CHECKPOINT_SECONDS) await chrome.alarms.clear(`checkpoint:${sessionId}:${seconds}`)
+  for (const alarm of await chrome.alarms.getAll()) if (alarm.name.startsWith(`model-check:${sessionId}:`)) await chrome.alarms.clear(alarm.name)
   return result
 }
 

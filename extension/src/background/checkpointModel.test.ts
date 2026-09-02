@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { predictCheckpoint, type CheckpointModelArtifact } from './checkpointModel'
+import bundledModel from '../../public/models/frozen_model.json'
 
 describe('checkpoint model inference', () => {
   it('uses only checkpoint values and applies the frozen threshold', () => {
@@ -7,5 +8,11 @@ describe('checkpoint model inference', () => {
     const session = { taskType: 'writing_creating', intendedDurationMinutes: 30, taskSites: ['example.com'], initialTaskSite: 'example.com' } as never
     const snapshot = { cutoffSeconds: 600, activeSeconds: 100, idleSeconds: 500, awaySeconds: 0, clickCount: 0, scrollCount: 0, keyboardActivityCount: 0, tabSwitchCount: 0, videoPlayingSeconds: 0 } as never
     expect(predictCheckpoint(artifact, session, snapshot).triggered).toBe(true)
+  })
+
+  it('matches Python for the bundled rolling model', () => {
+    const session = { taskType: 'coding_problem_solving', intendedDurationMinutes: 20, taskSites: ['example.com', 'docs.example.com', 'code.example.com'], initialTaskSite: 'example.com' } as never
+    const snapshot = { cutoffSeconds: 420, activeSeconds: 168, idleSeconds: 42, awaySeconds: 210, clickCount: 0, scrollCount: 0, keyboardActivityCount: 0, tabSwitchCount: 0, videoPlayingSeconds: 0 } as never
+    expect(predictCheckpoint(bundledModel as unknown as CheckpointModelArtifact, session, snapshot).probability).toBeCloseTo(0.9999999543660497, 12)
   })
 })

@@ -14,6 +14,8 @@ export type CheckpointModelArtifact = {
   risk_threshold: number
   prompt_probability?: number
   daily_prompt_cap?: number
+  prediction_policy?: string
+  consecutive_positive_scores_required?: number
 }
 
 export const CHECKPOINT_MODEL_STORAGE_KEY = 'driftsense_checkpoint_model_v1'
@@ -21,9 +23,9 @@ export const CHECKPOINT_MODEL_STORAGE_KEY = 'driftsense_checkpoint_model_v1'
 export function validateCheckpointModel(value: unknown): CheckpointModelArtifact {
   const artifact = value as Partial<CheckpointModelArtifact>
   if (!artifact || artifact.artifact_status !== 'frozen_phase2_candidate') throw new Error('This is not a frozen Phase 2 checkpoint model.')
-  if (!artifact.model_version || !Array.isArray(artifact.prediction_offsets_seconds) || artifact.prediction_offsets_seconds.length !== 1) throw new Error('The model must define exactly one prediction checkpoint.')
-  const cutoff = artifact.prediction_offsets_seconds[0]
-  if (![600, 1200, 1800, 3600, 5400].includes(cutoff)) throw new Error('The model checkpoint must be 10, 20, 30, 60, or 90 minutes.')
+  if (!artifact.model_version || !Array.isArray(artifact.prediction_offsets_seconds)) throw new Error('The model prediction policy is missing.')
+  const rolling = artifact.prediction_policy === 'every_60_seconds_from_one_third_of_intended_duration'
+  if (!rolling && artifact.prediction_offsets_seconds.length !== 1) throw new Error('A fixed model must define exactly one prediction checkpoint.')
   if (!artifact.source_columns || !Array.isArray(artifact.source_columns.numeric) || !Array.isArray(artifact.source_columns.categorical)) throw new Error('The model source-column specification is missing.')
   if (!Array.isArray(artifact.coefficients) || !artifact.coefficients.every(Number.isFinite) || !Number.isFinite(artifact.intercept) || !Number.isFinite(artifact.risk_threshold)) throw new Error('The model coefficients or threshold are invalid.')
   if ((artifact.risk_threshold ?? -1) < 0 || (artifact.risk_threshold ?? 2) > 1) throw new Error('The risk threshold must be between zero and one.')
@@ -58,7 +60,8 @@ function rawFeatures(session: InternalSession, snapshot: CheckpointSnapshot): Re
 }
 
 export function predictCheckpoint(artifact: CheckpointModelArtifact, session: InternalSession, snapshot: CheckpointSnapshot) {
-  if (artifact.artifact_status !== 'frozen_phase2_candidate' || !artifact.prediction_offsets_seconds.includes(snapshot.cutoffSeconds)) throw new Error('Model is not frozen for this checkpoint.')
+  const rolling = artifact.prediction_policy === 'every_60_seconds_from_one_third_of_intended_duration'
+  if (artifact.artifact_status !== 'frozen_phase2_candidate' || (!rolling && !artifact.prediction_offsets_seconds.includes(snapshot.cutoffSeconds))) throw new Error('Model is not frozen for this checkpoint.')
   const raw = rawFeatures(session, snapshot)
   const vector: number[] = []
   for (const name of artifact.source_columns.numeric) {

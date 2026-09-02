@@ -1,71 +1,130 @@
 {
   "artifact_status": "frozen_phase2_candidate",
-  "model_version": "phase1-logistic-600s-v1",
+  "model_version": "phase1-rolling-activity-logistic-v1",
   "checkpoint_policy": "single_600_seconds",
-  "prediction_offsets_seconds": [
-    600
-  ],
-  "selected_model": "intended_duration",
+  "prediction_offsets_seconds": [],
+  "selected_model": "rolling_activity_context_pilot",
   "source_columns": {
     "numeric": [
       "intended_duration_minutes",
-      "elapsed_to_intended_ratio"
+      "elapsed_to_intended_ratio",
+      "task_site_count",
+      "active_share",
+      "idle_share",
+      "away_share"
     ],
-    "categorical": []
+    "categorical": [
+      "task_type"
+    ]
   },
   "feature_order": [
     "intended_duration_minutes",
-    "elapsed_to_intended_ratio"
+    "elapsed_to_intended_ratio",
+    "task_site_count",
+    "active_share",
+    "idle_share",
+    "away_share",
+    "task_type_coding_problem_solving",
+    "task_type_communication_coordination",
+    "task_type_learning_tutorial",
+    "task_type_other_planned_task",
+    "task_type_reading_research",
+    "task_type_writing_creating"
   ],
   "numeric_preprocessing": {
     "intended_duration_minutes": {
       "impute_median": 30.0,
-      "mean": 37.36742424242424,
-      "scale": 23.860021070541514
+      "mean": 34.60567823343849,
+      "scale": 23.896841242838462
     },
     "elapsed_to_intended_ratio": {
-      "impute_median": 0.3333333333333333,
-      "mean": 0.3940446127946128,
-      "scale": 0.23448953775083317
+      "impute_median": 0.8922222222222222,
+      "mean": 0.9491485570744247,
+      "scale": 0.41829602836002244
+    },
+    "task_site_count": {
+      "impute_median": 12.0,
+      "mean": 12.466876971608833,
+      "scale": 2.773182872357878
+    },
+    "active_share": {
+      "impute_median": 0.8259591285907075,
+      "mean": 0.8253078089191674,
+      "scale": 0.07868153791744188
+    },
+    "idle_share": {
+      "impute_median": 0.07480812837955694,
+      "mean": 0.07553065979616393,
+      "scale": 0.04977005279484433
+    },
+    "away_share": {
+      "impute_median": 0.09775399771721531,
+      "mean": 0.09916153128466862,
+      "scale": 0.067703623718779
     }
   },
-  "categorical_encoding": {},
+  "categorical_encoding": {
+    "task_type": {
+      "impute_value": "learning_tutorial",
+      "categories": [
+        "coding_problem_solving",
+        "communication_coordination",
+        "learning_tutorial",
+        "other_planned_task",
+        "reading_research",
+        "writing_creating"
+      ],
+      "unknown_policy": "all_zero"
+    }
+  },
   "participant_calibration": {
     "uses_prior_sessions_only": false,
     "fallback": "training_median_and_baseline_available_0"
   },
   "coefficients": [
-    0.13796023465263962,
-    0.3942368198026329
+    -0.16083890396501116,
+    0.17276452110270354,
+    0.08282389209866445,
+    -1.730544055818728,
+    0.8185372658299618,
+    1.4094256639372844,
+    -0.26882129566367974,
+    -0.014630568472730683,
+    -0.10989339229235924,
+    0.8682673956819484,
+    0.14213298632223842,
+    -0.61477901154337
   ],
-  "intercept": -0.23039210405277777,
-  "risk_threshold": 0.44724021523281665,
+  "intercept": -0.4979310550146102,
+  "risk_threshold": 0.7363471184701026,
   "prompt_probability": 0.5,
   "daily_prompt_cap": 3,
-  "training_rows": 528,
+  "training_rows": 634,
   "training_source_sha256": "8f13d48c63a4d5b824ad52e8f663787ea962671bcc994f80cad7823e8c630a12",
-  "model_scope": "10_minute_intended_duration_baseline",
-  "activity_features_used": false,
-  "deployment_note": "ML integration baseline; does not infer attention or use live activity features.",
+  "model_scope": "rolling_activity_technical_pilot",
+  "prediction_policy": "every_60_seconds_from_one_third_of_intended_duration",
+  "consecutive_positive_scores_required": 2,
+  "activity_features_used": true,
+  "chronological_holdout_metrics": {
+    "n": 193,
+    "prevalence": 0.45595854922279794,
+    "accuracy": 0.8911917098445595,
+    "precision": 0.958904109589041,
+    "recall": 0.7954545454545454,
+    "f1": 0.8695652173913043,
+    "roc_auc": 0.9375541125541126,
+    "brier": 0.10647378673986208,
+    "prompt_rate": 0.37823834196891193,
+    "false_prompt_rate_all_sessions": 0.015544041450777202,
+    "false_prompt_share_of_prompts": 0.0410958904109589,
+    "threshold": 0.7363471184701026,
+    "tn": 102,
+    "fp": 3,
+    "fn": 18,
+    "tp": 70
+  },
   "data_quality_warnings": [
     "Repaired 20 drift labels from explicit post-session answers in memory."
   ],
-  "chronological_holdout_metrics": {
-    "n": 166,
-    "prevalence": 0.463855421686747,
-    "accuracy": 0.5542168674698795,
-    "precision": 0.5205479452054794,
-    "recall": 0.4935064935064935,
-    "f1": 0.5066666666666667,
-    "roc_auc": 0.5742010798190573,
-    "brier": 0.24321725777179962,
-    "prompt_rate": 0.4397590361445783,
-    "false_prompt_rate_all_sessions": 0.21084337349397592,
-    "false_prompt_share_of_prompts": 0.4794520547945205,
-    "threshold": 0.44724021523281665,
-    "tn": 54,
-    "fp": 35,
-    "fn": 39,
-    "tp": 38
-  }
+  "deployment_note": "Provisional pilot model trained on completed-session activity proportions. Prospectively validate rolling performance before formal Phase 2."
 }
