@@ -4,8 +4,9 @@ import { getSessions, getSettings, initializeStorage, patchSettings } from '../s
 import type { RuntimeRequest } from '../shared/types'
 import { captureCheckpoint, dismissReflection, getOpenSession, getSessionForTaskSite, markReflectionRequested, noteActiveContext, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
 import { loadCheckpointModel, predictCheckpoint } from './checkpointModel'
+import { canDeliverPhase2Prompt, consecutivePositiveScoreCount, hasPhase2Assignment, phase2Assignment, type Phase2Assignment } from './phase2Policy'
 
-type Phase2Decision = { sessionId: string; cutoffSeconds: number; at: string; modelVersion: string | null; probability: number | null; triggered: boolean; assignment: 'intervention' | 'silent_control' | null; delivered: boolean; deliveryChannel?: 'esp32' | 'browser_notification' | null; reason: string }
+type Phase2Decision = { sessionId: string; cutoffSeconds: number; at: string; modelVersion: string | null; probability: number | null; triggered: boolean; assignment: Phase2Assignment | null; delivered: boolean; deliveryChannel?: 'esp32' | 'browser_notification' | null; reason: string }
 const PHASE2_AUDIT_KEY = 'driftsense_phase2_decisions_v1'
 const DEVICE_ALERT_KEY = 'driftsense_device_alert_v1'
 const DEVICE_CONNECTION_KEY = 'driftsense_device_connection_v1'
@@ -33,16 +34,16 @@ async function evaluateCheckpoint(sessionId: string, cutoff: number) {
     const result = predictCheckpoint(model, session, snapshot)
     const prior = await auditRows()
     const sessionRows = prior.filter((item) => item.sessionId === sessionId)
-    if (sessionRows.some((item) => item.assignment !== null)) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: result.triggered, assignment: null, delivered: false, reason: 'session_already_assigned' }); return }
+    if (hasPhase2Assignment(sessionRows)) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: result.triggered, assignment: null, delivered: false, reason: 'session_already_assigned' }); return }
     if (!result.triggered) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: false, assignment: null, delivered: false, reason: 'below_threshold' }); return }
-    const last = sessionRows.at(-1)
     const required = model.consecutive_positive_scores_required ?? 1
-    const consecutive = last?.triggered && cutoff - last.cutoffSeconds === 60 ? 2 : 1
+    const consecutive = consecutivePositiveScoreCount(sessionRows, cutoff)
     if (consecutive < required) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment: null, delivered: false, reason: 'awaiting_consecutive_score' }); return }
-    const assignment = crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_0000_0000 < (model.prompt_probability ?? 0.5) ? 'intervention' : 'silent_control'
+    const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_0000_0000
+    const assignment = phase2Assignment(randomValue, model.prompt_probability ?? 0.5)
     const today = new Date().toISOString().slice(0, 10)
     const deliveredToday = prior.filter((item) => item.delivered && item.at.startsWith(today)).length
-    const eligibleForDelivery = assignment === 'intervention' && deliveredToday < (model.daily_prompt_cap ?? 3)
+    const eligibleForDelivery = canDeliverPhase2Prompt(assignment, deliveredToday, model.daily_prompt_cap ?? 3)
     let delivered = false
     let deliveryChannel: Phase2Decision['deliveryChannel'] = null
     let reason = assignment === 'silent_control' ? 'silent_control' : 'daily_cap'
@@ -55,7 +56,10 @@ async function evaluateCheckpoint(sessionId: string, cutoff: number) {
 async function updateContextAndDevice(tabId: number, domain: string | null) {
   await noteActiveContext(tabId, domain)
   const session = await getOpenSession()
-  if (session?.status === 'active' && session.currentContext === 'task_site') deviceCommand('ALERT_OFF')
+  if (session?.status === 'active' && session.currentContext === 'task_site') {
+    deviceCommand('ALERT_OFF')
+    await chrome.notifications.clear(`driftsense-checkin:${session.sessionId}`)
+  }
 }
 
 void initializeStorage().then(syncCollectorRegistration).catch(reportCollectorError)
@@ -89,14 +93,29 @@ async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.Mes
     if (tabId === null) throw new Error('Open an approved task site before starting a task.')
     const session = await startTaskSession(tabId, request.domain, request.taskType, request.intendedDurationMinutes)
     if (!session) throw new Error('This hostname is not an enabled participant-approved task site.')
+    deviceCommand('ALERT_OFF')
     try { await chrome.tabs.sendMessage(tabId, { type: 'TASK_SESSION_STARTED', sessionId: session.sessionId }) } catch { /* The page can be reloaded to attach the collector. */ }
     return { session }
   }
   if (request.type === 'RECORD_ACTIVITY_WINDOW') return { session: await recordActivityWindow(request.sessionId, request.window) }
-  if (request.type === 'REQUEST_REFLECTION') return { session: await markReflectionRequested(request.sessionId) }
+  if (request.type === 'REQUEST_REFLECTION') {
+    const session = await markReflectionRequested(request.sessionId)
+    deviceCommand('ALERT_OFF')
+    await chrome.notifications.clear(`driftsense-checkin:${request.sessionId}`)
+    return { session }
+  }
   if (request.type === 'DISMISS_REFLECTION') return { session: await dismissReflection(request.sessionId, request.action) }
-  if (request.type === 'SUBMIT_REFLECTION') return { session: await submitReflection(request.sessionId, request.answer) }
-  if (request.type === 'SET_MONITORING') return { settings: await patchSettings({ monitoringEnabled: request.enabled }) }
+  if (request.type === 'SUBMIT_REFLECTION') {
+    const session = await submitReflection(request.sessionId, request.answer)
+    deviceCommand('ALERT_OFF')
+    await chrome.notifications.clear(`driftsense-checkin:${request.sessionId}`)
+    return { session }
+  }
+  if (request.type === 'SET_MONITORING') {
+    const settings = await patchSettings({ monitoringEnabled: request.enabled })
+    if (!request.enabled) deviceCommand('ALERT_OFF')
+    return { settings }
+  }
   if (request.type === 'SYNC_COLLECTOR') return { collectorStatus: await syncCollectorRegistration() }
   if (request.type === 'GET_POPUP_STATE') {
     const [settings, sessions, currentTabId] = await Promise.all([getSettings(), getSessions(), getCurrentTabId()])

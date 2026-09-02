@@ -10,6 +10,8 @@ describe('Phase 1 task-session lifecycle', () => {
   it('starts rolling predictions one third into the intended duration', () => {
     expect(predictionOffsetsForDuration(10).slice(0, 2)).toEqual([240, 300])
     expect(predictionOffsetsForDuration(20)[0]).toBe(420)
+    expect(predictionOffsetsForDuration(30).slice(0, 2)).toEqual([600, 660])
+    expect(predictionOffsetsForDuration(30).at(-1)).toBe(1800)
     expect(predictionOffsetsForDuration(90)[0]).toBe(1800)
   })
   it('requires an explicit start on an approved task site', async () => {

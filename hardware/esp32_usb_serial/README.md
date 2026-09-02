@@ -23,6 +23,7 @@ BUTTON:3
 Extension to ESP32:
 
 ```text
+PING
 READY
 DURATION:30
 START
@@ -33,6 +34,17 @@ COMPLETE
 ALERT_ON
 ALERT_OFF
 ```
+
+`ALERT_ON` starts one unresolved alert episode: the red LED stays on and the
+active buzzer produces two short beeps every 10 seconds. `ALERT_OFF`,
+`REFLECTION`, `COMPLETE`, or button 3 stops the sound immediately and turns the
+LED off. This repeated sound does not represent repeated model decisions or
+additional Phase 2 prompts.
+
+The device page sends `PING` every two seconds. If the ESP32 receives no command
+for 15 seconds while an alert is active (for example, because the device page
+closed or the USB cable was removed), it silences the buzzer and LED as a safety
+fallback.
 
 ## Suggested wiring
 
@@ -77,3 +89,5 @@ Keep that device page open: it owns the Web Serial connection. At a configured
 checkpoint the extension evaluates only a validated frozen checkpoint model,
 records the Phase 2 assignment, and sends `ALERT_ON` only for delivered
 intervention assignments. Returning to an approved task site sends `ALERT_OFF`.
+The model can be evaluated repeatedly, but Phase 2 creates at most one alert
+episode per session.

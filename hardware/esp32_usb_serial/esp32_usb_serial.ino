@@ -13,6 +13,10 @@ const int LED_PIN = 18;
 const int BUZZER_PIN = 19;
 
 const unsigned long DEBOUNCE_MS = 300;
+const unsigned long ALERT_REPEAT_MS = 10000;
+const unsigned long BUZZER_ON_MS = 100;
+const unsigned long BUZZER_GAP_MS = 80;
+const unsigned long HOST_COMMAND_TIMEOUT_MS = 15000;
 
 LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
 
@@ -25,14 +29,25 @@ enum DeviceMode {
   MODE_ALERT
 };
 
+enum BeepPhase {
+  BEEP_IDLE,
+  BEEP_FIRST_ON,
+  BEEP_GAP,
+  BEEP_SECOND_ON
+};
+
 DeviceMode mode = MODE_READY;
 DeviceMode modeBeforeAlert = MODE_READY;
 int selectedMinutes = 0;
 long remainingSeconds = 0;
 bool alertOn = false;
+BeepPhase beepPhase = BEEP_IDLE;
 String serialBuffer = "";
 unsigned long lastButtonAt[3] = {0, 0, 0};
 int lastButtonState[3] = {HIGH, HIGH, HIGH};
+unsigned long beepPhaseStartedAt = 0;
+unsigned long lastBeepStartedAt = 0;
+unsigned long lastHostCommandAt = 0;
 
 String formatSeconds(long seconds) {
   if (seconds < 0) seconds = 0;
@@ -43,14 +58,49 @@ String formatSeconds(long seconds) {
   return String(buffer);
 }
 
-void beepBriefly() {
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(100);
+void stopBuzzer() {
   digitalWrite(BUZZER_PIN, LOW);
-  delay(80);
+  beepPhase = BEEP_IDLE;
+}
+
+void startBeepPattern(unsigned long now) {
   digitalWrite(BUZZER_PIN, HIGH);
-  delay(100);
-  digitalWrite(BUZZER_PIN, LOW);
+  beepPhase = BEEP_FIRST_ON;
+  beepPhaseStartedAt = now;
+  lastBeepStartedAt = now;
+}
+
+void updateAlertBuzzer() {
+  if (!alertOn) {
+    stopBuzzer();
+    return;
+  }
+
+  unsigned long now = millis();
+  if (beepPhase == BEEP_IDLE && now - lastBeepStartedAt >= ALERT_REPEAT_MS) {
+    startBeepPattern(now);
+  } else if (beepPhase == BEEP_FIRST_ON && now - beepPhaseStartedAt >= BUZZER_ON_MS) {
+    digitalWrite(BUZZER_PIN, LOW);
+    beepPhase = BEEP_GAP;
+    beepPhaseStartedAt = now;
+  } else if (beepPhase == BEEP_GAP && now - beepPhaseStartedAt >= BUZZER_GAP_MS) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    beepPhase = BEEP_SECOND_ON;
+    beepPhaseStartedAt = now;
+  } else if (beepPhase == BEEP_SECOND_ON && now - beepPhaseStartedAt >= BUZZER_ON_MS) {
+    stopBuzzer();
+  }
+}
+
+void silenceAlert() {
+  alertOn = false;
+  digitalWrite(LED_PIN, LOW);
+  stopBuzzer();
+}
+
+void stopAlertAndRestoreMode() {
+  if (alertOn) mode = modeBeforeAlert;
+  silenceAlert();
 }
 
 void printRow(int row, String text) {
@@ -90,6 +140,10 @@ void readButton(int pin, int buttonNumber) {
   unsigned long now = millis();
   if (lastButtonState[index] == HIGH && currentState == LOW && now - lastButtonAt[index] >= DEBOUNCE_MS) {
     lastButtonAt[index] = now;
+    if (buttonNumber == 3 && alertOn) {
+      stopAlertAndRestoreMode();
+      renderDisplay();
+    }
     Serial.print("BUTTON:");
     Serial.println(buttonNumber);
   }
@@ -99,54 +153,58 @@ void readButton(int pin, int buttonNumber) {
 void handleLine(String line) {
   line.trim();
   line.toUpperCase();
+  if (line.length() == 0) return;
+  lastHostCommandAt = millis();
+
+  if (line == "PING") return;
 
   if (line == "READY") {
     mode = MODE_READY;
-    alertOn = false;
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
+    silenceAlert();
   } else if (line.startsWith("DURATION:")) {
     long parsedMinutes = line.substring(9).toInt();
     selectedMinutes = parsedMinutes < 0 ? 0 : (int)parsedMinutes;
     mode = MODE_SELECTING;
+    silenceAlert();
   } else if (line == "START") {
     mode = MODE_RUNNING;
-    alertOn = false;
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
+    silenceAlert();
   } else if (line.startsWith("TIME:")) {
     remainingSeconds = max(0L, line.substring(5).toInt());
-    if (!alertOn) mode = remainingSeconds == 0 ? MODE_TIME_REACHED : MODE_RUNNING;
+    DeviceMode timerMode = remainingSeconds == 0 ? MODE_TIME_REACHED : MODE_RUNNING;
+    if (alertOn) modeBeforeAlert = timerMode;
+    else mode = timerMode;
   } else if (line == "TIME_REACHED") {
-    if (!alertOn) mode = MODE_TIME_REACHED;
+    if (alertOn) modeBeforeAlert = MODE_TIME_REACHED;
+    else mode = MODE_TIME_REACHED;
   } else if (line == "REFLECTION") {
     mode = MODE_REFLECTION;
-    alertOn = false;
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
+    silenceAlert();
   } else if (line == "COMPLETE") {
     mode = MODE_READY;
-    alertOn = false;
     selectedMinutes = 0;
     remainingSeconds = 0;
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
+    silenceAlert();
   } else if (line == "ALERT_ON") {
     if (alertOn) return;
     modeBeforeAlert = mode;
     mode = MODE_ALERT;
     alertOn = true;
     digitalWrite(LED_PIN, HIGH);
-    beepBriefly();
+    startBeepPattern(millis());
   } else if (line == "ALERT_OFF") {
     if (!alertOn) return;
-    alertOn = false;
-    mode = modeBeforeAlert;
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
+    stopAlertAndRestoreMode();
   }
 
   renderDisplay();
+}
+
+void enforceHostCommandTimeout() {
+  if (alertOn && millis() - lastHostCommandAt >= HOST_COMMAND_TIMEOUT_MS) {
+    stopAlertAndRestoreMode();
+    renderDisplay();
+  }
 }
 
 void readSerialLines() {
@@ -185,6 +243,9 @@ void loop() {
   readButton(BUTTON_1_PIN, 1);
   readButton(BUTTON_2_PIN, 2);
   readButton(BUTTON_3_PIN, 3);
+
+  enforceHostCommandTimeout();
+  updateAlertBuzzer();
 
   delay(10);
 }

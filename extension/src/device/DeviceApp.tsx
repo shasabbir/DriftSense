@@ -49,6 +49,7 @@ export function DeviceApp() {
   const localModeRef = useRef<LocalMode>('idle')
   const taskTypeRef = useRef<TaskType>('writing_creating')
   const timeReachedRef = useRef(false)
+  const writeQueueRef = useRef<Promise<void>>(Promise.resolve())
   const storeConnectionState = useCallback((isConnected: boolean) => chrome.storage.local.set({ driftsense_device_connection_v1: { connected: isConnected, updatedAt: new Date().toISOString() } }), [])
 
   const appendLog = useCallback((message: string) => {
@@ -64,17 +65,21 @@ export function DeviceApp() {
     return next
   }, [])
 
-  const sendCommand = useCallback(async (command: DeviceCommand) => {
-    const port = portRef.current
-    if (!port?.writable) return
+  const sendCommand = useCallback((command: DeviceCommand): Promise<void> => {
     const line = formatDeviceCommand(command)
-    const writer = port.writable.getWriter()
-    try {
-      await writer.write(new TextEncoder().encode(`${line}\n`))
-      appendLog(`> ${line}`)
-    } finally {
-      writer.releaseLock()
-    }
+    const queued = writeQueueRef.current.catch(() => undefined).then(async () => {
+      const port = portRef.current
+      if (!port?.writable) return
+      const writer = port.writable.getWriter()
+      try {
+        await writer.write(new TextEncoder().encode(`${line}\n`))
+        if (command.type !== 'PING') appendLog(`> ${line}`)
+      } finally {
+        writer.releaseLock()
+      }
+    }).catch((writeError: unknown) => appendLog(writeError instanceof Error ? writeError.message : 'Serial write failed'))
+    writeQueueRef.current = queued
+    return queued
   }, [appendLog])
 
   const submitReflection = useCallback(async (session: InternalSession, answer: PostSessionAnswer) => {
@@ -193,26 +198,31 @@ export function DeviceApp() {
         await storeConnectionState(false)
       }
     })()
-  }, [appendLog, handleButtonEvent, sendCommand])
+  }, [appendLog, handleButtonEvent, sendCommand, storeConnectionState])
 
   const disconnect = useCallback(async () => {
+    await sendCommand({ type: 'ALERT_OFF' })
     try { await readerRef.current?.cancel() } catch { /* already closed */ }
     try { await portRef.current?.close() } catch { /* already closed */ }
     portRef.current = null
     setConnected(false)
     await storeConnectionState(false)
     appendLog('Disconnected')
-  }, [appendLog, storeConnectionState])
+  }, [appendLog, sendCommand, storeConnectionState])
 
   useEffect(() => { void refresh() }, [refresh])
   useEffect(() => {
     if (!connected) return
-    void storeConnectionState(true)
-    const id = window.setInterval(() => void storeConnectionState(true), 2000)
+    const heartbeat = () => {
+      void storeConnectionState(true)
+      void sendCommand({ type: 'PING' })
+    }
+    heartbeat()
+    const id = window.setInterval(heartbeat, 2000)
     const markDisconnected = () => void storeConnectionState(false)
     window.addEventListener('beforeunload', markDisconnected)
     return () => { window.clearInterval(id); window.removeEventListener('beforeunload', markDisconnected); void storeConnectionState(false) }
-  }, [connected, storeConnectionState])
+  }, [connected, sendCommand, storeConnectionState])
   useEffect(() => { void loadCheckpointModel().then(setModel) }, [])
   useEffect(() => {
     if (typeof chrome === 'undefined' || !chrome.runtime?.onMessage) return

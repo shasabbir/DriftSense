@@ -59,6 +59,13 @@ intervention is assigned while that heartbeat is missing, DriftSense shows a
 neutral Chrome check-in notification and records `browser_notification` as the
 delivery channel instead of claiming ESP32 delivery.
 
+For an ESP32 delivery, the extension sends one `ALERT_ON` per assigned
+intervention. The device keeps the red LED on and repeats two short beeps every
+10 seconds until the extension sends `ALERT_OFF`. Returning to a
+participant-approved task site, finishing the session, pausing collection, or
+pressing button 3 stops the alert. A two-second `PING` keeps the device watchdog
+alive; an alert is silenced after 15 seconds without a host command.
+
 The bundled `phase1-rolling-activity-logistic-v1` is a technical/usability
 pilot model. It scores live active, idle, and away shares once per minute,
 starting one third into the participant's intended duration, and requires two
@@ -86,7 +93,8 @@ Button mapping:
 
 The serial protocol is newline-delimited text. The ESP32 sends `BUTTON:1`,
 `BUTTON:2`, or `BUTTON:3`; the extension sends commands such as `DURATION:30`,
-`START`, `TIME:1785`, `REFLECTION`, and `COMPLETE`.
+`START`, `TIME:1785`, `PING`, `ALERT_ON`, `ALERT_OFF`, `REFLECTION`, and
+`COMPLETE`.
 
 The current implementation does not use the session-end JSON model for hardware
 alerts. Early alerting still requires a separately trained and frozen checkpoint

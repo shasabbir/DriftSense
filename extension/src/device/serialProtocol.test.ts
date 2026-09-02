@@ -14,6 +14,7 @@ describe('ESP32 serial protocol', () => {
   })
 
   it('formats extension commands', () => {
+    expect(formatDeviceCommand({ type: 'PING' })).toBe('PING')
     expect(formatDeviceCommand({ type: 'DURATION', minutes: 30 })).toBe('DURATION:30')
     expect(formatDeviceCommand({ type: 'TIME', seconds: 1785 })).toBe('TIME:1785')
     expect(formatDeviceCommand({ type: 'REFLECTION' })).toBe('REFLECTION')

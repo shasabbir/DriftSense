@@ -1,6 +1,7 @@
 export type DeviceButtonEvent = { type: 'button'; button: 1 | 2 | 3 }
 
 export type DeviceCommand =
+  | { type: 'PING' }
   | { type: 'READY' }
   | { type: 'DURATION'; minutes: number }
   | { type: 'START' }
