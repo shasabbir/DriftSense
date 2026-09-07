@@ -9,8 +9,8 @@ const int LCD_ROWS = 2;
 const int BUTTON_1_PIN = 25;
 const int BUTTON_2_PIN = 26;
 const int BUTTON_3_PIN = 27;
-const int LED_PIN = 18;
-const int BUZZER_PIN = 19;
+const int LED_PIN = 19;
+const int BUZZER_PIN = 18;
 
 const unsigned long DEBOUNCE_MS = 300;
 const unsigned long ALERT_REPEAT_MS = 10000;
