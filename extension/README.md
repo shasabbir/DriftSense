@@ -61,39 +61,39 @@ delivery channel instead of claiming ESP32 delivery.
 
 For an ESP32 delivery, the extension sends one `ALERT_ON` per assigned
 intervention. The device keeps the red LED on and repeats two short beeps every
-10 seconds until the extension sends `ALERT_OFF`. Returning to a
+10 seconds. The extension automatically sends `ALERT_OFF` after five alert
+cycles (approximately 41 seconds). Returning to a
 participant-approved task site, finishing the session, pausing collection, or
-pressing button 3 stops the alert. A two-second `PING` keeps the device watchdog
+pressing button 3 stops it earlier. A two-second `PING` keeps the device watchdog
 alive; an alert is silenced after 15 seconds without a host command.
 
-The bundled `phase1-rolling-activity-logistic-v2` is a technical/usability
-pilot model. It scores live active, idle, and away shares at duration-relative
-decision points. Sessions shorter than 30 minutes have one decision at the
-midpoint. Sessions of 30 minutes or longer have decisions at one-third and
-two-thirds of the intended duration:
+The bundled `phase1-rolling-activity-logistic-v3` is a technical/usability
+pilot model. It scores cumulative live active, idle, and away shares at
+recurring checkpoints. Sessions of 20 minutes or less are checked every five
+minutes. Longer sessions are checked every ten minutes:
 
 | Duration | Model windows | Maximum delivered alerts |
 |---|---|---|
-| 10 | minute 5 | 1 |
-| 15 | minute 8 | 1 |
-| 20 | minute 10 | 1 |
-| 30 | minutes 10 and 20 | 2 |
-| 45 | minutes 15 and 30 | 2 |
-| 60 | minutes 20 and 40 | 2 |
-| 90 | minutes 30 and 60 | 2 |
+| 10 | minutes 5 and 10 | 2 |
+| 15 | minutes 5, 10, and 15 | 3 |
+| 20 | minutes 5, 10, 15, and 20 | 4 |
+| 30 | minutes 10, 20, and 30 | 3 |
+| 45 | minutes 10, 20, 30, and 40 | 4 |
+| 60 | minutes 10, 20, 30, 40, 50, and 60 | 6 |
+| 90 | every 10 minutes through minute 90 | 9 |
 
 These are the durations observed in the training data, not an input whitelist.
 Phase 1 custom durations remain valid. For example, a 50-minute session uses
-minutes 17 and 34. The actual selected duration always controls the alert
+minutes 10, 20, 30, 40, and 50. The actual selected duration controls the alert
 points. The model uses duration as a numeric feature: values between 10 and 90
 minutes interpolate within the observed range, while values outside that range
 are clipped to the nearest boundary for the duration feature only. Sessions are
 never rejected because their duration was absent from the training data.
 
-The session is randomized only once; silent-control sessions remain silent in
-both windows. Reported holdout metrics are session-end metrics because the
+The session is randomized only once; silent-control sessions remain silent at
+all checkpoints. Reported holdout metrics are session-end metrics because the
 source CSV has completed-session aggregates. Treat rolling performance and the
-adaptive two-window policy as unvalidated until shadow-mode predictions are
+recurring-checkpoint policy as unvalidated until shadow-mode predictions are
 compared with later explicit alignment answers; do not present them as formal
 Phase 2 early-prediction or intervention results without revising the protocol.
 

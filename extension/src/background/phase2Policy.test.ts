@@ -1,29 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { alertWindowAlreadyDecided, assignmentForDeliveryPolicy, canDeliverPhase2Prompt, consecutivePositiveScoreCount, durationAlertWindows, existingPhase2Assignment, phase2Assignment, predictionOffsetsForDuration } from './phase2Policy'
+import { ALERT_AUTO_STOP_SECONDS, ALERT_MAX_CYCLES, ALERT_REPEAT_SECONDS, alertWindowAlreadyDecided, assignmentForDeliveryPolicy, canDeliverPhase2Prompt, durationAlertWindows, existingPhase2Assignment, phase2Assignment, predictionOffsetsForDuration } from './phase2Policy'
 
 describe('Phase 2 alert policy', () => {
-  it('uses one midpoint decision below 30 minutes and two third-point decisions from 30 minutes', () => {
-    expect(durationAlertWindows(10)).toEqual([{ index: 1, startMinute: 5, endMinute: 5 }])
-    expect(durationAlertWindows(20)).toEqual([{ index: 1, startMinute: 10, endMinute: 10 }])
-    expect(durationAlertWindows(29)).toEqual([{ index: 1, startMinute: 15, endMinute: 15 }])
-    expect(durationAlertWindows(30)).toEqual([
-      { index: 1, startMinute: 10, endMinute: 10 },
-      { index: 2, startMinute: 20, endMinute: 20 },
-    ])
-    expect(durationAlertWindows(90)).toEqual([
-      { index: 1, startMinute: 30, endMinute: 30 },
-      { index: 2, startMinute: 60, endMinute: 60 },
-    ])
-    expect(predictionOffsetsForDuration(30)).toEqual([600, 1200])
-    expect(predictionOffsetsForDuration(50)).toEqual([1020, 2040])
+  it('checks every five minutes through 20 minutes and every ten minutes above 20', () => {
+    expect(predictionOffsetsForDuration(4)).toEqual([])
+    expect(predictionOffsetsForDuration(10)).toEqual([300, 600])
+    expect(predictionOffsetsForDuration(20)).toEqual([300, 600, 900, 1200])
+    expect(predictionOffsetsForDuration(21)).toEqual([600, 1200])
+    expect(predictionOffsetsForDuration(50)).toEqual([600, 1200, 1800, 2400, 3000])
+    expect(predictionOffsetsForDuration(90)).toEqual([600, 1200, 1800, 2400, 3000, 3600, 4200, 4800, 5400])
   })
 
-  it('requires consecutive one-minute positive scores and resets after a negative score', () => {
-    expect(consecutivePositiveScoreCount([{ cutoffSeconds: 600, triggered: true, assignment: null }], 660)).toBe(2)
-    expect(consecutivePositiveScoreCount([
-      { cutoffSeconds: 600, triggered: true, assignment: null },
-      { cutoffSeconds: 660, triggered: false, assignment: null },
-    ], 720)).toBe(1)
+  it('allows five alert cycles ten seconds apart before the extension stops the alert', () => {
+    expect(ALERT_REPEAT_SECONDS).toBe(10)
+    expect(ALERT_MAX_CYCLES).toBe(5)
+    expect(ALERT_AUTO_STOP_SECONDS).toBe(41)
   })
 
   it('keeps one random assignment while allowing one decision in each alert window', () => {

@@ -14,13 +14,16 @@ export type DurationAlertWindow = {
   endMinute: number
 }
 
+export const ALERT_REPEAT_SECONDS = 10
+export const ALERT_MAX_CYCLES = 5
+export const ALERT_AUTO_STOP_SECONDS = (ALERT_MAX_CYCLES - 1) * ALERT_REPEAT_SECONDS + 1
+
 export function durationAlertWindows(intendedDurationMinutes: number | null): DurationAlertWindow[] {
   if (!intendedDurationMinutes || intendedDurationMinutes < 1) return []
   const duration = Math.round(intendedDurationMinutes)
-  const starts = duration < 30
-    ? [Math.max(1, Math.ceil(duration / 2))]
-    : [Math.max(1, Math.ceil(duration / 3)), Math.ceil((duration * 2) / 3)]
-  return [...new Set(starts)].map((startMinute, index) => ({
+  const interval = duration <= 20 ? 5 : 10
+  const checkpoints = Array.from({ length: Math.floor(duration / interval) }, (_, index) => (index + 1) * interval)
+  return checkpoints.map((startMinute, index) => ({
     index: index + 1,
     startMinute,
     endMinute: startMinute,
@@ -43,18 +46,6 @@ export function existingPhase2Assignment(rows: Phase2HistoryRow[]): Phase2Assign
 
 export function alertWindowAlreadyDecided(rows: Phase2HistoryRow[], alertWindow: number): boolean {
   return rows.some((row) => row.assignment !== null && (row.alertWindow ?? 1) === alertWindow)
-}
-
-export function consecutivePositiveScoreCount(rows: Phase2HistoryRow[], currentCutoffSeconds: number): number {
-  let count = 1
-  let expectedCutoff = currentCutoffSeconds - 60
-  for (let index = rows.length - 1; index >= 0; index -= 1) {
-    const row = rows[index]
-    if (row.cutoffSeconds !== expectedCutoff || !row.triggered) break
-    count += 1
-    expectedCutoff -= 60
-  }
-  return count
 }
 
 export function phase2Assignment(randomValue: number, promptProbability: number): Phase2Assignment {

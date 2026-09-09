@@ -86,18 +86,15 @@ Select an ESP32 board, upload `esp32_usb_serial.ino`, then open the DriftSense
 extension's ESP32 device page and click `Connect ESP32`.
 
 Keep that device page open: it owns the Web Serial connection. At a configured
-checkpoint the extension evaluates only a validated frozen checkpoint model,
-records the Phase 2 assignment, and sends `ALERT_ON` only for delivered
-intervention assignments. Returning to an approved task site sends `ALERT_OFF`.
-The extension uses one model window for 10-, 15-, and 20-minute sessions and
-two widely spaced model windows for 30-, 45-, 60-, and 90-minute sessions. Each
-window requires two consecutive positive scores. The session is randomized
-once, so silent-control sessions remain silent; an intervention session can
-receive at most one alert episode per window.
+checkpoint the extension evaluates the bundled frozen pilot model and sends
+`ALERT_ON` when the score reaches its threshold. Sessions of 20 minutes or less
+are checked every five minutes; longer sessions are checked every ten minutes.
+The extension sends `ALERT_OFF` after five ten-second alert cycles, or earlier
+when the user returns to an approved task site.
 
 The hardware duration button continues to add 10 minutes and does not restrict
 the user to durations present in the training data. A 50-minute selection, for
-example, uses model windows at minutes 17-19 and 34-36.
+example, uses model checkpoints at minutes 10, 20, 30, 40, and 50.
 
 The ESP32 decrements the displayed remaining time locally with `millis()`.
 `TIME:<seconds>` messages from the extension resynchronize that clock, so the

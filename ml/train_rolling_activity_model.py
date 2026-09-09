@@ -42,11 +42,10 @@ def train(source: Path, output: Path, bundled: Path) -> dict:
     artifact = _serialize_logistic_model(estimator, spec, threshold, 600, len(frame), quality["sha256"])
     observed_durations = sorted(int(value) for value in frame["intended_duration_minutes"].dropna().unique())
     artifact.update({
-        "model_version": "phase1-rolling-activity-logistic-v2",
+        "model_version": "phase1-rolling-activity-logistic-v3",
         "model_scope": "rolling_activity_technical_pilot",
-        "prediction_policy": "midpoint_below_30_thirds_from_30",
+        "prediction_policy": "recurring_5_minutes_up_to_20_else_10",
         "prediction_offsets_seconds": [],
-        "consecutive_positive_scores_required": 1,
         "observed_intended_durations_minutes": observed_durations,
         "intended_duration_range_minutes": [min(observed_durations), max(observed_durations)],
         "duration_feature_policy": "linear_interpolation_with_boundary_clipping",

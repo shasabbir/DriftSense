@@ -4,12 +4,13 @@ import { getSessions, getSettings, initializeStorage, patchSettings } from '../s
 import type { RuntimeRequest } from '../shared/types'
 import { captureCheckpoint, dismissReflection, getOpenSession, getSessionForTaskSite, markReflectionRequested, noteActiveContext, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
 import { loadCheckpointModel, predictCheckpoint } from './checkpointModel'
-import { alertWindowAlreadyDecided, alertWindowForCutoff, assignmentForDeliveryPolicy, canDeliverPhase2Prompt, consecutivePositiveScoreCount, existingPhase2Assignment, type DeliveryPolicy, type Phase2Assignment } from './phase2Policy'
+import { ALERT_AUTO_STOP_SECONDS, alertWindowAlreadyDecided, alertWindowForCutoff, assignmentForDeliveryPolicy, canDeliverPhase2Prompt, existingPhase2Assignment, type DeliveryPolicy, type Phase2Assignment } from './phase2Policy'
 
 type Phase2Decision = { sessionId: string; cutoffSeconds: number; at: string; modelVersion: string | null; probability: number | null; triggered: boolean; assignment: Phase2Assignment | null; deliveryPolicy?: DeliveryPolicy; alertWindow?: number | null; alertEpisode?: number | null; delivered: boolean; deliveryChannel?: 'esp32' | 'browser_notification' | null; reason: string }
 const PHASE2_AUDIT_KEY = 'driftsense_phase2_decisions_v1'
 const DEVICE_ALERT_KEY = 'driftsense_device_alert_v1'
 const DEVICE_CONNECTION_KEY = 'driftsense_device_connection_v1'
+const ALERT_STOP_ALARM_PREFIX = 'alert-stop:'
 async function auditRows(): Promise<Phase2Decision[]> { return (await chrome.storage.local.get(PHASE2_AUDIT_KEY))[PHASE2_AUDIT_KEY] ?? [] }
 async function saveDecision(row: Phase2Decision) { const rows = await auditRows(); await chrome.storage.local.set({ [PHASE2_AUDIT_KEY]: [...rows, row] }) }
 function deviceCommand(command: 'ALERT_ON' | 'ALERT_OFF') {
@@ -29,6 +30,19 @@ async function clearBrowserCheckIns(sessionId: string): Promise<void> {
   const notifications = await new Promise<Object>((resolve) => chrome.notifications.getAll(resolve))
   await Promise.all(Object.keys(notifications).filter((id) => id.startsWith(prefix)).map((id) => chrome.notifications.clear(id)))
 }
+async function clearAlertStopAlarms(sessionId?: string): Promise<void> {
+  const prefix = sessionId ? `${ALERT_STOP_ALARM_PREFIX}${sessionId}:` : ALERT_STOP_ALARM_PREFIX
+  const alarms = await chrome.alarms.getAll()
+  await Promise.all(alarms.filter((alarm) => alarm.name.startsWith(prefix)).map((alarm) => chrome.alarms.clear(alarm.name)))
+}
+async function scheduleAlertStop(sessionId: string, episode: number): Promise<void> {
+  await clearAlertStopAlarms(sessionId)
+  chrome.alarms.create(`${ALERT_STOP_ALARM_PREFIX}${sessionId}:${episode}`, { when: Date.now() + ALERT_AUTO_STOP_SECONDS * 1000 })
+}
+async function stopAlertEpisode(sessionId: string): Promise<void> {
+  deviceCommand('ALERT_OFF')
+  await Promise.all([clearAlertStopAlarms(sessionId), clearBrowserCheckIns(sessionId)])
+}
 
 async function evaluateCheckpoint(sessionId: string, cutoff: number) {
   const snapshot = await captureCheckpoint(sessionId, cutoff)
@@ -44,9 +58,6 @@ async function evaluateCheckpoint(sessionId: string, cutoff: number) {
     const sessionRows = prior.filter((item) => item.sessionId === sessionId)
     if (alertWindowAlreadyDecided(sessionRows, alertWindow.index)) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: result.triggered, assignment: null, alertWindow: alertWindow.index, delivered: false, reason: 'alert_window_already_decided' }); return }
     if (!result.triggered) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: false, assignment: null, alertWindow: alertWindow.index, delivered: false, reason: 'below_threshold' }); return }
-    const required = model.consecutive_positive_scores_required ?? 1
-    const consecutive = consecutivePositiveScoreCount(sessionRows, cutoff)
-    if (consecutive < required) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment: null, alertWindow: alertWindow.index, delivered: false, reason: 'awaiting_consecutive_score' }); return }
     const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_0000_0000
     const deliveryPolicy = model.delivery_policy ?? 'randomized_capped'
     const assignment = assignmentForDeliveryPolicy(existingPhase2Assignment(sessionRows), deliveryPolicy, randomValue, model.prompt_probability ?? 0.5)
@@ -57,8 +68,10 @@ async function evaluateCheckpoint(sessionId: string, cutoff: number) {
     let delivered = false
     let deliveryChannel: Phase2Decision['deliveryChannel'] = null
     let reason = assignment === 'silent_control' ? 'silent_control' : 'daily_cap'
-    if (eligibleForDelivery && await esp32Connected()) { deviceCommand('ALERT_ON'); delivered = true; deliveryChannel = 'esp32'; reason = 'delivered_esp32' }
+    if (eligibleForDelivery && session.currentContext === 'task_site') reason = 'currently_on_task_site'
+    else if (eligibleForDelivery && await esp32Connected()) { deviceCommand('ALERT_ON'); delivered = true; deliveryChannel = 'esp32'; reason = 'delivered_esp32' }
     else if (eligibleForDelivery) { await showBrowserCheckIn(sessionId, deliveredInSession + 1); delivered = true; deliveryChannel = 'browser_notification'; reason = 'delivered_browser_fallback_no_device' }
+    if (delivered) await scheduleAlertStop(sessionId, deliveredInSession + 1)
     await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment, deliveryPolicy, alertWindow: alertWindow.index, alertEpisode: delivered ? deliveredInSession + 1 : null, delivered, deliveryChannel, reason })
   } catch (error) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: model.model_version, probability: null, triggered: false, assignment: null, delivered: false, reason: error instanceof Error ? error.message : 'prediction_failed' }) }
 }
@@ -67,8 +80,7 @@ async function updateContextAndDevice(tabId: number, domain: string | null) {
   await noteActiveContext(tabId, domain)
   const session = await getOpenSession()
   if (session?.status === 'active' && session.currentContext === 'task_site') {
-    deviceCommand('ALERT_OFF')
-    await clearBrowserCheckIns(session.sessionId)
+    await stopAlertEpisode(session.sessionId)
   }
 }
 
@@ -85,8 +97,16 @@ chrome.runtime.onMessage.addListener((request: RuntimeRequest, sender, sendRespo
 chrome.tabs.onActivated.addListener(({ tabId }) => { void chrome.tabs.get(tabId).then((tab) => updateContextAndDevice(tabId, hostnameFromUrl(tab.url ?? ''))).catch(() => updateContextAndDevice(tabId, null)) })
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.url && tab.active) void updateContextAndDevice(tabId, hostnameFromUrl(changeInfo.url)) })
 chrome.tabs.onRemoved.addListener((tabId) => { void updateContextAndDevice(tabId, null) })
-chrome.alarms.onAlarm.addListener((alarm) => { const match = /^model-check:(.+):(\d+)$/.exec(alarm.name); if (match) void evaluateCheckpoint(match[1], Number(match[2])) })
-chrome.notifications.onClosed.addListener((notificationId) => { if (notificationId.startsWith('driftsense-checkin:')) deviceCommand('ALERT_OFF') })
+chrome.alarms.onAlarm.addListener((alarm) => {
+  const modelMatch = /^model-check:(.+):(\d+)$/.exec(alarm.name)
+  if (modelMatch) { void evaluateCheckpoint(modelMatch[1], Number(modelMatch[2])); return }
+  const stopMatch = /^alert-stop:(.+):\d+$/.exec(alarm.name)
+  if (stopMatch) void stopAlertEpisode(stopMatch[1])
+})
+chrome.notifications.onClosed.addListener((notificationId) => {
+  const match = /^driftsense-checkin:(.+):\d+$/.exec(notificationId)
+  if (match) void stopAlertEpisode(match[1])
+})
 
 async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.MessageSender): Promise<Record<string, unknown>> {
   if (request.type === 'GET_PAGE_CONTEXT') {
@@ -104,6 +124,7 @@ async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.Mes
     if (tabId === null) throw new Error('Open an approved task site before starting a task.')
     const session = await startTaskSession(tabId, request.domain, request.taskType, request.intendedDurationMinutes)
     if (!session) throw new Error('This hostname is not an enabled participant-approved task site.')
+    await clearAlertStopAlarms()
     deviceCommand('ALERT_OFF')
     try { await chrome.tabs.sendMessage(tabId, { type: 'TASK_SESSION_STARTED', sessionId: session.sessionId }) } catch { /* The page can be reloaded to attach the collector. */ }
     return { session }
@@ -111,20 +132,18 @@ async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.Mes
   if (request.type === 'RECORD_ACTIVITY_WINDOW') return { session: await recordActivityWindow(request.sessionId, request.window) }
   if (request.type === 'REQUEST_REFLECTION') {
     const session = await markReflectionRequested(request.sessionId)
-    deviceCommand('ALERT_OFF')
-    await clearBrowserCheckIns(request.sessionId)
+    await stopAlertEpisode(request.sessionId)
     return { session }
   }
   if (request.type === 'DISMISS_REFLECTION') return { session: await dismissReflection(request.sessionId, request.action) }
   if (request.type === 'SUBMIT_REFLECTION') {
     const session = await submitReflection(request.sessionId, request.answer)
-    deviceCommand('ALERT_OFF')
-    await clearBrowserCheckIns(request.sessionId)
+    await stopAlertEpisode(request.sessionId)
     return { session }
   }
   if (request.type === 'SET_MONITORING') {
     const settings = await patchSettings({ monitoringEnabled: request.enabled })
-    if (!request.enabled) deviceCommand('ALERT_OFF')
+    if (!request.enabled) { deviceCommand('ALERT_OFF'); await clearAlertStopAlarms() }
     return { settings }
   }
   if (request.type === 'SYNC_COLLECTOR') return { collectorStatus: await syncCollectorRegistration() }

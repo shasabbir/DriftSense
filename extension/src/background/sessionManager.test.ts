@@ -7,12 +7,12 @@ beforeEach(async () => { vi.useRealTimers(); vi.stubGlobal('chrome', { alarms: {
 async function enableSites(...sites: string[]) { const settings = createDefaultSettings(); const monitoredDomains = settings.monitoredDomains.map((item) => ({ ...item, enabled: sites.includes(item.domain) })); await setSettings({ ...settings, consentAccepted: true, monitoringEnabled: true, onboardingComplete: true, monitoredDomains }) }
 
 describe('Phase 1 task-session lifecycle', () => {
-  it('schedules duration-relative model windows', () => {
-    expect(predictionOffsetsForDuration(10)).toEqual([300])
-    expect(predictionOffsetsForDuration(20)).toEqual([600])
-    expect(predictionOffsetsForDuration(30)).toEqual([600, 1200])
-    expect(predictionOffsetsForDuration(50)).toEqual([1020, 2040])
-    expect(predictionOffsetsForDuration(90)).toEqual([1800, 3600])
+  it('schedules recurring duration-relative model checks', () => {
+    expect(predictionOffsetsForDuration(10)).toEqual([300, 600])
+    expect(predictionOffsetsForDuration(20)).toEqual([300, 600, 900, 1200])
+    expect(predictionOffsetsForDuration(21)).toEqual([600, 1200])
+    expect(predictionOffsetsForDuration(50)).toEqual([600, 1200, 1800, 2400, 3000])
+    expect(predictionOffsetsForDuration(90)).toEqual([600, 1200, 1800, 2400, 3000, 3600, 4200, 4800, 5400])
   })
   it('requires an explicit start on an approved task site', async () => {
     await enableSites('youtube.com')

@@ -23,10 +23,10 @@ describe('checkpoint model inference', () => {
     expect(modelIntendedDuration(artifact, 120)).toBe(90)
   })
 
-  it('predicts high risk for a fully away 50-minute session in both alert windows', () => {
+  it('predicts high risk for a fully away 50-minute session at every recurring checkpoint', () => {
     const artifact = bundledModel as unknown as CheckpointModelArtifact
     const session = { taskType: 'writing_creating', intendedDurationMinutes: 50, taskSites: ['example.com'], initialTaskSite: 'example.com' } as never
-    for (const cutoffSeconds of [1020, 1080, 2040, 2100]) {
+    for (const cutoffSeconds of [600, 1200, 1800, 2400, 3000]) {
       const snapshot = { cutoffSeconds, activeSeconds: 0, idleSeconds: 0, awaySeconds: cutoffSeconds, clickCount: 0, scrollCount: 0, keyboardActivityCount: 0, tabSwitchCount: 1, videoPlayingSeconds: 0 } as never
       const result = predictCheckpoint(artifact, session, snapshot)
       expect(result.probability).toBeGreaterThan(artifact.risk_threshold)
