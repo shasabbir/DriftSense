@@ -1,4 +1,5 @@
 export type Phase2Assignment = 'intervention' | 'silent_control'
+export type DeliveryPolicy = 'randomized_capped' | 'technical_pilot_always_deliver'
 
 export type Phase2HistoryRow = {
   cutoffSeconds: number
@@ -16,12 +17,13 @@ export type DurationAlertWindow = {
 export function durationAlertWindows(intendedDurationMinutes: number | null): DurationAlertWindow[] {
   if (!intendedDurationMinutes || intendedDurationMinutes < 1) return []
   const duration = Math.round(intendedDurationMinutes)
-  const starts = [Math.max(3, Math.ceil(duration / 3))]
-  if (duration >= 30) starts.push(Math.ceil((duration * 2) / 3))
+  const starts = duration < 30
+    ? [Math.max(1, Math.ceil(duration / 2))]
+    : [Math.max(1, Math.ceil(duration / 3)), Math.ceil((duration * 2) / 3)]
   return [...new Set(starts)].map((startMinute, index) => ({
     index: index + 1,
     startMinute,
-    endMinute: Math.min(duration, startMinute + 2),
+    endMinute: startMinute,
   }))
 }
 
@@ -60,6 +62,11 @@ export function phase2Assignment(randomValue: number, promptProbability: number)
   return randomValue < probability ? 'intervention' : 'silent_control'
 }
 
-export function canDeliverPhase2Prompt(assignment: Phase2Assignment, deliveredToday: number, dailyCap: number): boolean {
-  return assignment === 'intervention' && deliveredToday < Math.max(0, dailyCap)
+export function assignmentForDeliveryPolicy(existing: Phase2Assignment | null, policy: DeliveryPolicy, randomValue: number, promptProbability: number): Phase2Assignment {
+  if (existing) return existing
+  return policy === 'technical_pilot_always_deliver' ? 'intervention' : phase2Assignment(randomValue, promptProbability)
+}
+
+export function canDeliverPhase2Prompt(assignment: Phase2Assignment, deliveredToday: number, dailyCap: number, policy: DeliveryPolicy = 'randomized_capped'): boolean {
+  return assignment === 'intervention' && (policy === 'technical_pilot_always_deliver' || deliveredToday < Math.max(0, dailyCap))
 }

@@ -1,6 +1,6 @@
 {
   "artifact_status": "frozen_phase2_candidate",
-  "model_version": "phase1-rolling-activity-logistic-v1",
+  "model_version": "phase1-rolling-activity-logistic-v2",
   "checkpoint_policy": "single_600_seconds",
   "prediction_offsets_seconds": [],
   "selected_model": "rolling_activity_context_pilot",
@@ -102,8 +102,8 @@
   "training_rows": 634,
   "training_source_sha256": "8f13d48c63a4d5b824ad52e8f663787ea962671bcc994f80cad7823e8c630a12",
   "model_scope": "rolling_activity_technical_pilot",
-  "prediction_policy": "duration_relative_windows_at_one_third_and_two_thirds",
-  "consecutive_positive_scores_required": 2,
+  "prediction_policy": "midpoint_below_30_thirds_from_30",
+  "consecutive_positive_scores_required": 1,
   "observed_intended_durations_minutes": [
     10,
     15,
@@ -118,6 +118,7 @@
     90
   ],
   "duration_feature_policy": "linear_interpolation_with_boundary_clipping",
+  "delivery_policy": "technical_pilot_always_deliver",
   "activity_features_used": true,
   "chronological_holdout_metrics": {
     "n": 193,

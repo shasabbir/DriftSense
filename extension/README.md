@@ -66,26 +66,26 @@ participant-approved task site, finishing the session, pausing collection, or
 pressing button 3 stops the alert. A two-second `PING` keeps the device watchdog
 alive; an alert is silenced after 15 seconds without a host command.
 
-The bundled `phase1-rolling-activity-logistic-v1` is a technical/usability
-pilot model. It scores live active, idle, and away shares in duration-relative
-three-minute windows and requires two consecutive positive scores. Sessions
-shorter than 30 minutes have one window near one-third of their intended
-duration. Sessions of 30 minutes or longer have a second window near two-thirds:
+The bundled `phase1-rolling-activity-logistic-v2` is a technical/usability
+pilot model. It scores live active, idle, and away shares at duration-relative
+decision points. Sessions shorter than 30 minutes have one decision at the
+midpoint. Sessions of 30 minutes or longer have decisions at one-third and
+two-thirds of the intended duration:
 
 | Duration | Model windows | Maximum delivered alerts |
 |---|---|---|
-| 10 | minutes 4-6 | 1 |
-| 15 | minutes 5-7 | 1 |
-| 20 | minutes 7-9 | 1 |
-| 30 | minutes 10-12 and 20-22 | 2 |
-| 45 | minutes 15-17 and 30-32 | 2 |
-| 60 | minutes 20-22 and 40-42 | 2 |
-| 90 | minutes 30-32 and 60-62 | 2 |
+| 10 | minute 5 | 1 |
+| 15 | minute 8 | 1 |
+| 20 | minute 10 | 1 |
+| 30 | minutes 10 and 20 | 2 |
+| 45 | minutes 15 and 30 | 2 |
+| 60 | minutes 20 and 40 | 2 |
+| 90 | minutes 30 and 60 | 2 |
 
 These are the durations observed in the training data, not an input whitelist.
 Phase 1 custom durations remain valid. For example, a 50-minute session uses
-minutes 17-19 and 34-36. The actual selected duration always controls the alert
-windows. The model uses duration as a numeric feature: values between 10 and 90
+minutes 17 and 34. The actual selected duration always controls the alert
+points. The model uses duration as a numeric feature: values between 10 and 90
 minutes interpolate within the observed range, while values outside that range
 are clipped to the nearest boundary for the duration feature only. Sessions are
 never rejected because their duration was absent from the training data.
@@ -96,6 +96,14 @@ source CSV has completed-session aggregates. Treat rolling performance and the
 adaptive two-window policy as unvalidated until shadow-mode predictions are
 compared with later explicit alignment answers; do not present them as formal
 Phase 2 early-prediction or intervention results without revising the protocol.
+
+The bundled technical-pilot artifact uses
+`technical_pilot_always_deliver`: every decision point that reaches the frozen
+model threshold produces an alert, and the research daily cap is not applied.
+This makes browser-notification and model testing deterministic. A separately
+imported formal Phase 2 artifact can use `randomized_capped`, which retains 1:1
+silent-control assignment and the prespecified daily cap. The audit export
+records the delivery policy used for each eligible decision.
 
 1. Upload [`../hardware/esp32_usb_serial/esp32_usb_serial.ino`](../hardware/esp32_usb_serial/esp32_usb_serial.ino) to the ESP32.
 2. Build and load the extension from `dist/`.

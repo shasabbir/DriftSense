@@ -98,3 +98,7 @@ receive at most one alert episode per window.
 The hardware duration button continues to add 10 minutes and does not restrict
 the user to durations present in the training data. A 50-minute selection, for
 example, uses model windows at minutes 17-19 and 34-36.
+
+The ESP32 decrements the displayed remaining time locally with `millis()`.
+`TIME:<seconds>` messages from the extension resynchronize that clock, so the
+LCD countdown continues even if Chrome throttles the background device page.

@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { alertWindowAlreadyDecided, canDeliverPhase2Prompt, consecutivePositiveScoreCount, durationAlertWindows, existingPhase2Assignment, phase2Assignment, predictionOffsetsForDuration } from './phase2Policy'
+import { alertWindowAlreadyDecided, assignmentForDeliveryPolicy, canDeliverPhase2Prompt, consecutivePositiveScoreCount, durationAlertWindows, existingPhase2Assignment, phase2Assignment, predictionOffsetsForDuration } from './phase2Policy'
 
 describe('Phase 2 alert policy', () => {
-  it('uses one duration-relative window for short sessions and two for long sessions', () => {
-    expect(durationAlertWindows(20)).toEqual([{ index: 1, startMinute: 7, endMinute: 9 }])
-    expect(durationAlertWindows(90)).toEqual([
-      { index: 1, startMinute: 30, endMinute: 32 },
-      { index: 2, startMinute: 60, endMinute: 62 },
+  it('uses one midpoint decision below 30 minutes and two third-point decisions from 30 minutes', () => {
+    expect(durationAlertWindows(10)).toEqual([{ index: 1, startMinute: 5, endMinute: 5 }])
+    expect(durationAlertWindows(20)).toEqual([{ index: 1, startMinute: 10, endMinute: 10 }])
+    expect(durationAlertWindows(29)).toEqual([{ index: 1, startMinute: 15, endMinute: 15 }])
+    expect(durationAlertWindows(30)).toEqual([
+      { index: 1, startMinute: 10, endMinute: 10 },
+      { index: 2, startMinute: 20, endMinute: 20 },
     ])
-    expect(predictionOffsetsForDuration(30)).toEqual([600, 660, 720, 1200, 1260, 1320])
-    expect(predictionOffsetsForDuration(50)).toEqual([1020, 1080, 1140, 2040, 2100, 2160])
+    expect(durationAlertWindows(90)).toEqual([
+      { index: 1, startMinute: 30, endMinute: 30 },
+      { index: 2, startMinute: 60, endMinute: 60 },
+    ])
+    expect(predictionOffsetsForDuration(30)).toEqual([600, 1200])
+    expect(predictionOffsetsForDuration(50)).toEqual([1020, 2040])
   })
 
   it('requires consecutive one-minute positive scores and resets after a negative score', () => {
@@ -33,5 +39,10 @@ describe('Phase 2 alert policy', () => {
     expect(canDeliverPhase2Prompt('silent_control', 0, 3)).toBe(false)
     expect(canDeliverPhase2Prompt('intervention', 2, 3)).toBe(true)
     expect(canDeliverPhase2Prompt('intervention', 3, 3)).toBe(false)
+  })
+
+  it('always delivers qualifying intervention windows in technical-pilot mode', () => {
+    expect(assignmentForDeliveryPolicy(null, 'technical_pilot_always_deliver', 0.99, 0.5)).toBe('intervention')
+    expect(canDeliverPhase2Prompt('intervention', 99, 3, 'technical_pilot_always_deliver')).toBe(true)
   })
 })

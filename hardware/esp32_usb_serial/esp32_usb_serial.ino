@@ -48,6 +48,9 @@ int lastButtonState[3] = {HIGH, HIGH, HIGH};
 unsigned long beepPhaseStartedAt = 0;
 unsigned long lastBeepStartedAt = 0;
 unsigned long lastHostCommandAt = 0;
+unsigned long lastCountdownTickAt = 0;
+
+void renderDisplay();
 
 String formatSeconds(long seconds) {
   if (seconds < 0) seconds = 0;
@@ -101,6 +104,25 @@ void silenceAlert() {
 void stopAlertAndRestoreMode() {
   if (alertOn) mode = modeBeforeAlert;
   silenceAlert();
+}
+
+void updateCountdown() {
+  bool countdownRunning = mode == MODE_RUNNING || (alertOn && modeBeforeAlert == MODE_RUNNING);
+  if (!countdownRunning || remainingSeconds <= 0) return;
+
+  unsigned long now = millis();
+  unsigned long elapsedMilliseconds = now - lastCountdownTickAt;
+  if (elapsedMilliseconds < 1000) return;
+
+  unsigned long elapsedSeconds = elapsedMilliseconds / 1000;
+  remainingSeconds = max(0L, remainingSeconds - (long)elapsedSeconds);
+  lastCountdownTickAt += elapsedSeconds * 1000;
+
+  if (remainingSeconds == 0) {
+    if (alertOn) modeBeforeAlert = MODE_TIME_REACHED;
+    else mode = MODE_TIME_REACHED;
+  }
+  if (!alertOn) renderDisplay();
 }
 
 void printRow(int row, String text) {
@@ -169,8 +191,10 @@ void handleLine(String line) {
   } else if (line == "START") {
     mode = MODE_RUNNING;
     silenceAlert();
+    lastCountdownTickAt = millis();
   } else if (line.startsWith("TIME:")) {
     remainingSeconds = max(0L, line.substring(5).toInt());
+    lastCountdownTickAt = millis();
     DeviceMode timerMode = remainingSeconds == 0 ? MODE_TIME_REACHED : MODE_RUNNING;
     if (alertOn) modeBeforeAlert = timerMode;
     else mode = timerMode;
@@ -246,6 +270,7 @@ void loop() {
 
   enforceHostCommandTimeout();
   updateAlertBuzzer();
+  updateCountdown();
 
   delay(10);
 }

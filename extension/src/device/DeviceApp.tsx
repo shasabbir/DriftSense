@@ -229,7 +229,11 @@ export function DeviceApp() {
     const listener = (message: unknown) => {
       const candidate = message as { type?: string; command?: DeviceCommand }
       if (candidate.type === 'DRIFTSENSE_DEVICE_COMMAND' && candidate.command) {
-        void sendCommand(candidate.command)
+        if (candidate.command.type === 'ALERT_ON') {
+          void sendCommand({ type: 'ALERT_OFF' }).then(() => sendCommand({ type: 'ALERT_ON' }))
+        } else {
+          void sendCommand(candidate.command)
+        }
       }
     }
     chrome.runtime.onMessage.addListener(listener)

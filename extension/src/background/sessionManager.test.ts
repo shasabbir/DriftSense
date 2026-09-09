@@ -8,11 +8,11 @@ async function enableSites(...sites: string[]) { const settings = createDefaultS
 
 describe('Phase 1 task-session lifecycle', () => {
   it('schedules duration-relative model windows', () => {
-    expect(predictionOffsetsForDuration(10)).toEqual([240, 300, 360])
-    expect(predictionOffsetsForDuration(20)).toEqual([420, 480, 540])
-    expect(predictionOffsetsForDuration(30)).toEqual([600, 660, 720, 1200, 1260, 1320])
-    expect(predictionOffsetsForDuration(50)).toEqual([1020, 1080, 1140, 2040, 2100, 2160])
-    expect(predictionOffsetsForDuration(90)).toEqual([1800, 1860, 1920, 3600, 3660, 3720])
+    expect(predictionOffsetsForDuration(10)).toEqual([300])
+    expect(predictionOffsetsForDuration(20)).toEqual([600])
+    expect(predictionOffsetsForDuration(30)).toEqual([600, 1200])
+    expect(predictionOffsetsForDuration(50)).toEqual([1020, 2040])
+    expect(predictionOffsetsForDuration(90)).toEqual([1800, 3600])
   })
   it('requires an explicit start on an approved task site', async () => {
     await enableSites('youtube.com')

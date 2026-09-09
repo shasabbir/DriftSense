@@ -19,12 +19,14 @@ export type CheckpointModelArtifact = {
   observed_intended_durations_minutes?: number[]
   intended_duration_range_minutes?: [number, number]
   duration_feature_policy?: string
+  delivery_policy?: 'randomized_capped' | 'technical_pilot_always_deliver'
 }
 
 export const CHECKPOINT_MODEL_STORAGE_KEY = 'driftsense_checkpoint_model_v1'
 const ROLLING_POLICIES = new Set([
   'every_60_seconds_from_one_third_of_intended_duration',
   'duration_relative_windows_at_one_third_and_two_thirds',
+  'midpoint_below_30_thirds_from_30',
 ])
 
 function isRollingPolicy(policy: string | undefined): boolean {
@@ -108,9 +110,14 @@ export async function loadCheckpointModel(): Promise<CheckpointModelArtifact | n
   if (cached) return cached
   try {
     const stored = (await chrome.storage.local.get(CHECKPOINT_MODEL_STORAGE_KEY))[CHECKPOINT_MODEL_STORAGE_KEY]
-    if (stored) { cached = validateCheckpointModel(stored); return cached }
+    if (stored) {
+      const installed = validateCheckpointModel(stored)
+      const staleBundledPilot = installed.model_version === 'phase1-rolling-activity-logistic-v1'
+      if (!staleBundledPilot) { cached = installed; return cached }
+    }
     const response = await fetch(chrome.runtime.getURL('models/frozen_model.json'))
     cached = response.ok ? validateCheckpointModel(await response.json()) : null
+    if (cached) await chrome.storage.local.set({ [CHECKPOINT_MODEL_STORAGE_KEY]: cached })
   } catch { cached = null }
   return cached
 }

@@ -4,9 +4,9 @@ import { getSessions, getSettings, initializeStorage, patchSettings } from '../s
 import type { RuntimeRequest } from '../shared/types'
 import { captureCheckpoint, dismissReflection, getOpenSession, getSessionForTaskSite, markReflectionRequested, noteActiveContext, recordActivityWindow, startTaskSession, submitReflection } from './sessionManager'
 import { loadCheckpointModel, predictCheckpoint } from './checkpointModel'
-import { alertWindowAlreadyDecided, alertWindowForCutoff, canDeliverPhase2Prompt, consecutivePositiveScoreCount, existingPhase2Assignment, phase2Assignment, type Phase2Assignment } from './phase2Policy'
+import { alertWindowAlreadyDecided, alertWindowForCutoff, assignmentForDeliveryPolicy, canDeliverPhase2Prompt, consecutivePositiveScoreCount, existingPhase2Assignment, type DeliveryPolicy, type Phase2Assignment } from './phase2Policy'
 
-type Phase2Decision = { sessionId: string; cutoffSeconds: number; at: string; modelVersion: string | null; probability: number | null; triggered: boolean; assignment: Phase2Assignment | null; alertWindow?: number | null; alertEpisode?: number | null; delivered: boolean; deliveryChannel?: 'esp32' | 'browser_notification' | null; reason: string }
+type Phase2Decision = { sessionId: string; cutoffSeconds: number; at: string; modelVersion: string | null; probability: number | null; triggered: boolean; assignment: Phase2Assignment | null; deliveryPolicy?: DeliveryPolicy; alertWindow?: number | null; alertEpisode?: number | null; delivered: boolean; deliveryChannel?: 'esp32' | 'browser_notification' | null; reason: string }
 const PHASE2_AUDIT_KEY = 'driftsense_phase2_decisions_v1'
 const DEVICE_ALERT_KEY = 'driftsense_device_alert_v1'
 const DEVICE_CONNECTION_KEY = 'driftsense_device_connection_v1'
@@ -20,11 +20,15 @@ async function esp32Connected(): Promise<boolean> {
   const state = (await chrome.storage.local.get(DEVICE_CONNECTION_KEY))[DEVICE_CONNECTION_KEY] as { connected?: boolean; updatedAt?: string } | undefined
   return Boolean(state?.connected && state.updatedAt && Date.now() - new Date(state.updatedAt).getTime() < 6000)
 }
-async function showBrowserCheckIn(sessionId: string): Promise<void> {
-  await chrome.notifications.create(`driftsense-checkin:${sessionId}`, { type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon-128.png'), title: 'DriftSense check-in', message: 'Take a moment to reflect on whether this session still matches the task you started.', priority: 1 })
+async function showBrowserCheckIn(sessionId: string, episode: number): Promise<void> {
+  await chrome.notifications.create(`driftsense-checkin:${sessionId}:${episode}`, { type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon-128.png'), title: 'DriftSense check-in', message: 'Take a moment to reflect on whether this session still matches the task you started.', priority: 1 })
   await chrome.storage.local.set({ [DEVICE_ALERT_KEY]: true })
 }
-async function alertEpisodeActive(): Promise<boolean> { return Boolean((await chrome.storage.local.get(DEVICE_ALERT_KEY))[DEVICE_ALERT_KEY]) }
+async function clearBrowserCheckIns(sessionId: string): Promise<void> {
+  const prefix = `driftsense-checkin:${sessionId}`
+  const notifications = await new Promise<Object>((resolve) => chrome.notifications.getAll(resolve))
+  await Promise.all(Object.keys(notifications).filter((id) => id.startsWith(prefix)).map((id) => chrome.notifications.clear(id)))
+}
 
 async function evaluateCheckpoint(sessionId: string, cutoff: number) {
   const snapshot = await captureCheckpoint(sessionId, cutoff)
@@ -44,18 +48,18 @@ async function evaluateCheckpoint(sessionId: string, cutoff: number) {
     const consecutive = consecutivePositiveScoreCount(sessionRows, cutoff)
     if (consecutive < required) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment: null, alertWindow: alertWindow.index, delivered: false, reason: 'awaiting_consecutive_score' }); return }
     const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_0000_0000
-    const assignment = existingPhase2Assignment(sessionRows) ?? phase2Assignment(randomValue, model.prompt_probability ?? 0.5)
+    const deliveryPolicy = model.delivery_policy ?? 'randomized_capped'
+    const assignment = assignmentForDeliveryPolicy(existingPhase2Assignment(sessionRows), deliveryPolicy, randomValue, model.prompt_probability ?? 0.5)
     const today = new Date().toISOString().slice(0, 10)
     const deliveredToday = prior.filter((item) => item.delivered && item.at.startsWith(today)).length
     const deliveredInSession = sessionRows.filter((item) => item.delivered).length
-    const eligibleForDelivery = canDeliverPhase2Prompt(assignment, deliveredToday, model.daily_prompt_cap ?? 3)
+    const eligibleForDelivery = canDeliverPhase2Prompt(assignment, deliveredToday, model.daily_prompt_cap ?? 3, deliveryPolicy)
     let delivered = false
     let deliveryChannel: Phase2Decision['deliveryChannel'] = null
     let reason = assignment === 'silent_control' ? 'silent_control' : 'daily_cap'
-    if (eligibleForDelivery && await alertEpisodeActive()) reason = 'previous_alert_still_active'
-    else if (eligibleForDelivery && await esp32Connected()) { deviceCommand('ALERT_ON'); delivered = true; deliveryChannel = 'esp32'; reason = 'delivered_esp32' }
-    else if (eligibleForDelivery) { await showBrowserCheckIn(sessionId); delivered = true; deliveryChannel = 'browser_notification'; reason = 'delivered_browser_fallback_no_device' }
-    await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment, alertWindow: alertWindow.index, alertEpisode: delivered ? deliveredInSession + 1 : null, delivered, deliveryChannel, reason })
+    if (eligibleForDelivery && await esp32Connected()) { deviceCommand('ALERT_ON'); delivered = true; deliveryChannel = 'esp32'; reason = 'delivered_esp32' }
+    else if (eligibleForDelivery) { await showBrowserCheckIn(sessionId, deliveredInSession + 1); delivered = true; deliveryChannel = 'browser_notification'; reason = 'delivered_browser_fallback_no_device' }
+    await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: result.modelVersion, probability: result.probability, triggered: true, assignment, deliveryPolicy, alertWindow: alertWindow.index, alertEpisode: delivered ? deliveredInSession + 1 : null, delivered, deliveryChannel, reason })
   } catch (error) { await saveDecision({ sessionId, cutoffSeconds: cutoff, at: new Date().toISOString(), modelVersion: model.model_version, probability: null, triggered: false, assignment: null, delivered: false, reason: error instanceof Error ? error.message : 'prediction_failed' }) }
 }
 
@@ -64,7 +68,7 @@ async function updateContextAndDevice(tabId: number, domain: string | null) {
   const session = await getOpenSession()
   if (session?.status === 'active' && session.currentContext === 'task_site') {
     deviceCommand('ALERT_OFF')
-    await chrome.notifications.clear(`driftsense-checkin:${session.sessionId}`)
+    await clearBrowserCheckIns(session.sessionId)
   }
 }
 
@@ -108,14 +112,14 @@ async function handleMessage(request: RuntimeRequest, sender: chrome.runtime.Mes
   if (request.type === 'REQUEST_REFLECTION') {
     const session = await markReflectionRequested(request.sessionId)
     deviceCommand('ALERT_OFF')
-    await chrome.notifications.clear(`driftsense-checkin:${request.sessionId}`)
+    await clearBrowserCheckIns(request.sessionId)
     return { session }
   }
   if (request.type === 'DISMISS_REFLECTION') return { session: await dismissReflection(request.sessionId, request.action) }
   if (request.type === 'SUBMIT_REFLECTION') {
     const session = await submitReflection(request.sessionId, request.answer)
     deviceCommand('ALERT_OFF')
-    await chrome.notifications.clear(`driftsense-checkin:${request.sessionId}`)
+    await clearBrowserCheckIns(request.sessionId)
     return { session }
   }
   if (request.type === 'SET_MONITORING') {
