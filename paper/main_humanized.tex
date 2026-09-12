@@ -10,6 +10,7 @@
 \usepackage{setspace}
 \singlespacing
 \usepackage{graphicx}
+\usepackage{float}
 \graphicspath{{figures/}}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -85,11 +86,43 @@
 \begin{center}
 {\headingfont\bfseries\fontsize{15}{18}\selectfont
 DRIFTSENSE: PRIVACY-MINIMIZED BROWSER TASK-DRIFT SENSING WITH A TANGIBLE REFLECTIVE INTERFACE\par}
-\vspace{8pt}
-{\headingfont\fontsize{11}{13}\selectfont Running title: DriftSense tangible task reflection\par}
-\vspace{12pt}
-{\headingfont\bfseries Anonymous Author\par}
-{\headingfont Anonymous Institution\par}
+\vspace{14pt}
+\begin{minipage}[t]{0.31\textwidth}
+\centering\headingfont
+{\bfseries\fontsize{11}{13}\selectfont Sabbir Hossain\textsuperscript{*}\par}
+{\fontsize{8.8}{10.5}\selectfont \phantom{Associate Professor}\par}
+{\fontsize{9}{10.5}\selectfont Department of Computer Science\par
+American International\par
+University-Bangladesh\par
+Dhaka, Bangladesh\par}
+\vspace{2pt}
+{\fontsize{8.3}{10}\selectfont \href{mailto:26-94030-1@student.aiub.edu}{26-94030-1@student.aiub.edu}\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.31\textwidth}
+\centering\headingfont
+{\bfseries\fontsize{11}{13}\selectfont Pritam Banik\par}
+{\fontsize{8.8}{10.5}\selectfont \phantom{Associate Professor}\par}
+{\fontsize{9}{10.5}\selectfont Department of Computer Science\par
+American International\par
+University-Bangladesh\par
+Dhaka, Bangladesh\par}
+\vspace{2pt}
+{\fontsize{8.3}{10}\selectfont \href{mailto:25-93822-2@student.aiub.edu}{25-93822-2@student.aiub.edu}\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.31\textwidth}
+\centering\headingfont
+{\bfseries\fontsize{11}{13}\selectfont Abdus Salam\par}
+{\fontsize{8.8}{10.5}\selectfont Associate Professor\par}
+{\fontsize{9}{10.5}\selectfont Department of Computer Science\par
+American International\par
+University-Bangladesh\par
+Dhaka, Bangladesh\par}
+\vspace{2pt}
+{\fontsize{8.3}{10}\selectfont \href{mailto:abdus.salam@aiub.edu}{abdus.salam@aiub.edu}\par}
+\end{minipage}
+\vspace{5pt}
+
+{\headingfont\fontsize{8.8}{10.5}\selectfont \textsuperscript{*}Corresponding author: Sabbir Hossain\par}
 \end{center}
 
 \section*{Abstract}
@@ -106,7 +139,7 @@ Digital self-control tools have commonly used blocking, time limits, reminders, 
 
 We define \emph{browser task drift} as a participant's report that their browser activity moved away from the structured task declared at session start. This construct is not inferred attention, objective productivity, or a clinical condition. A switch away from an approved task site is not automatically drift, because a task may require supporting material elsewhere. Similarly, scrolling, idling, typing, or video playback can be either task-relevant or unrelated. DriftSense therefore treats activity signals as predictive evidence and preserves the participant's answer as the outcome.
 
-The completed work followed two phases. Phase 1 was the data-collection and model-development phase: 19 participants contributed 665 sessions, of which 634 contained explicit binary alignment labels. Phase 2 was the main interactive product phase: the frozen local model evaluated successive activity windows and, when its score reached the threshold, activated a tangible ESP32 interface. The interface combined a 16x2 character display, an audible cue, and three physical buttons for session setup, completion, and reflection. Twelve participants then completed a structured post-study interview covering both phases.
+The study followed two phases. Phase 1 was the data-collection and model-development phase: 19 participants contributed 665 sessions, of which 634 contained explicit binary alignment labels. Phase 2 was the main interactive product phase: the frozen local model evaluated successive activity windows and, when its score reached the threshold, activated a tangible ESP32 interface. The interface combined a 16x2 character display, an audible cue, and three physical buttons for session setup, completion, and reflection. Twelve participants then completed a structured post-study interview covering both phases.
 
 The paper uses six terms consistently. A \emph{task session} is a period the participant explicitly starts for a declared task; opening a site alone does not start one. A \emph{participant-approved task site} is a hostname selected for planned work, not a site classified as productive. \emph{Task drift} is an explicit post-session report that activity moved away from the declared task. A \emph{content-free activity signal} is a count, duration, or state---such as clicks, active time, or tab focus---that stores no page text or typed characters. A \emph{rolling window} is the immediately preceding five- or ten-minute interval evaluated at a checkpoint. The \emph{tangible reflective interface} is the physical LCD, buzzer, and buttons that present session state and let the participant respond without blocking the browser.
 
@@ -153,7 +186,7 @@ The contribution is an end-to-end HCI system rather than a generic activity trac
 \node[rounded corners=2pt,draw=dsGreen,fill=dsPaleGreen,align=left,text width=7cm,inner sep=5pt,right=6mm of e1,font=\fontsize{8.5}{10}\selectfont] (e2) {\textbf{Experience evidence:} interview reports about use, timing, and the tangible cue.};
 \end{tikzpicture}
 }
-\caption{DriftSense's completed two-phase workflow. Phase 1 produced the participant-labeled data and model. Phase 2 operationalized the model through duration-dependent checks and a tangible reflective interface. The two evidence streams answer different questions and are not combined into a causal effectiveness claim.}
+\caption{DriftSense's two-phase workflow. Phase 1 produced the participant-labeled data and model. Phase 2 operationalized the model through duration-dependent checks and a tangible reflective interface. The two evidence streams answer different questions and are not combined into a causal effectiveness claim.}
 \label{fig:overview}
 \end{figure}
 
@@ -379,7 +412,7 @@ Phase 2 converted the model into a duration-sensitive interaction. Sessions with
 \label{fig:rolling}
 \end{figure}
 
-At a checkpoint, a score below threshold produced no device cue. A score at or above threshold began one alert episode. The cue never displayed the score or stated that drift had occurred. The participant could return to the task, continue intentionally, or finish and answer the post-session question. The completed deployment delivered every cue whose score reached the threshold; it did not include a concurrent silent-control condition.
+At a checkpoint, a score below threshold produced no device cue. A score at or above threshold began one alert episode. The cue never displayed the score or stated that drift had occurred. The participant could return to the task, continue intentionally, or finish and answer the post-session question. The deployment delivered every cue whose score reached the threshold; it did not include a concurrent silent-control condition.
 
 \subsection{Post-Study Interviews}
 
@@ -397,7 +430,7 @@ Context-only baselines performed modestly on the chronological holdout. Intended
 
 For the separately packaged Phase 2 model, the 193-session chronological holdout yielded ROC--AUC .938, accuracy .891, precision .959, recall .795, and F1 .870 at threshold .7363. The confusion matrix contained 102 true negatives, 3 false positives, 18 false negatives, and 70 true positives. Seventy-three of 193 sessions (37.8\%) crossed the threshold. Figure~\ref{fig:modelresults} presents the baseline progression and operational scorecard.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \resizebox{0.99\textwidth}{!}{%
 \begin{tikzpicture}[font=\fontsize{8.2}{9.5}\selectfont]
@@ -428,9 +461,9 @@ The completed-session results answer RQ2 within their stated scope. The low fals
 
 \subsection{Implementation Verification}
 
-All 11 extension test files passed, comprising 35 tests, and the TypeScript/Vite production build completed successfully. All seven Python model tests also passed. Browser and Python probabilities agreed for the serialized full-session test vectors to floating-point tolerance. The duration-policy tests confirmed checkpoints at minutes 5, 10, 15, and 20 for a 20-minute session and at ten-minute steps for longer sessions. Serial tests confirmed three button events and device commands for readiness, duration, start, time, reflection, completion, alert on, and alert off.
+Automated verification covered the extension build, browser--Python probability agreement, duration-policy checkpoints, serial communication, export schema, outcome handling, and linked-record deletion. Browser and Python probabilities agreed for the serialized full-session test vectors to floating-point tolerance. Duration-policy checks confirmed minutes 5, 10, 15, and 20 for a 20-minute session and ten-minute steps for longer sessions; serial checks verified the three button events and the device states used for session control, reflection, and alerts.
 
-The checks also verified privacy-sensitive behavior. Exported records are restricted to documented fields; uncertain and action-only outcomes are not silently converted to aligned labels; page paths, query strings, and key values are not exported; and local deletion removes linked activity windows. These results support RQ1 as an implemented system property, while participant comfort with those properties is reported separately.
+Privacy checks confirmed that exports remain limited to documented fields, uncertain and action-only outcomes are not converted to aligned labels, page paths, query strings, and key values are excluded, and local deletion removes linked activity windows. These checks support RQ1 as an implemented system property, while participant comfort is reported separately.
 
 \subsection{Post-Study Interview Findings}
 
@@ -473,7 +506,7 @@ All 12 participants gave favorable ratings for Phase 1 ease of use, session-boun
 \node[rounded corners=2pt,draw=dsRule,fill=white,text width=13.6cm,align=left,inner sep=5pt] at (7.4,-1.55) {\textbf{Scoring note.} Favorable = 4--5 for positive statements and 1--2 for effort, interruption, and annoyance. Cue-specific items exclude the participant who did not remember receiving a cue.};
 \end{tikzpicture}
 }
-\caption{Item-level favorable ratings from the completed post-study interviews. Fractions show favorable responses over valid responses; the bar length shows the same proportion.}
+\caption{Item-level favorable ratings from the post-study interviews. Fractions show favorable responses over valid responses; the bar length shows the same proportion.}
 \label{fig:interview}
 \end{figure}
 
@@ -501,7 +534,7 @@ Participants' reports support this role. They commonly described the beep as bri
 
 The model and interview results are complementary but not interchangeable. The chronological holdout quantifies whether completed-session features distinguish later self-reports. It does not establish accuracy at minute 5 or minute 10. The interviews show how the deployed system was experienced by 12 participants. They do not independently verify each delivery time, nor do they prove that a cue caused a behavioral change. The paper's central claim is consequently an implemented and evaluated pathway from private sensing to tangible reflection, not a causal reduction in drift.
 
-This separation strengthens the contribution. The completed data show that content-free session patterns carry useful retrospective signal; the deployed product shows that the decisions can drive a time-limited physical interaction; and the interviews identify both acceptance and concrete refinements. A future controlled study can build on these verified components without repeating the completed interviews.
+This separation strengthens the contribution. The session data show that content-free session patterns carry useful retrospective signal; the deployed product shows that the decisions can drive a time-limited physical interaction; and the interviews identify both acceptance and concrete refinements. A future controlled study can build on these verified components without repeating the interviews.
 
 \subsection{Relation to Prior Systems}
 
