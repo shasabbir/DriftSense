@@ -1,5 +1,5 @@
 % DriftSense manuscript prepared for Human Technology.
-% Compile with: xelatex main.tex; bibtex main; xelatex main.tex; xelatex main.tex
+% Compile with: xelatex main.tex; biber main; xelatex main.tex; xelatex main.tex
 \documentclass[12pt,a4paper]{article}
 
 \usepackage[top=3.8cm,bottom=3.7cm,left=2.54cm,right=2.54cm]{geometry}
@@ -23,13 +23,23 @@
 \usepackage{subcaption}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
-\usepackage{natbib}
+\usepackage{etoolbox}
+\usepackage[
+  backend=biber,
+  style=apa,
+  sorting=nyt,
+  sortcites=true,
+  maxcitenames=99,
+  mincitenames=99,
+  maxbibnames=99,
+  doi=true,
+  url=false,
+  isbn=false
+]{biblatex}
+\addbibresource{references.bib}
+\newcommand{\citep}[1]{\parencite{#1}}
+\usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
-
-% Show complete author lists in every citation.
-\let\shortcitep\citep
-\renewcommand{\citep}[1]{\shortcitep*{#1}}
-\setcitestyle{round}
 
 \definecolor{dsNavy}{HTML}{193A5A}
 \definecolor{dsBlue}{HTML}{3E78B2}
@@ -44,7 +54,9 @@
 
 \setlength{\parindent}{0.75cm}
 \setlength{\parskip}{0pt}
-\setlength{\emergencystretch}{2em}
+\setlength{\emergencystretch}{4em}
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
 \setlist{nosep,leftmargin=1.1cm}
 \setcounter{secnumdepth}{0}
 \titleformat{\section}{\headingfont\bfseries\fontsize{12}{14}\selectfont\centering}{}{0pt}{\MakeUppercase}
@@ -53,15 +65,16 @@
 \titlespacing*{\section}{0pt}{18pt}{8pt}
 \titlespacing*{\subsection}{0pt}{12pt}{4pt}
 \titlespacing*{\subsubsection}{0.75cm}{10pt}{3pt}
-\captionsetup{font={small},labelfont=bf,justification=justified,singlelinecheck=false,skip=5pt}
-\captionsetup[subfigure]{font={small},labelfont=bf,justification=centering}
+\DeclareCaptionFont{arialnine}{\headingfont\fontsize{9}{11}\selectfont}
+\captionsetup{font=arialnine,labelfont=bf,labelsep=period,justification=centering,singlelinecheck=false,skip=5pt}
+\captionsetup[subfigure]{font=arialnine,labelfont=bf,labelsep=period,justification=centering}
 \renewcommand{\arraystretch}{1.16}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\AtBeginEnvironment{table}{\headingfont\fontsize{9}{11}\selectfont}
+\AtBeginEnvironment{tikzpicture}{\headingfont\fontsize{8.5}{10}\selectfont}
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\headingfont\fontsize{8.5}{10}\selectfont DRIFTSENSE}
-\fancyhead[R]{\headingfont\fontsize{8.5}{10}\selectfont ANONYMOUS MANUSCRIPT}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0pt}
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
@@ -80,7 +93,7 @@ DRIFTSENSE: PRIVACY-MINIMIZED BROWSER TASK-DRIFT SENSING WITH A TANGIBLE REFLECT
 \end{center}
 
 \section*{Abstract}
-\noindent Browser sites are mixed-use environments, so neither a hostname nor elapsed time can determine whether activity serves a user's current task. DriftSense is a local-first browser and tangible-interface system for participant-reported task drift. In Phase 1, 19 participants contributed 665 explicitly initiated task sessions containing structured task context, content-free activity counts, and post-session alignment reports. A compact logistic model showed strong completed-session discrimination on a chronological holdout (ROC--AUC = .938; F1 = .870). Phase 2 applied the model through successive five-minute windows for sessions up to 20 minutes and ten-minute windows for longer sessions. Windows above threshold activated an ESP32 interface with a countdown display, brief buzzer cue, and three physical controls. Interviews with 12 participants indicated high usability, privacy comfort, usefulness, and low annoyance, while identifying mistimed cues. The results support a user-defined, privacy-minimized approach to reflective assistance while leaving early-window accuracy and causal behavioral effects for future controlled evaluation.
+\noindent Browser sites are mixed-use environments, so neither hostname nor elapsed time determines whether activity serves a user's current task. DriftSense is a local-first browser system with a tangible interface for participant-reported task drift. In Phase 1, 19 participants contributed 665 explicitly initiated sessions containing structured task context, content-free activity counts, and post-session alignment reports. A compact logistic model showed strong completed-session discrimination on a chronological holdout (ROC--AUC = .938; F1 = .870). Phase 2 applied the model through successive five-minute windows for sessions up to 20 minutes and ten-minute windows for longer sessions. Scores above threshold activated an ESP32 interface with a countdown display, brief buzzer cue, and three physical controls. Interviews with 12 participants indicated high usability, privacy comfort, usefulness, and low annoyance, while identifying mistimed cues. These findings support privacy-minimized reflective assistance while leaving early-window accuracy and causal behavioral effects for controlled evaluation.
 
 \vspace{6pt}
 \noindent\textbf{Keywords:} digital wellbeing; task alignment; browser activity; privacy-minimized sensing; tangible interaction; reflective intervention
@@ -94,8 +107,6 @@ Digital self-control tools have commonly used blocking, time limits, reminders, 
 We define \emph{browser task drift} as a participant's report that their browser activity moved away from the structured task declared at session start. This construct is not inferred attention, objective productivity, or a clinical condition. A switch away from an approved task site is not automatically drift, because a task may require supporting material elsewhere. Similarly, scrolling, idling, typing, or video playback can be either task-relevant or unrelated. DriftSense therefore treats activity signals as predictive evidence and preserves the participant's answer as the outcome.
 
 The completed work followed two phases. Phase 1 was the data-collection and model-development phase: 19 participants contributed 665 sessions, of which 634 contained explicit binary alignment labels. Phase 2 was the main interactive product phase: the frozen local model evaluated successive activity windows and, when its score reached the threshold, activated a tangible ESP32 interface. The interface combined a 16x2 character display, an audible cue, and three physical buttons for session setup, completion, and reflection. Twelve participants then completed a structured post-study interview covering both phases.
-
-\subsection{Key Terms}
 
 The paper uses six terms consistently. A \emph{task session} is a period the participant explicitly starts for a declared task; opening a site alone does not start one. A \emph{participant-approved task site} is a hostname selected for planned work, not a site classified as productive. \emph{Task drift} is an explicit post-session report that activity moved away from the declared task. A \emph{content-free activity signal} is a count, duration, or state---such as clicks, active time, or tab focus---that stores no page text or typed characters. A \emph{rolling window} is the immediately preceding five- or ten-minute interval evaluated at a checkpoint. The \emph{tangible reflective interface} is the physical LCD, buzzer, and buttons that present session state and let the participant respond without blocking the browser.
 
@@ -160,6 +171,8 @@ Interventions can interrupt automatic action without imposing a prohibition. \te
 
 PauseNow frames digital wellbeing as alignment between intention and behavior rather than simple screen-time reduction \citep{zhao2024pausenow}. WellScreen compares expected and observed use to support reflection \citep{bhat2026wellscreen}. Regret also depends on both intention and activity \citep{cho2021reflect}. DriftSense therefore asks for the task before use and alignment after use; its cue invites reconsideration without claiming to know the participant's internal state.
 
+Some recent systems use richer semantic inputs to infer mental states or examine regretted use \citep{wu2024mindshift,guo2025regret}. These approaches can support detailed interpretation, but they also require more sensitive content than DriftSense stores. DriftSense instead limits its model to structured task context and aggregate, content-free activity.
+
 \subsection{Tangible and Audible Interaction}
 
 A tangible user interface gives digital state a physical form that can be seen or manipulated \citep{ishii1997tangible}. Recent reviews describe tangible systems as especially useful when controls should remain visible, direct, and separate from a crowded screen, while also stressing the need for usability evaluation before stronger outcome claims \citep{bertolo2025tangible}. Sound is similarly noticeable outside the visual foreground, but it can interrupt or create social discomfort. Studies of notification muting show that removing sound does not automatically reduce checking or improve wellbeing \citep{liao2022sound,dekker2025buzz}. DriftSense therefore uses a short, time-limited beep paired with a display and physical controls, and the interviews explicitly measure interruption and annoyance.
@@ -176,7 +189,7 @@ Existing systems provide interface modification, pre-access friction, reflective
 
 \begin{table}[htbp]
 \centering
-\caption{Closest systems and the design gap addressed by DriftSense.}
+\caption{Closest Systems and the Design Gap Addressed by DriftSense.}
 \label{tab:related}
 \small
 \begin{tabularx}{\textwidth}{@{}p{2.7cm}YYYY@{}}
@@ -235,7 +248,7 @@ The extension includes onboarding, participant-approved task-site configuration,
 \caption{ESP32 controller and button map.}
 \end{subfigure}
 
-\caption{Implemented DriftSense browser interfaces. The task-start popup makes the declared task and duration explicit, while the cropped controller view shows the browser-side LCD representation and state-dependent mapping of the three physical buttons.}
+\caption{Implemented DriftSense browser interfaces. The task-start popup makes the declared task and duration explicit, while the cropped controller view shows the browser-side liquid-crystal display (LCD) representation and state-dependent mapping of the three physical buttons. ESP32 denotes the microcontroller platform.}
 \label{fig:interfaces}
 \end{figure}
 
@@ -255,7 +268,7 @@ When a model score reaches the threshold, the device produces two short beeps ev
 \draw[rounded corners=7pt,draw=dsNavy,line width=1pt,fill=dsPaleBlue] (.2,-2.0) rectangle (6.6,2.75);
 \node[anchor=west,font=\headingfont\bfseries\fontsize{10}{12}\selectfont,text=dsNavy] at (.55,2.43) {(a) PHYSICAL FRONT PANEL};
 \draw[rounded corners=2pt,fill=black!88,draw=black] (.8,.75) rectangle (5.25,2.05);
-\node[text=dsPaleGreen,font=\ttfamily\bfseries\fontsize{9}{11}\selectfont,align=left] at (3.02,1.40) {TASK 18:42\\B3: FINISH};
+\node[text=dsPaleGreen,font=\headingfont\bfseries\fontsize{9}{11}\selectfont,align=left] at (3.02,1.40) {TASK 18:42\\B3: FINISH};
 \draw[fill=dsGold!25,draw=dsGold,line width=.8pt] (5.85,1.40) circle (.35);
 \node[note] at (5.85,.78) {active\\buzzer};
 \foreach \x/\button/\colour in {1.55/B1/dsBlue,3.35/B2/dsGreen,5.15/B3/dsGold}{
@@ -267,18 +280,18 @@ When a model score reaches the threshold, the device produces two short beeps ev
 \node[note] at (5.15,-1.10) {start/finish\\or not sure};
 
 \node[anchor=west,font=\headingfont\bfseries\fontsize{10}{12}\selectfont,text=dsNavy] at (7.3,2.43) {(b) STATE AND ACTION FLOW};
-\node[state,fill=dsPaleBlue] (select) at (8.95,1.35) {\headingfont\bfseries SET DURATION\\B1 reset \;|\; B2 +10 min};
-\node[state,fill=dsPaleGreen] (running) at (12.65,1.35) {\headingfont\bfseries RUNNING\\LCD countdown; B3 finish};
-\node[state,fill=dsPaleRed] (reflect) at (12.65,-1.25) {\headingfont\bfseries REFLECTION\\B1 aligned \;|\; B2 moved away\\B3 not sure};
-\node[state,fill=dsPaleGold] (cue) at (16.25,-.20) {\headingfont\bfseries CHECK-IN\\threshold reached; two beeps\\every 10 s, up to five cycles};
-\draw[arrow] (select.east)--node[above,edgelabel]{B3 start}(running.west);
-\draw[arrow] (running.south)--node[left,edgelabel]{B3 finish}(reflect.north);
-\draw[arrow] (running.south east)--(cue.north west);
-\draw[arrow,draw=dsGreen] (cue.east) -- ++(.42,0) |- node[right,pos=.25,edgelabel]{return to task\\or alert stops}(running.east);
-\node[rounded corners=2pt,draw=dsRule,fill=white,text width=9.2cm,align=center,inner sep=3pt,font=\fontsize{8.2}{9.5}\selectfont] at (12.35,-2.85) {The browser stores data and computes the score; the ESP32 displays state, sounds the cue, and returns button events.};
+\node[state,fill=dsPaleBlue,text width=2.8cm] (select) at (8.75,1.35) {\headingfont\bfseries SET DURATION\\B1 reset \;|\; B2 +10 min\\B3 start};
+\node[state,fill=dsPaleGreen,text width=2.8cm] (running) at (12.25,1.35) {\headingfont\bfseries RUNNING\\LCD countdown; B3 finish};
+\node[state,fill=dsPaleRed,text width=2.8cm] (reflect) at (15.75,1.35) {\headingfont\bfseries REFLECTION\\B1 aligned \;|\; B2 moved away\\B3 not sure};
+\node[state,fill=dsPaleGold,text width=3.3cm] (cue) at (12.25,-1.10) {\headingfont\bfseries CHECK-IN\\threshold reached; two beeps\\every 10 s, up to five cycles};
+\draw[arrow] (select.east)--(running.west);
+\draw[arrow] (running.east)--(reflect.west);
+\draw[arrow] ([xshift=-5mm]running.south)--node[left,edgelabel]{score threshold}([xshift=-5mm]cue.north);
+\draw[arrow,draw=dsGreen] ([xshift=5mm]cue.north)--node[right,edgelabel,text=dsGreen]{return / stop alert}([xshift=5mm]running.south);
+\node[rounded corners=2pt,draw=dsRule,fill=white,text width=9.2cm,align=center,inner sep=3pt,font=\fontsize{8.2}{9.5}\selectfont] at (12.25,-2.85) {The browser stores data and computes the score; the ESP32 displays state, sounds the cue, and returns button events.};
 \end{tikzpicture}
 }
-\caption{Tangible interface and state-dependent controls. Panel (a) shows the physical LCD, buzzer, and three buttons. Panel (b) shows how the same controls support duration selection, a running task, a model-triggered check-in, and the final alignment response.}
+\caption{Tangible interface and state-dependent controls. Panel (a) shows the physical liquid-crystal display (LCD), buzzer, and three buttons. Panel (b) shows how the same controls support duration selection, a running task, a model-triggered check-in, and the final alignment response. B1--B3 denote buttons 1--3.}
 \label{fig:hardware}
 \end{figure}
 
@@ -309,11 +322,11 @@ Privacy is an architectural constraint rather than only a policy statement. Figu
 \node[item] at (10.05,-.2) {Outside-set destination\\domains or full history};
 \node[item,text width=6.85cm] at (8.25,-1.3) {Webcam data, face identity, emotion, or inferred mental-health state};
 \end{tikzpicture}
-\caption{DriftSense privacy boundary. The local record contains only structured task context, aggregate behavior, and explicit participant responses. It excludes page semantics and identifiable content.}
+\caption{DriftSense privacy boundary. The local record contains only structured task context, aggregate behavior, and explicit participant responses. It excludes page semantics and identifiable content. ID denotes anonymous participant identifier.}
 \label{fig:privacy}
 \end{figure}
 
-\section{Method}
+\section{Methods}
 
 \subsection{Study Structure and Evidence Sources}
 
@@ -407,7 +420,7 @@ For the separately packaged Phase 2 model, the 193-session chronological holdout
 \node[rounded corners=3pt,draw=dsGold,fill=dsPaleGold,minimum width=6.1cm,minimum height=1.25cm,align=center] at (10.35,-3.30) {\headingfont\bfseries DECISION BURDEN\\[2pt]73 / 193 sessions above threshold (37.8\%)};
 \end{tikzpicture}
 }
-\caption{Retrospective completed-session model results. Panel (a) shows how activity features separate the outcomes more strongly than context-only baselines. Panel (b) reports the separately packaged Phase 2 model at its stored threshold. These are completed-session results, not direct validation of five- or ten-minute windows.}
+\caption{Retrospective completed-session model results. Panel (a) shows how activity features separate the outcomes more strongly than context-only baselines. Panel (b) reports the separately packaged Phase 2 model at its stored threshold. ROC--AUC denotes area under the receiver operating characteristic curve; TN, FP, FN, and TP denote true negatives, false positives, false negatives, and true positives. These are completed-session results, not direct validation of five- or ten-minute windows.}
 \label{fig:modelresults}
 \end{figure}
 
@@ -504,7 +517,7 @@ Third, 31 sessions lacked a usable binary outcome and were excluded. Twenty nume
 
 Fifth, an audible cue can be inaccessible, unnoticed, or socially awkward. The prototype supports a short bounded beep, but participant requests show the need for configurable volume, silent modes, and clearer connection state. Finally, privacy minimization constrains model knowledge by design. Because DriftSense excludes page text and outside-set destination identity, it cannot determine semantic relevance. That limitation is also part of its contribution: the system asks for human interpretation rather than silently expanding surveillance.
 
-\section{Conclusion}
+\section{Conclusions}
 
 DriftSense demonstrates a complete path from participant-declared browser tasks to model-timed tangible reflection. Phase 1 collected 665 sessions from 19 participants, preserved explicit self-report as the task-drift label, and produced a compact model with strong completed-session discrimination. Phase 2 converted that model into successive five- or ten-minute decisions and an ESP32 interface combining a countdown display, a brief beep, and three physical controls. Interviews with 12 participants indicated high usability and privacy comfort; the 11 who remembered the cue generally described it as useful and minimally annoying while also identifying occasional false or mistimed cues.
 
@@ -522,7 +535,6 @@ The session and interview findings are reported using anonymous participant iden
 
 The extension source, schemas, tests, analysis code, model documentation, and aggregate results are maintained with the project. Participant-level exports and interview records should be shared only when consent, institutional approval, and disclosure-risk review permit it. Any released aggregate or de-identified evidence should include field definitions, exclusion and reconciliation rules, model versions, and reproducible commands.
 
-\bibliographystyle{plainnat}
-\bibliography{references}
+\printbibliography[title={References}]
 
 \end{document}
