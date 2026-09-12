@@ -1,15 +1,14 @@
 # Table List
 
-| Table | Purpose | Status |
+| Location | Purpose | Status |
 |---|---|---|
 | 1 | Compare the closest related systems by timing, intention, evaluation, and remaining gap | Complete in `main.tex` |
-| 2 | Participant demographics, recruitment, completion, and attrition | Results placeholder |
-| 3 | Session counts, class balance, label completion, and exclusions by participant and phase | Results placeholder |
-| 4 | RQ1 performance for all required baselines/models at 3, 5, and 10 minutes, including usable-session coverage | Results placeholder |
-| 5 | RQ2 participant-relative feature ablation against the otherwise equivalent population model | Results placeholder |
-| 6 | RQ3 eligible-session flow, assignment balance, missing labels, delivery failures, and prompt effect | Results placeholder |
-| 7 | Exit acceptability, burden items, and open-ended response categories | Results placeholder |
+| Figure 6 | Completed-session chronological holdout metrics, feature-family comparison, confusion matrix, and decision burden | Complete in `main.tex` |
+| Figure 7 | Item-level post-study interview ratings, denominators, and cue-exposure handling for 12 participants | Complete in `main.tex` |
+| Text | Phase 1 session counts, class balance, label completion, exclusions, and task-type distribution | Complete in `main.tex` |
+| Future table | Window-level performance for the implemented five- and ten-minute rolling policies | Requires checkpoint-level validation data |
+| Future table | Phase 2 cue decisions, delivery outcomes, and suppressions | Requires complete delivery audit records |
 
-Result tables must report uncertainty and denominators. They must distinguish
-chronological known-participant performance from participant-held-out performance, and
-must not treat the Phase 1--Phase 2 change as the randomized intervention effect.
+Future empirical tables must report uncertainty and denominators. They must distinguish
+completed-session performance from rolling-window performance and must not treat the
+fixed Phase 1--Phase 2 sequence as a randomized intervention effect.

@@ -2,13 +2,14 @@
 
 | Figure | File | Purpose | Status |
 |---|---|---|---|
-| 1 | To replace `figures/driftsense-architecture.svg` | Explain task initiation, task-site/away-state sensing, 3/5/10-minute features, local inference, randomization, and privacy | Revision required; old figure not embedded |
-| 2 | To be captured from the revised implementation | Show task declaration, final alignment reflection, and nonblocking side prompt | Revision required; old captures not embedded |
-| 3 | To replace `figures/driftsense-study-design.svg` | Separate RQ1 prediction, RQ2 participant-relative ablation, and RQ3 randomized intervention | Revision required; old figure not embedded |
-| Supplement | To replace `figures/driftsense-labeling.svg` | Define task types, final alignment answers, action choices, and label mapping | Revision required; old figure retained only as history |
-| 4 | To be generated from analysis output | Compare models, cutoffs, and validation settings with uncertainty | Results placeholder; no data yet |
-| 5 | To be generated from analysis output | Show the paired randomized prompt effect and uncertainty | Results placeholder; no data yet |
-| 6 | To be generated from final counts | Reconcile participant and session inclusion through both phases | Reporting placeholder; no data yet |
+| 1 | Native TikZ in `main.tex` | Show the completed Phase 1 data foundation and Phase 2 interactive system as separate evidence streams | Complete |
+| 2 | `driftsense-popup.png`, `driftsense-device-page.png` | Show the implemented task-start popup and ESP32 controller/button map | Complete |
+| 3 | Native TikZ in `main.tex` | Show the tangible LCD, buzzer, and buttons together with their state-dependent action flow | Complete |
+| 4 | Native TikZ in `main.tex` | Make the local-storage privacy boundary and excluded content explicit | Complete |
+| 5 | Native TikZ in `main.tex` | Show the implemented five-minute and ten-minute rolling intervals | Complete |
+| 6 | Native TikZ in `main.tex` | Compare chronological-holdout baselines and summarize the packaged model | Complete |
+| 7 | Native TikZ in `main.tex` | Report item-level favorable interview ratings with valid denominators | Complete |
 
-All current image assets represent earlier protocol variants and must not be
-embedded until revised against the implemented task-session protocol.
+The older image assets represent earlier protocol variants and are not embedded.
+The current figures describe the implemented 5/10-minute policy and beep-based
+tangible interface.

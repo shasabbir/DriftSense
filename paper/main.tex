@@ -1,256 +1,528 @@
-\documentclass[manuscript,screen,nonacm]{acmart}
+% DriftSense manuscript prepared for Human Technology.
+% Compile with: xelatex main.tex; bibtex main; xelatex main.tex; xelatex main.tex
+\documentclass[12pt,a4paper]{article}
 
+\usepackage[top=3.8cm,bottom=3.7cm,left=2.54cm,right=2.54cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\newfontfamily\headingfont{Arial}
+\usepackage{microtype}
+\usepackage{setspace}
+\singlespacing
+\usepackage{graphicx}
+\graphicspath{{figures/}}
 \usepackage{booktabs}
-\usepackage{enumitem}
 \usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{natbib}
+\usepackage[hidelinks]{hyperref}
+
+% Show complete author lists in every citation.
+\let\shortcitep\citep
+\renewcommand{\citep}[1]{\shortcitep*{#1}}
+\setcitestyle{round}
+
+\definecolor{dsNavy}{HTML}{193A5A}
+\definecolor{dsBlue}{HTML}{3E78B2}
+\definecolor{dsGreen}{HTML}{16836E}
+\definecolor{dsGold}{HTML}{D88918}
+\definecolor{dsRed}{HTML}{C95852}
+\definecolor{dsPaleBlue}{HTML}{EAF2FA}
+\definecolor{dsPaleGreen}{HTML}{E6F3F0}
+\definecolor{dsPaleGold}{HTML}{FFF4E2}
+\definecolor{dsPaleRed}{HTML}{FBEDEC}
+\definecolor{dsRule}{HTML}{AAB5BF}
+
+\setlength{\parindent}{0.75cm}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2em}
+\setlist{nosep,leftmargin=1.1cm}
+\setcounter{secnumdepth}{0}
+\titleformat{\section}{\headingfont\bfseries\fontsize{12}{14}\selectfont\centering}{}{0pt}{\MakeUppercase}
+\titleformat{\subsection}[block]{\headingfont\bfseries\fontsize{12}{14}\selectfont}{}{0pt}{}
+\titleformat{\subsubsection}[block]{\headingfont\fontsize{12}{14}\selectfont}{}{0pt}{}
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+\titlespacing*{\subsubsection}{0.75cm}{10pt}{3pt}
+\captionsetup{font={small},labelfont=bf,justification=justified,singlelinecheck=false,skip=5pt}
+\captionsetup[subfigure]{font={small},labelfont=bf,justification=centering}
+\renewcommand{\arraystretch}{1.16}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
-\setlength{\headheight}{21pt}
 
-\setcopyright{none}
-\settopmatter{printacmref=false}
-\acmConference[CHI '27]{Proceedings of the CHI Conference on Human Factors in Computing Systems}{April 2027}{TBD}
-\acmYear{2027}
-\copyrightyear{2027}
-\acmDOI{xx.xxxx/xxxxxxx.xxxxxxx}
-\acmISBN{978-x-xxxx-xxxx-x/27/04}
-
-\title{DriftSense: Participant-Calibrated Early Prediction and Reflective Support for Browser Task Drift}
-\author{[Author Name]}
-\affiliation{%
-  \institution{[Department / University]}
-  \city{[City]}
-  \country{[Country]}
-}
-\email{[Email]}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\headingfont\fontsize{8.5}{10}\selectfont DRIFTSENSE}
+\fancyhead[R]{\headingfont\fontsize{8.5}{10}\selectfont ANONYMOUS MANUSCRIPT}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
 
 \begin{document}
+\thispagestyle{plain}
 
-\begin{abstract}
-Fixed timers and domain-based controls cannot distinguish normal task behavior from activity that is unusual for a particular task or participant. We present DriftSense, a privacy-preserving Chrome extension and local machine-learning pipeline for studying browser task drift, defined as participant-reported deviation from a task declared at session start. Participants initiate a session, select a structured task type and intended duration, and use participant-approved task sites, including mixed-use sites when relevant. DriftSense records only approved hostname context, timing, aggregate interaction counts, focus and away-state summaries, and short activity windows; it does not collect page content, titles, messages, destination sites outside the approved set, or keystroke values. We specify a two-phase field protocol with 19--25 adult Chrome users. Phase 1 targets approximately 700 recorded sessions to obtain about 600 usable binary-labeled sessions over 10--14 days, with no model-assisted mid-session prompt. Models are evaluated at 3, 5, and 10 minutes, including a participant-calibrated logistic model whose relative features use prior sessions only. One checkpoint policy, model, threshold, and prompt cap are then frozen. During a seven- to ten-day Phase 2, model-eligible sessions are randomized equally to a nonblocking reflective side prompt or silent control. Prediction and intervention effects are evaluated separately. Empirical collection under this revised protocol has not occurred, so the manuscript reports the system and methodology without invented results. DriftSense does not claim to detect attention, objective productivity, emotion, addiction, or mental health status.
-\end{abstract}
+\begin{center}
+{\headingfont\bfseries\fontsize{15}{18}\selectfont
+DRIFTSENSE: PRIVACY-MINIMIZED BROWSER TASK-DRIFT SENSING WITH A TANGIBLE REFLECTIVE INTERFACE\par}
+\vspace{8pt}
+{\headingfont\fontsize{11}{13}\selectfont Running title: DriftSense tangible task reflection\par}
+\vspace{12pt}
+{\headingfont\bfseries Anonymous Author\par}
+{\headingfont Anonymous Institution\par}
+\end{center}
 
-\begin{CCSXML}
-<ccs2012>
-   <concept>
-       <concept_id>10003120.10003121.10003124.10010866</concept_id>
-       <concept_desc>Human-centered computing~Empirical studies in HCI</concept_desc>
-       <concept_significance>500</concept_significance>
-       </concept>
-   <concept>
-       <concept_id>10003120.10003123.10011760</concept_id>
-       <concept_desc>Human-centered computing~Ubiquitous and mobile computing systems and tools</concept_desc>
-       <concept_significance>300</concept_significance>
-       </concept>
-   <concept>
-       <concept_id>10010147.10010257.10010293</concept_id>
-       <concept_desc>Computing methodologies~Machine learning approaches</concept_desc>
-       <concept_significance>300</concept_significance>
-       </concept>
-</ccs2012>
-\end{CCSXML}
+\section*{Abstract}
+\noindent Browser sites are mixed-use environments, so neither a hostname nor elapsed time can determine whether activity serves a user's current task. DriftSense is a local-first browser and tangible-interface system for participant-reported task drift. In Phase 1, 19 participants contributed 665 explicitly initiated task sessions containing structured task context, content-free activity counts, and post-session alignment reports. A compact logistic model showed strong completed-session discrimination on a chronological holdout (ROC--AUC = .938; F1 = .870). Phase 2 applied the model through successive five-minute windows for sessions up to 20 minutes and ten-minute windows for longer sessions. Windows above threshold activated an ESP32 interface with a countdown display, brief buzzer cue, and three physical controls. Interviews with 12 participants indicated high usability, privacy comfort, usefulness, and low annoyance, while identifying mistimed cues. The results support a user-defined, privacy-minimized approach to reflective assistance while leaving early-window accuracy and causal behavioral effects for future controlled evaluation.
 
-\ccsdesc[500]{Human-centered computing~Empirical studies in HCI}
-\ccsdesc[300]{Human-centered computing~Ubiquitous and mobile computing systems and tools}
-\ccsdesc[300]{Computing methodologies~Machine learning approaches}
-
-\keywords{digital wellbeing, browser extension, task alignment, digital drift, self-report, privacy-preserving sensing, participant calibration, early prediction, reflective check-ins}
-
-\maketitle
+\vspace{6pt}
+\noindent\textbf{Keywords:} digital wellbeing; task alignment; browser activity; privacy-minimized sensing; tangible interaction; reflective intervention
 
 \section{Introduction}
-People routinely use the same browser sites for different tasks. YouTube may support a course, GitHub may support coding, Reddit may contain a technical answer, and a document editor may be open during focused writing or unrelated switching. Calling a hostname productive or distracting cannot establish whether the current activity remains aligned with the user's task. Fixed elapsed-time rules are similarly limited because normal interaction patterns differ across writing, coding, research, learning, and communication.
 
-Existing tools often operationalize undesirable use through screen time, app or website category, or fixed blocking rules \citep{roffarello2023digital,plackett2023socialmedia,biedermann2021digital,lyngs2019selfcontrol}. Such mechanisms can be useful for self-control, but they can also generate false positives when a user has a valid reason to visit a monitored website. They may also generate false negatives when a short session is clearly misaligned with intention. Recent work has therefore shifted toward user agency, reflection, friction, and intention alignment. For example, self-nudging systems such as \textit{one sec} introduce a short pause before app access \citep{gruning2023onesec}; Purpose Mode reduces distracting interface patterns while preserving access to social media websites \citep{lee2025purpose}; and PauseNow frames digital wellbeing as alignment between intentions and behavior \citep{zhao2024pausenow}.
+The same browser site can support sharply different goals. A video platform may host a tutorial, a social platform may contain a project discussion, and a search result may be either necessary background or the beginning of an unplanned detour. Treating a domain as inherently useful or distracting ignores this ambiguity. Fixed timers have a related weakness: they know how long a session has lasted but not whether the activity still serves the task that motivated it. DriftSense starts from a different premise. The participant declares the task, lightweight browser signals describe how the session unfolds, and the participant's later self-report defines whether drift occurred.
 
-We use the term \textit{browser task drift} to describe participant-reported deviation from a structured task declared at session start. The label comes only from the participant's post-session judgment; tab switching, inactivity, scrolling, leaving a task site, or a model score never defines drift. This framing is deliberately narrower than attention detection or productivity optimization. DriftSense studies task alignment without inferring clinical status, mental state, or semantic relevance of page activity.
+Digital self-control tools have commonly used blocking, time limits, reminders, monitoring, or interface restriction \citep{lyngs2019selfcontrol,biedermann2021digital,roffarello2023digital}. Reviews warn that screen time alone does not describe whether use was meaningful or whether an intervention respected the user's goal \citep{almoallim2022functionalities,rahmillah2023apps}. Purpose Mode preserves access while reducing selected attention-capturing elements \citep{lee2025purpose}; \textit{one sec} inserts a short pause before application entry \citep{gruning2023onesec}; and StayFocused asks reflective questions around attempted focus-session exits \citep{li2024stayfocused}. These systems motivate cues that are noticeable and optional rather than blocking.
 
-DriftSense uses a local-first Chrome Manifest V3 extension and a reproducible machine-learning pipeline. Participants choose sites they use for planned browser tasks; these \textit{task sites} may include mixed-use sites and are not labeled productive or distracting. A participant initiates or confirms a task session and selects one structured type: writing or creating, coding or problem solving, reading or research, learning or tutorial, communication or coordination, or another planned task. The extension records content-free activity windows and creates leakage-safe snapshots at 3, 5, and 10 minutes. Participant-relative features compare the current pattern with prior aligned sessions without training a separate high-capacity model for each person. At the real session boundary, the participant reports whether the session remained aligned. In Phase 2, the frozen checkpoint policy determines eligibility for 1:1 prompt-versus-silent randomization, and access remains available in either assignment.
+We define \emph{browser task drift} as a participant's report that their browser activity moved away from the structured task declared at session start. This construct is not inferred attention, objective productivity, or a clinical condition. A switch away from an approved task site is not automatically drift, because a task may require supporting material elsewhere. Similarly, scrolling, idling, typing, or video playback can be either task-relevant or unrelated. DriftSense therefore treats activity signals as predictive evidence and preserves the participant's answer as the outcome.
 
-The central research questions are:
+The completed work followed two phases. Phase 1 was the data-collection and model-development phase: 19 participants contributed 665 sessions, of which 634 contained explicit binary alignment labels. Phase 2 was the main interactive product phase: the frozen local model evaluated successive activity windows and, when its score reached the threshold, activated a tangible ESP32 interface. The interface combined a 16x2 character display, an audible cue, and three physical buttons for session setup, completion, and reflection. Twelve participants then completed a structured post-study interview covering both phases.
 
-\begin{quote}
-\textit{RQ1: At 3, 5, and 10 minutes, can structured task context and lightweight browser activity predict later self-reported task drift better than elapsed-time, intended-duration, task-site, task-only, and activity-only alternatives?}
+\subsection{Key Terms}
 
-\textit{RQ2: Do participant-relative features derived only from prior sessions improve early prediction over an otherwise equivalent population model?}
+The paper uses six terms consistently. A \emph{task session} is a period the participant explicitly starts for a declared task; opening a site alone does not start one. A \emph{participant-approved task site} is a hostname selected for planned work, not a site classified as productive. \emph{Task drift} is an explicit post-session report that activity moved away from the declared task. A \emph{content-free activity signal} is a count, duration, or state---such as clicks, active time, or tab focus---that stores no page text or typed characters. A \emph{rolling window} is the immediately preceding five- or ten-minute interval evaluated at a checkpoint. The \emph{tangible reflective interface} is the physical LCD, buzzer, and buttons that present session state and let the participant respond without blocking the browser.
 
-\textit{RQ3: Among sessions eligible under one frozen model policy, does a nonblocking reflective side prompt reduce subsequent self-reported task drift compared with a randomized silent control?}
-\end{quote}
+This paper asks three questions:
 
-The expected contribution is an implementation and evaluation framework for participant-calibrated early task-drift prediction and lightweight reflective support. The contribution is not identifying productive websites, tracking activity, dashboarding, or blocking alone. It combines a user-declared task, privacy-minimized activity, participant-relative features derived without future leakage, explicit comparisons against simple policies, and a randomized test of one model-triggered prompt. Phase 1 supplies model-development data; it is not a causal control for Phase 2.
+\begin{enumerate}[label=\textit{RQ\arabic*:},font=\itshape]
+\item How can a browser system represent participant-declared task alignment using privacy-minimized, content-free signals without treating time or hostnames as ground truth?
+\item How well does the Phase 1 model distinguish later participant-reported task drift on a chronological completed-session holdout?
+\item How did participants describe the usability, privacy, timing, usefulness, interruption, and annoyance of the Phase 2 tangible interface?
+\end{enumerate}
+
+The contribution is an end-to-end HCI system rather than a generic activity tracker. It comprises a participant-grounded task-drift construct, a local sensing and labeling workflow, a compact model and duration-dependent rolling policy, a tangible reflective interface, and empirical evidence from both session records and post-study interviews. Figure~\ref{fig:overview} summarizes the relationship between the two phases and the distinct evidence each produced.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.99\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=4.5mm,
+  phase/.style={rounded corners=3pt,draw=dsNavy,line width=.7pt,minimum width=15.2cm,minimum height=3.0cm,inner sep=6pt},
+  stagebox/.style={rounded corners=2pt,draw=dsRule,fill=white,align=center,text width=2.5cm,minimum height=1.25cm,font=\headingfont\fontsize{8.2}{9.5}\selectfont},
+  arrow/.style={-{Latex[length=2mm]},line width=.8pt,draw=dsNavy},
+  tag/.style={rounded corners=8pt,inner xsep=7pt,inner ysep=3pt,font=\headingfont\bfseries\fontsize{8.5}{10}\selectfont}
+]
+\node[phase,fill=dsPaleBlue] (p1) {};
+\node[tag,fill=dsBlue,text=white,anchor=north west] at ($(p1.north west)+(3mm,-3mm)$) {PHASE 1: DATA FOUNDATION};
+\node[stagebox,anchor=west] (s1) at ($(p1.west)+(4mm,-4mm)$) {19 participants\\declare task + duration};
+\node[stagebox,right=4mm of s1] (s2) {Content-free\\browser sensing};
+\node[stagebox,right=4mm of s2] (s3) {Post-session\\alignment report};
+\node[stagebox,right=4mm of s3] (s4) {665 sessions\\634 binary labels};
+\node[stagebox,right=4mm of s4] (s5) {Model\\development\\and threshold};
+\draw[arrow] (s1)--(s2); \draw[arrow] (s2)--(s3); \draw[arrow] (s3)--(s4); \draw[arrow] (s4)--(s5);
+
+\node[phase,fill=dsPaleGreen,below=6mm of p1] (p2) {};
+\node[tag,fill=dsGreen,text=white,anchor=north west] at ($(p2.north west)+(3mm,-3mm)$) {PHASE 2: MAIN INTERACTIVE SYSTEM};
+\node[stagebox,anchor=west] (t1) at ($(p2.west)+(4mm,-4mm)$) {Participant starts\\a new task};
+\node[stagebox,right=4mm of t1] (t2) {Successive 5- or\\10-minute windows};
+\node[stagebox,right=4mm of t2] (t3) {Local score\\versus threshold};
+\node[stagebox,right=4mm of t3] (t4) {LCD + brief beep\\+ three buttons};
+\node[stagebox,right=4mm of t4] (t5) {12 post-study\\interviews};
+\draw[arrow] (t1)--(t2); \draw[arrow] (t2)--(t3); \draw[arrow] (t3)--(t4); \draw[arrow] (t4)--(t5);
+\draw[arrow,rounded corners] (s5.south) -- ++(0,-3mm) -| (t1.north);
+
+\node[rounded corners=2pt,draw=dsGold,fill=dsPaleGold,align=left,text width=7cm,inner sep=5pt,anchor=north west,font=\fontsize{8.5}{10}\selectfont] (e1) at ($(p2.south west)+(0,-5mm)$) {\textbf{Prediction evidence:} chronological holdout using completed-session features.};
+\node[rounded corners=2pt,draw=dsGreen,fill=dsPaleGreen,align=left,text width=7cm,inner sep=5pt,right=6mm of e1,font=\fontsize{8.5}{10}\selectfont] (e2) {\textbf{Experience evidence:} interview reports about use, timing, and the tangible cue.};
+\end{tikzpicture}
+}
+\caption{DriftSense's completed two-phase workflow. Phase 1 produced the participant-labeled data and model. Phase 2 operationalized the model through duration-dependent checks and a tangible reflective interface. The two evidence streams answer different questions and are not combined into a causal effectiveness claim.}
+\label{fig:overview}
+\end{figure}
 
 \section{Related Work}
-\subsection{Digital Self-Control Interventions}
-Digital self-control tools commonly use blocking, time limits, monitoring, reminders, friction, or interface modification \citep{lyngs2019selfcontrol,biedermann2021digital,roffarello2023digital}. Reviews find promising short-term effects but also short deployments, nonstandard outcomes, homogeneous samples, and few control groups; time spent is common but too coarse to represent why a site was used \citep{roffarello2023digital,plackett2023socialmedia}. Purpose Mode instead lets users suppress attention-capturing interface patterns while preserving access and found that goal alignment was more informative than site context alone \citep{lee2025purpose}. These findings justify retaining time and domain as baselines rather than treating them as ground truth.
 
-\subsection{Intention and Reflection}
-Several systems create a reflective moment around technology use. \textit{one sec} adds pre-access friction and an explicit choice to continue \citep{gruning2023onesec}; PauseNow proposes intention alignment but reports no outcome evaluation \citep{zhao2024pausenow}; and StayFocused and MindShift deliver reflective or generated support, with mixed behavioral effects and concerns about repetitive prompts, assumptions, and richer personal data \citep{li2024stayfocused,wu2024mindshift}. WellScreen links estimated and actual smartphone use to daily reflection, but its small two-week deployment had no control condition \citep{bhat2026wellscreen}. DriftSense uses a shorter, nonblocking check-in and does not collect mental state.
+\subsection{Digital Self-Control and Preserving Utility}
 
-\subsection{Session-Level Modeling and Research Gap}
-Regret depends on activity and intention, not only duration \citep{cho2021reflect,guo2025regret}. In a seven-day study with 21 participants, perceived intention--use mismatch correlated more strongly with regret than duration; phone-context CatBoost reached AUC 0.732 within person but only 0.536 when a participant was held out \citep{ahmed2026scroll}. This gap motivates separate known-user and unseen-user evaluation. Behavioral sensing also creates privacy risks, so DriftSense limits collection to hostname-level context and aggregate interaction signals and makes no clinical or mental-state inference \citep{burr2020ethics,buchi2021digital}.
+Digital self-control tools span dashboards, timers, application limits, blocking, friction, reminders, and interface changes \citep{lyngs2019selfcontrol,roffarello2023digital}. Recent reviews find mixed evidence across short, varied studies and call for designs that go beyond screen-time reduction \citep{biedermann2021digital,plackett2023socialmedia,almoallim2022functionalities,almansoori2023designing}. Digital wellbeing is better understood as a changing balance between technology's benefits and costs than as the absence of use \citep{vandenabeele2020dynamic}. Less use may mean successful self-regulation or unfinished work; more use may mean drift or necessary effort.
 
-Table~\ref{tab:related-comparison} shows the closest comparison points. No evaluated system combines a declared pre-session browser intention, content-free early activity, participant-relative calibration, a post-session alignment label, explicit weak baselines, and randomized model-triggered reflection.
+Interface design can also shape user agency \citep{monge2023acdp,cecchinato2019agenda}. Controlled studies of social-media interfaces show that the same restriction can help in one context and create friction in another \citep{lyngs2020facebook}. Purpose Mode lets users hide feeds, constrain continuous content, or simplify layouts \citep{lee2025purpose}. Earlier work similarly found that people judge smartphone use partly through purpose and autonomy rather than duration alone \citep{lukoff2018meaningful}. These findings explain why DriftSense does not classify an entire site as undesirable or block access when a cue appears.
 
-\begin{table*}[t]
-  \caption{Closest systems informing the DriftSense research gap.}
-  \label{tab:related-comparison}
-  \small
-  \begin{tabularx}{\textwidth}{@{}lYYYY@{}}
-    \toprule
-    Work & Timing and mechanism & Role of intention & Evaluation & Remaining gap \\
-    \midrule
-    Purpose Mode \citep{lee2025purpose} & During-use interface modification & Goal alignment measured in EMA & Two-week field deployment & No session prediction; fixed phase order \\
-    \textit{one sec} \citep{gruning2023onesec} & Friction before app access & Opening reason elicited around nudge & Observational field study and online experiment & No within-session prediction or field control \\
-    PauseNow \citep{zhao2024pausenow} & Proposed recognition and nudging & Original intention is central & Conceptual framework & No deployed outcome evaluation \\
-    \textit{Before You Scroll Again} \citep{ahmed2026scroll} & Prediction before social-media use & Mismatch reported after use & Seven-day sensing study; within-person and held-out tests & Regret label; no intervention test \\
-    WellScreen \citep{bhat2026wellscreen} & Daily post-use reflection & Estimated versus actual use & Two-week mixed-methods deployment & No session classifier or control \\
-    \textbf{DriftSense (planned)} & Frozen early model plus one side prompt & Structured task declared before and revisited after use & 10--14-day collection plus randomized 7--10-day intervention & Browser-only participant-calibrated pilot \\
-    \bottomrule
-  \end{tabularx}
-\end{table*}
+\subsection{Intention, Friction, and Reflection}
 
-The contribution is therefore narrow: evaluate whether task context plus participant-relative, content-free activity improves early prediction over time, intended duration, task-site, task-only, and population-activity alternatives, then test the resulting prompt against a randomized silent control. The short pilot cannot establish durable behavior change, objective productivity, or population-level generalization.
+Interventions can interrupt automatic action without imposing a prohibition. \textit{one sec} couples a short delay with an explicit choice before entry to a selected application \citep{gruning2023onesec}. MindPhone asks about intention at phone unlock \citep{terzimehic2022mindphone}; StayFocused asks reflective questions around a focus-session exit \citep{li2024stayfocused}; and InteractOut adds weak resistance to common gestures \citep{lu2024interactout}. A large review of goal-oriented HCI interventions further shows that the way a goal is represented and supported matters to behavior-change outcomes \citep{zhu2025goals}.
 
-\section{System Design}
-\subsection{Evidence-Derived Design Requirements}
-DriftSense is designed for a research setting where participants voluntarily install a browser extension, configure participant-approved task sites, initiate task sessions, and export a local dataset for analysis. Six requirements follow from the reviewed evidence:
+PauseNow frames digital wellbeing as alignment between intention and behavior rather than simple screen-time reduction \citep{zhao2024pausenow}. WellScreen compares expected and observed use to support reflection \citep{bhat2026wellscreen}. Regret also depends on both intention and activity \citep{cho2021reflect}. DriftSense therefore asks for the task before use and alignment after use; its cue invites reconsideration without claiming to know the participant's internal state.
 
-\begin{enumerate}[leftmargin=*]
-  \item \textbf{Measure task alignment, not assumed productivity.} Time and hostname remain baselines, but the target label must come from the participant's declared task and later reflection. A mixed-use site may be task relevant, and leaving a task site may be necessary.
-  \item \textbf{Initiate an explicit task.} Merely opening a hostname is insufficient. The participant initiates or confirms a task session, selects a structured task type, and provides an intended duration as context rather than an automatic endpoint.
-  \item \textbf{Intervene lightly and preserve agency.} Reflection should provide an explicit choice and never block the site. A single neutral check-in follows evidence that friction and an opt-out can disrupt automatic action, whereas repetitive or inflexible prompts can be irritating \citep{gruning2023onesec,li2024stayfocused}.
-  \item \textbf{Minimize and localize sensing.} The system uses aggregate interaction counts and approved-hostname context while excluding content, titles, screenshots, messages, key values, and destinations outside the approved task-site set. Outside-set activity is represented only as aggregate away time or state.
-  \item \textbf{Keep measurement stable across conditions.} The same task declaration and post-session questions should be used throughout collection and intervention so that the mid-session prompt is the only randomized interface difference.
-  \item \textbf{Make prediction and intervention auditable.} Exported records support 3-, 5-, and 10-minute prediction, participant-aware validation, participant-relative ablation, a frozen deployment policy, and verification of every eligibility and randomization decision.
+\subsection{Tangible and Audible Interaction}
+
+A tangible user interface gives digital state a physical form that can be seen or manipulated \citep{ishii1997tangible}. Recent reviews describe tangible systems as especially useful when controls should remain visible, direct, and separate from a crowded screen, while also stressing the need for usability evaluation before stronger outcome claims \citep{bertolo2025tangible}. Sound is similarly noticeable outside the visual foreground, but it can interrupt or create social discomfort. Studies of notification muting show that removing sound does not automatically reduce checking or improve wellbeing \citep{liao2022sound,dekker2025buzz}. DriftSense therefore uses a short, time-limited beep paired with a display and physical controls, and the interviews explicitly measure interruption and annoyance.
+
+\subsection{Behavioral Sensing, Personal Context, and Privacy}
+
+Behavioral sensing can support timely assistance, but richer sensing also increases disclosure risk. Digital-wellbeing scholarship therefore calls for attention to agency, context, and the consequences of measurement \citep{burr2020ethics,buchi2021digital}. Studies across devices also show that wellbeing practices and constraints do not stop at one screen \citep{roffarello2021multidevice}. DriftSense therefore reports its known-participant holdout without claiming unseen-user performance.
+
+DriftSense minimizes inputs rather than reconstructing page meaning. It records structured task type, timing, interaction counts without their values, focus state, idle and active time, aggregate away time without destination identity, and accessible video-playback state. It excludes page text, titles, URL paths and queries, messages, screenshots, key values, and outside-set destination identities. This retains useful session patterns while reducing exposure of what the participant viewed or typed.
+
+\subsection{Research Gap}
+
+Existing systems provide interface modification, pre-access friction, reflective prompts, intention questions, or post-use awareness. DriftSense links these elements at browser-session level: the participant starts a task, content-free activity is summarized locally, the post-session answer supplies the label, the model evaluates five- or ten-minute windows, and a physical device delivers a brief cue outside the browser. Table~\ref{tab:related} compares the closest systems.
+
+\begin{table}[htbp]
+\centering
+\caption{Closest systems and the design gap addressed by DriftSense.}
+\label{tab:related}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.7cm}YYYY@{}}
+\toprule
+System & Intervention moment & Role of intention & Evidence & Difference from DriftSense \\
+\midrule
+Purpose Mode \citep{lee2025purpose} & During social-media use & Goal alignment measured in repeated assessments & Two-week field deployment & Modifies interface features; no session classifier or tangible cue \\
+\textit{one sec} \citep{gruning2023onesec} & Before application access & Opening reason supports deliberation & Observational deployment and online experiment & Fixed friction before entry rather than model-timed reflection \\
+StayFocused \citep{li2024stayfocused} & On attempted exit or session completion & Focus goal entered at session start & Three-condition field study & Triggered by interaction state rather than activity-based risk \\
+PauseNow \citep{zhao2024pausenow} & Proposed recognition and nudging & Original intention is central & Conceptual framework & No deployed prediction and outcome evaluation \\
+WellScreen \citep{bhat2026wellscreen} & Daily post-use reflection & Estimated versus observed use & Two-week mixed-methods probe & Retrospective daily reflection rather than within-session cueing \\
+\textbf{DriftSense} & Successive 5- or 10-minute windows & Task declared before use; alignment answered afterward & 665 sessions and 12 interviews & Local content-free model linked to an ESP32 reflective interface \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{DriftSense Concept and Design}
+
+\subsection{Task Drift as a Participant-Grounded Construct}
+
+DriftSense separates context, predictors, and outcomes. The participant-approved hostname and structured task type provide context. Aggregate activity provides predictors. Only the explicit post-session alignment response supplies the binary outcome. This separation prevents a common category error: treating a behavioral trace as if it were proof of what the behavior meant.
+
+At task start, a participant chooses one of six structured task types: writing or creating, coding or problem solving, reading or research, learning or tutorial, communication or coordination, or another planned task. The participant also selects an intended duration. The duration configures the session and rolling schedule but does not automatically end the task or label its outcome. The task may continue across multiple approved sites, and temporary activity away from the approved set remains an aggregate duration rather than a record of destination identity.
+
+At the real session boundary, DriftSense asks whether the session remained aligned with the task the participant started. An explicit aligned response is coded 0 and an explicit moved-away response is coded 1. A not-sure response, a missing answer, or an action without an alignment answer remains unlabeled. Continue, save, dismiss, stop, and reminder actions are not substituted for the construct.
+
+\subsection{Design Requirements}
+
+Six requirements shaped the implementation:
+
+\begin{enumerate}
+\item \textbf{Explicit initiation.} A hostname opening is not sufficient evidence of a task; the participant starts the session and declares a structured task type.
+\item \textbf{Participant-defined alignment.} Time and site are inputs or baselines, never ground-truth labels.
+\item \textbf{Content minimization.} The system uses counts, durations, and states without collecting page content or key values.
+\item \textbf{Local operation.} Session records, model parameters, and exports remain on the participant's device unless the participant deliberately exports them.
+\item \textbf{User-controlled support.} A cue is brief and nonblocking, displays no probability, and permits the participant to continue intentionally.
+\item \textbf{Auditable state.} Session, checkpoint, model, cue, response, and suppression states are represented explicitly so that prediction and outcome measurement remain separable.
 \end{enumerate}
 
-\subsection{Chrome Extension Architecture}
-The existing Chrome Manifest V3 prototype uses React and TypeScript, with a background service worker, content scripts, popup, options page, local dashboard, and allowlisted exports. It currently implements an earlier monitored-visit flow. Before the revised study it must be changed to support explicit task initiation, structured task types, multi-site task continuity, aggregate away-state sensing, recoverable pending reflection, and 3/5/10-minute snapshots. The Phase 2 build then adds a fixed local model, frozen checkpoint policy, 1:1 session-level randomization, and one nonblocking side prompt. No remote inference service is required. Earlier architecture and interface figures are withheld because they describe the superseded protocol.
+\subsection{Browser and Tangible Components}
 
-\subsection{Session Flow, Sensing, and Labeling}
-Participants select hostnames they use for planned browser tasks, including mixed-use sites when relevant. A task session begins only when the participant initiates or explicitly confirms it and selects writing/creating, coding/problem solving, reading/research, learning/tutorial, communication/coordination, or another planned task, together with an intended duration. The duration is context for modeling and reflection, not an automatic session end.
+The browser component is a Chrome Manifest V3 extension implemented with React and TypeScript. Its background service worker manages a single active task session, local storage, activity aggregation, pending reflections, checkpoint evaluation, and exports. Content scripts count clicks, scroll events, and keyboard activity without storing targets or characters. Focus, idle, active, away, tab-switch, and accessible video-playback durations are accumulated in ten-second windows.
 
-A task may continue across approved task sites. Leaving one approved site does not end the task or define drift. Outside the approved set, DriftSense stores only aggregate away time/state and never the destination. A session ends through explicit completion or a prespecified tested boundary such as confirmed abandonment or sustained inactivity. Closing or navigating away creates a recoverable pending reflection rather than silently discarding the label. Linked 10-second records store only offset, aggregate event counts, idle/focus/away state, and accessible video state. A separate intervention log records the frozen model, checkpoint, threshold decision, eligibility, assignment, prompt delivery/response, and suppression reason.
+The extension includes onboarding, participant-approved task-site configuration, a task-start popup, local dashboards, a privacy and export view, and an ESP32 controller page. Figure~\ref{fig:interfaces} shows the two views that most directly explain the interaction sequence. The popup makes task declaration and intended duration visible before data collection. The device controller mirrors the physical controls and the LCD state, making the hardware behavior inspectable even though the ESP32 remains the immediate tangible interface. The privacy boundary is documented separately in Figure~\ref{fig:privacy}.
 
-After each session, both study phases and both randomized assignments use the same question:
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{0.29\textwidth}
+\centering
+\includegraphics[width=\linewidth]{driftsense-popup.png}
+\caption{Task-start popup.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.68\textwidth}
+\centering
+\includegraphics[width=\linewidth,trim=140 541 140 65,clip]{driftsense-device-page.png}
+\caption{ESP32 controller and button map.}
+\end{subfigure}
 
-\begin{quote}
-\textit{Did this session remain aligned with the task you started?}
-\end{quote}
+\caption{Implemented DriftSense browser interfaces. The task-start popup makes the declared task and duration explicit, while the cropped controller view shows the browser-side LCD representation and state-dependent mapping of the three physical buttons.}
+\label{fig:interfaces}
+\end{figure}
 
-The primary binary labels are defined only by explicit \textit{Aligned} and \textit{No, I moved away from it} responses:
+The ESP32 device uses a 16x2 I2C character display, three pull-up buttons, and an active buzzer. The display maintains the selected duration and countdown. Button meanings change with a small number of visible states: setup, selection, running, and reflection. During setup, the buttons reset or add duration and start the task. During a running session, the third button finishes the task and requests reflection. During reflection, buttons 1, 2, and 3 record aligned, moved away, and not sure, respectively. The device and extension exchange short line-based commands over USB serial; the browser remains the source of truth for session and model state.
 
-\begin{equation}
-y =
-\begin{cases}
-0, & \text{if answer is \textit{Aligned}}\\
-1, & \text{if answer is \textit{No, I moved away from it}}
-\end{cases}
-\end{equation}
+When a model score reaches the threshold, the device produces two short beeps every ten seconds for at most five cycles. Returning to an approved task site, completing the task, entering reflection, pressing stop, or reaching the automatic limit silences the buzzer. A two-second heartbeat lets the device detect connection loss; an unresolved alert is silenced after 15 seconds without a heartbeat. These rules keep the cue noticeable and time-limited.
 
-\textit{Not sure} and missing answers remain unlabeled and are excluded from the primary binary analyses. Outcome measurement is separate from actions such as continue, finish, remind later, or dismiss; an action never supplies the label.
+\begin{figure}[htbp]
+\centering
+\resizebox{0.99\textwidth}{!}{%
+\begin{tikzpicture}[
+ state/.style={rounded corners=3pt,draw=dsNavy,line width=.8pt,align=center,text width=3.15cm,minimum height=1.15cm,inner sep=5pt,font=\fontsize{8.5}{10}\selectfont},
+ arrow/.style={-{Latex[length=2mm]},line width=.8pt,draw=dsNavy},
+ note/.style={font=\headingfont\fontsize{8}{9.2}\selectfont,align=center},
+ edgelabel/.style={font=\headingfont\fontsize{8}{9.2}\selectfont,align=center,fill=white,inner sep=1.2pt}
+]
+\draw[rounded corners=7pt,draw=dsNavy,line width=1pt,fill=dsPaleBlue] (.2,-2.0) rectangle (6.6,2.75);
+\node[anchor=west,font=\headingfont\bfseries\fontsize{10}{12}\selectfont,text=dsNavy] at (.55,2.43) {(a) PHYSICAL FRONT PANEL};
+\draw[rounded corners=2pt,fill=black!88,draw=black] (.8,.75) rectangle (5.25,2.05);
+\node[text=dsPaleGreen,font=\ttfamily\bfseries\fontsize{9}{11}\selectfont,align=left] at (3.02,1.40) {TASK 18:42\\B3: FINISH};
+\draw[fill=dsGold!25,draw=dsGold,line width=.8pt] (5.85,1.40) circle (.35);
+\node[note] at (5.85,.78) {active\\buzzer};
+\foreach \x/\button/\colour in {1.55/B1/dsBlue,3.35/B2/dsGreen,5.15/B3/dsGold}{
+  \draw[fill=\colour!24,draw=\colour,line width=1pt] (\x,-.35) circle (.43);
+  \node[font=\headingfont\bfseries\fontsize{8.5}{10}\selectfont] at (\x,-.35) {\button};
+}
+\node[note] at (1.55,-1.10) {reset or\\aligned};
+\node[note] at (3.35,-1.10) {add 10 or\\moved away};
+\node[note] at (5.15,-1.10) {start/finish\\or not sure};
 
-During Phase 2, eligible sessions assigned to the prompt arm receive a compact side card asking \textit{Still working toward your original goal?}; silent-control sessions receive no mid-session interface. The probability is not displayed, access remains available, and at most one prompt appears per session. The local dashboard supports participant control rather than forming a claimed contribution.
+\node[anchor=west,font=\headingfont\bfseries\fontsize{10}{12}\selectfont,text=dsNavy] at (7.3,2.43) {(b) STATE AND ACTION FLOW};
+\node[state,fill=dsPaleBlue] (select) at (8.95,1.35) {\headingfont\bfseries SET DURATION\\B1 reset \;|\; B2 +10 min};
+\node[state,fill=dsPaleGreen] (running) at (12.65,1.35) {\headingfont\bfseries RUNNING\\LCD countdown; B3 finish};
+\node[state,fill=dsPaleRed] (reflect) at (12.65,-1.25) {\headingfont\bfseries REFLECTION\\B1 aligned \;|\; B2 moved away\\B3 not sure};
+\node[state,fill=dsPaleGold] (cue) at (16.25,-.20) {\headingfont\bfseries CHECK-IN\\threshold reached; two beeps\\every 10 s, up to five cycles};
+\draw[arrow] (select.east)--node[above,edgelabel]{B3 start}(running.west);
+\draw[arrow] (running.south)--node[left,edgelabel]{B3 finish}(reflect.north);
+\draw[arrow] (running.south east)--(cue.north west);
+\draw[arrow,draw=dsGreen] (cue.east) -- ++(.42,0) |- node[right,pos=.25,edgelabel]{return to task\\or alert stops}(running.east);
+\node[rounded corners=2pt,draw=dsRule,fill=white,text width=9.2cm,align=center,inner sep=3pt,font=\fontsize{8.2}{9.5}\selectfont] at (12.35,-2.85) {The browser stores data and computes the score; the ESP32 displays state, sounds the cue, and returns button events.};
+\end{tikzpicture}
+}
+\caption{Tangible interface and state-dependent controls. Panel (a) shows the physical LCD, buzzer, and three buttons. Panel (b) shows how the same controls support duration selection, a running task, a model-triggered check-in, and the final alignment response.}
+\label{fig:hardware}
+\end{figure}
 
-\section{Drift Prediction and Model-Assisted Reflection}
-\subsection{Prediction Task}
-The main task is binary session-level prediction:
+\subsection{Privacy Boundary}
 
-\begin{quote}
-Given structured task context, approved-hostname context, prior-session calibration, and lightweight activity observed by a fixed cutoff, predict whether the participant will later report that the task session drifted.
-\end{quote}
+Privacy is an architectural constraint rather than only a policy statement. Figure~\ref{fig:privacy} groups stored data by purpose and contrasts them with excluded content. Approved hostnames identify only the sites a participant selected for planned tasks. Activity outside that set is summarized as away time without destination identity. The model receives numeric summaries and a structured task category, not page semantics. Participants can inspect, export, or delete their local records.
 
-The positive class is the self-reported \textit{No, I moved away from it} label and the negative class is \textit{Aligned}. \textit{Not sure} and missing responses are excluded from the binary task and reported separately. The model outputs a probability for audit and eligibility; it is not treated as attention detection or a fact about the session.
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+ item/.style={rounded corners=2pt,draw=dsRule,fill=white,text width=3.25cm,minimum height=.8cm,align=center,font=\fontsize{8.3}{9.5}\selectfont},
+ head/.style={font=\headingfont\bfseries\fontsize{9.5}{11}\selectfont},
+ boundary/.style={rounded corners=5pt,dashed,line width=1pt,inner sep=6pt}
+]
+\node[boundary,draw=dsGreen,fill=dsPaleGreen,minimum width=7.3cm,minimum height=5.1cm] (stored) at (0,0) {};
+\node[head,text=dsGreen,anchor=north] at ($(stored.north)+(0,-3mm)$) {STORED LOCALLY};
+\node[item] at (-1.8,.9) {Structured task type\\and intended duration};
+\node[item] at (1.8,.9) {Approved task-site\\hostname};
+\node[item] at (-1.8,-.2) {Timing, focus, idle,\\active, and away time};
+\node[item] at (1.8,-.2) {Click, scroll, keyboard,\\tab, and video counts};
+\node[item,text width=6.85cm] at (0,-1.3) {Anonymous ID, model audit fields, and explicit post-session answer};
 
-\subsection{Feature Groups}
-Features cover task type, intended duration, approved task-site context, elapsed time, cumulative and recent activity, focus loss, tab switching, idle/active/away/video ratios, and event rates per active minute. Participant-relative features compare the current pattern with prior aligned sessions for the same or similar task type; all history is computed from sessions preceding the prediction. Activity windows are truncated at 3, 5, and 10 minutes. No early feature uses final duration, a later label, or later activity. Revised architecture and study-design figures will be generated only after the implementation and protocol are frozen.
+\node[boundary,draw=dsRed,fill=dsPaleRed,minimum width=7.3cm,minimum height=5.1cm] (excluded) at (8.25,0) {};
+\node[head,text=dsRed,anchor=north] at ($(excluded.north)+(0,-3mm)$) {NEVER STORED};
+\node[item] at (6.45,.9) {Page text, titles, paths,\\or query strings};
+\node[item] at (10.05,.9) {Screenshots, messages,\\or source code};
+\node[item] at (6.45,-.2) {Passwords or\\keystroke values};
+\node[item] at (10.05,-.2) {Outside-set destination\\domains or full history};
+\node[item,text width=6.85cm] at (8.25,-1.3) {Webcam data, face identity, emotion, or inferred mental-health state};
+\end{tikzpicture}
+\caption{DriftSense privacy boundary. The local record contains only structured task context, aggregate behavior, and explicit participant responses. It excludes page semantics and identifiable content.}
+\label{fig:privacy}
+\end{figure}
 
-\subsection{Baselines}
-DriftSense evaluates simple policies and feature ablations before the participant-calibrated model:
+\section{Method}
 
-\begin{enumerate}[leftmargin=*]
-  \item \textbf{Majority baseline.} Predict the training-set majority class.
-  \item \textbf{Elapsed-time baseline.} Use a validation-derived fixed time policy.
-  \item \textbf{Intended-duration baseline.} Use elapsed time relative to intended duration.
-  \item \textbf{Task-site baseline.} Estimate approved-hostname tendency from training data only.
-  \item \textbf{Task-only logistic regression.} Use structured task type and intended duration without activity.
-  \item \textbf{Activity-only logistic regression.} Use population activity without task context.
-  \item \textbf{Task-plus-activity logistic regression.} Combine task context with population activity but omit participant-relative features.
-\end{enumerate}
+\subsection{Study Structure and Evidence Sources}
 
-These comparisons test both whether activity adds value beyond timer and task context and whether participant-relative representation adds value beyond the population model.
+The study used a sequential two-phase design. Phase 1 collected task-session records without a model-assisted mid-session cue. After the data were merged, checked, and used for model development, Phase 2 deployed the tangible system with duration-dependent model evaluation. The same task-alignment construct linked the phases, but the evidence served different purposes. Phase 1 supported model development and retrospective discrimination. Phase 2 interviews supported descriptive evaluation of usability and perceived cue experience. The phase order was fixed, so differences in preference or recollection are not randomized causal estimates.
 
-\subsection{Main Models}
-The primary deployment candidate is logistic regression combining task context, activity, and participant-relative features. It is interpretable, appropriate for approximately 600 usable sessions, and straightforward to deploy locally. This is a participant-calibrated population model, not a separately trained model for every person. Random Forest is an optional robustness comparison, while CatBoost or XGBoost may appear only as secondary offline checks \citep{chen2016xgboost,dorogush2018catboost}. GRU, TCN, Transformer, and high-capacity per-person models are outside this pilot because 19--25 participants and roughly 24--32 usable sessions per person on average do not justify them.
+Four evidence sources support the paper. The literature archive contains the works used to derive the design requirements and research gap. The extension, firmware, model artifacts, and automated tests establish implemented behavior. The merged session file provides Phase 1 activity and alignment records. The interview workbook provides anonymous structured and open responses from 12 participants after Phase 2.
 
-\subsection{Early Prediction}
-Offline evaluation compares 3-, 5-, and 10-minute cutoffs. For each cutoff, reporting includes the number of sessions still observable, complete, and binary labeled. Results are shown both for each cutoff-specific cohort and for the common subset lasting at least 10 minutes, since later cutoffs otherwise select a different population. Model selection considers discrimination, calibration, coverage, expected prompt rate, and false-prompt burden. Before Phase 2, the study freezes either one selected checkpoint or a prespecified first-threshold-crossing policy across the three checkpoints, together with preprocessing, threshold, and prompt cap. At most one prompt can occur per session.
+\subsection{Phase 1 Data Collection}
 
-\section{Methodology}
-\subsection{Study Design}
-We plan a two-phase in-the-wild feasibility study with one cohort, preceded by a small technical and usability pilot. Phase 1 is a 10--14-day observational collection period with task initiation and post-session reflection but no model-assisted mid-session prompt. After model development, Phase 2 is a seven- to ten-day intervention period using the frozen policy. Sessions crossing the frozen threshold are randomized 1:1 to a reflective prompt or silent control. This randomized comparison addresses RQ3; Phase 1 prediction addresses RQ1 and RQ2. Overall before--after change is descriptive because phase order, novelty, and temporal changes prevent causal attribution.
+Nineteen participants installed the extension and explicitly started browser task sessions. At each start they selected a structured task type and intended duration. During the task, the extension aggregated content-free interaction and state measures into local ten-second windows. At the session boundary it requested the participant's alignment answer and retained unresolved questions as pending reflections rather than silently assigning a label.
 
-The target is 19--25 completing participants. Phase 1 aims for approximately 700 recorded sessions to obtain about 600 usable binary-labeled sessions after missing responses, short sessions, and incomplete windows, with at least 20 usable sessions per retained participant and preferably 30--40. Phase 2 aims for 150--200 randomized eligible sessions where feasible, with most participants represented in both assignments. These are operational feasibility targets rather than a formal power calculation, and clustered sessions do not replace independent participants. Shortfalls will narrow the claims and keep intervention estimates exploratory.
+The participant exports were merged into \texttt{driftsense\_merged.csv}. The file contains 665 sessions and 18 documented fields. Participants contributed between 31 and 39 sessions (median = 35). Intended durations were 10, 15, 20, 30, 45, 60, or 90 minutes. Observed durations ranged from 1.6 to 120.0 minutes (median = 24.3; mean = 31.5). Learning or tutorial sessions were most common (199), followed by communication or coordination (129), reading or research (122), coding or problem solving (93), writing or creating (91), and other planned tasks (31).
 
-\subsection{Participants and Recruitment}
-Eligible participants are adults who use Chrome or a Chromium-based browser on a personal computer, regularly perform planned browser tasks, can identify participant-approved task sites, and can install the extension for the study period. Recruitment may use a university convenience sample of students and knowledge workers. Participants are not screened on addiction, ADHD, mental health, or another clinical category. Reporting includes recruitment source, demographics relevant to interpretation, attrition, usable sessions, cutoff coverage, and missing labels without claiming representativeness.
+Of the 665 records, 634 had usable binary outcomes: 358 aligned and 276 moved away, yielding a drift prevalence of 43.5\%. Thirty-one not-sure or missing outcomes were excluded from binary modeling. A consistency audit identified 20 rows in which the stored numeric label disagreed with the explicit post-session answer. The analysis derived the label from that explicit answer according to the study rule and left the source export unchanged. There were no duplicate session identifiers, no overlapping sessions within a participant, and all 665 rows satisfied exact active + idle + away time accounting.
 
-\subsection{Consent, Privacy, and Data Handling}
-Before installation, participants receive a consent form and field-level explanation. Consent covers approved task-site hostnames, structured task type, intended duration, session and checkpoint timing, aggregate click/scroll/keyboard-activity counts without key values, idle/active time, focus loss, tab switches, aggregate time outside the task-site set without destination identity, activity windows, post-session answers, and---during Phase 2---model version, estimate, random assignment, prompt display, and response. The extension does not collect page text, titles, paths, queries, passwords, screenshots, private messages, source code, free-text task descriptions by default, keystroke values, full browsing history, outside-set destinations, webcam data, identity, emotion, or inferred mental state.
+\subsection{Model Development and Validation}
 
-Participants receive anonymous codes such as \texttt{P01}. They can pause monitoring, change monitored domains, inspect records, export their data, delete individual sessions, or delete all local data. Participant exports are stored in a private, access-controlled study directory outside the source repository. Only consented research staff can access the combined dataset. Any publication artifact will contain aggregates or de-identified excerpts rather than raw participant files. Ethics approval or institutional exemption, as applicable, must be obtained before recruitment.
+The modeling pipeline compared increasingly informative feature families: majority class, a prompt-all timer rule, intended duration, task site, task type, combined context, activity, context plus activity, context plus activity and elapsed-time features, and participant-calibrated context plus activity. Activity features included log-transformed event counts and durations, event rates per minute, and active, idle, away, and video shares. Participant identifiers organized the splits but were not included as model inputs.
 
-\subsection{Phase 1: Observational Collection}
-After onboarding, each participant chooses sites used for planned tasks, including mixed-use sites when relevant. The participant initiates or confirms each task session, selects a structured task type and intended duration, and then browses normally while aggregate session and activity-window signals are stored locally. At the real session boundary, the extension asks whether the session remained aligned with the task. Navigation or closure must preserve a pending reflection rather than silently treating the session as non-drift. No mid-session risk estimate or model-assisted intervention is shown during Phase 1.
+Preprocessing was fit within training data. The development set contained participant-relative days 1--7 for all 19 participants (441 sessions). Candidate feature families and regularization values were compared using five repeats of participant-grouped five-fold validation. A chronological known-participant holdout contained 193 later sessions from 18 participants. The selection rule preferred the highest development ROC--AUC, choosing the simpler family when models were within .01 and then comparing Brier score. A decision threshold was selected on development predictions subject to a 35\% positive-decision cap and evaluated once on the chronological holdout.
 
-Participants use the collector for 10--14 days. The research team checks only adherence and technical failure; it cannot inspect page content because none is collected. Participants export the session and activity-window files through the consented transfer procedure. Files are validated and combined outside the repository and Git history.
+The deployed Phase 2 package was a compact logistic model using structured task type, intended duration, task-site count, elapsed-to-intended-duration ratio, and active, idle, and away shares. It was serialized for matching browser-side inference. The stored threshold was .7363. The model's retrospective holdout results use completed-session activity proportions; they show discrimination in recorded sessions but do not prove accuracy for the earlier rolling windows used during Phase 2.
 
-\subsection{Model Development and Freeze}
-Earlier Phase 1 sessions form the development period and a prespecified later portion forms the chronological holdout for known-participant future-session performance. The exact split rule is frozen before modeling. Preprocessing, participant histories, features, hyperparameters, and threshold rules are selected within development data using participant-grouped folds. The chronological holdout is evaluated once. Participant-grouped or leave-one-participant-out evaluation is reported separately as unseen-user performance and is not conflated with the deployment-relevant known-participant result.
+\subsection{Phase 2 Rolling Evaluation}
 
-The primary deployment candidate is task-plus-activity logistic regression with participant-relative features. It is compared with majority, elapsed-time, intended-duration, task-site, task-only, activity-only, and non-calibrated task-plus-activity alternatives; Random Forest is optional. Metrics are accuracy, precision, recall, F1-score, ROC-AUC, confusion matrix, calibration where feasible, cutoff coverage, and expected prompt rate. Performance is computed at 3, 5, and 10 minutes, and every cutoff feature uses only information observed by that time. Participant-relative features use prior sessions only.
+Phase 2 converted the model into a duration-sensitive interaction. Sessions with intended duration up to and including 20 minutes were checked every five minutes. Longer sessions were checked every ten minutes. Each checkpoint evaluated only the immediately preceding interval, as illustrated in Figure~\ref{fig:rolling}. Thus, minute 10 in a short session represents minutes 5--10, whereas minute 20 in a longer session represents minutes 10--20. The implementation continues this pattern for the configured duration; for example, a 50-minute session is checked at minutes 10, 20, 30, 40, and 50.
 
-After holdout evaluation, one checkpoint policy, model, preprocessing specification, threshold, and prompt cap are frozen. A single selected checkpoint is preferred; a first-threshold-crossing policy across 3, 5, and 10 minutes is permitted only if prespecified and still produces at most one prompt per session. The threshold balances sensitivity, calibration, coverage, false prompts, and burden and is never retuned from Phase 2 outcomes. If enrichment over simple baselines is negligible or eligibility is impractical, the result is reported honestly and Phase 2 is framed, at most, as technical feasibility.
+\begin{figure}[htbp]
+\centering
+\resizebox{0.99\textwidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,font=\fontsize{8.5}{10}\selectfont]
+\node[anchor=east,font=\headingfont\bfseries] at (2.25,2.15) {SESSION $\leq$ 20 MIN};
+\foreach \x/\a/\b/\c in {2.5/0/5/dsBlue,5.4/5/10/dsGreen,8.3/10/15/dsGold,11.2/15/20/dsRed}{
+  \filldraw[fill=\c!22,draw=\c,line width=.7pt,rounded corners=1.5pt] (\x,1.7) rectangle ++(2.45,.75);
+  \node[font=\headingfont\bfseries] at (\x+1.225,2.13) {\a--\b min};
+  \draw[-{Latex[length=1.8mm]},draw=\c,line width=.7pt] (\x+1.225,1.7)--++(0,-.4);
+  \node[align=center] at (\x+1.225,1.02) {evaluate\\at min \b};
+}
+\node[anchor=east,font=\headingfont\bfseries] at (2.25,-.05) {SESSION $>$ 20 MIN};
+\foreach \x/\a/\b/\c in {2.5/0/10/dsBlue,5.4/10/20/dsGreen,8.3/20/30/dsGold,11.2/30/40/dsRed}{
+  \filldraw[fill=\c!22,draw=\c,line width=.7pt,rounded corners=1.5pt] (\x,-.5) rectangle ++(2.45,.75);
+  \node[font=\headingfont\bfseries] at (\x+1.225,-.07) {\a--\b min};
+  \draw[-{Latex[length=1.8mm]},draw=\c,line width=.7pt] (\x+1.225,-.5)--++(0,-.4);
+  \node[align=center] at (\x+1.225,-1.18) {evaluate\\at min \b};
+}
+\node[rounded corners=2pt,fill=dsPaleGold,draw=dsGold,text width=12.5cm,align=center,inner sep=5pt] at (8.1,-2.35) {Each decision uses the activity from its own interval. A site or elapsed time alone never supplies the drift label.};
+\end{tikzpicture}
+}
+\caption{Implemented duration-dependent rolling schedule. Five-minute intervals are used for intended sessions up to 20 minutes; ten-minute intervals are used for longer sessions. The illustrated long-session sequence continues in ten-minute steps when the intended duration exceeds 40 minutes.}
+\label{fig:rolling}
+\end{figure}
 
-\subsection{Phase 2: Micro-Randomized Intervention}
-The same participants use the intervention build for seven to ten days. Task declaration, sensing, boundaries, and post-session reflection remain identical to Phase 1. A session becomes eligible only at the frozen checkpoint policy, with complete features, a score meeting the frozen threshold, no prior assignment, and no suppression by the prompt cap. The extension uses local random assignment with equal probability:
+At a checkpoint, a score below threshold produced no device cue. A score at or above threshold began one alert episode. The cue never displayed the score or stated that drift had occurred. The participant could return to the task, continue intentionally, or finish and answer the post-session question. The completed deployment delivered every cue whose score reached the threshold; it did not include a concurrent silent-control condition.
 
-\begin{enumerate}[leftmargin=*]
-  \item \textbf{Reflective-prompt assignment.} Show a compact, nonblocking side card asking \textit{Still working toward your original goal?} with continue, finish, remind-later, and dismiss actions.
-  \item \textbf{Silent-control assignment.} Show no mid-session interface.
-\end{enumerate}
+\subsection{Post-Study Interviews}
 
-Assignment is logged before rendering and survives reload or service-worker suspension. Analysis follows assignment regardless of interaction. A maximum of one prompt per session and a prespecified daily cap limit burden. Sessions below threshold, ending before the applicable checkpoint, missing features, or suppressed by the cap remain available for descriptive reporting but are excluded from the randomized prompt-effect comparison. Both assignments receive the same post-session reflection. This comparison estimates the effect of showing the prompt among model-eligible sessions; it does not directly compare model targeting with fixed-time prompting.
+Twelve participants completed the interview workbook after using both phases. Six were aged 18--24, five were 25--34, and one was 35--44. Six identified their main role as student, two as knowledge worker, two as software professional, and two as both student and worker. Eleven remembered receiving the Phase 2 check-in and beep; one did not. Ratings specifically concerning cue timing and experience were therefore available for 11 participants, while general Phase 2 ratings and phase preference were available for all 12.
 
-\subsection{Measures}
-The primary prediction outcomes are F1-score and ROC-AUC for participant-calibrated task-plus-activity prediction relative to the required baselines. Accuracy, precision, recall, confusion matrices, class balance, calibration where feasible, cutoff coverage, and expected prompt rate are also reported. Results separate chronological known-participant prediction from participant-held-out prediction.
+The workbook contains five Phase 1 and ten Phase 2 Likert statements on a five-point agreement scale. For positively worded items, ratings of 4 or 5 were favorable. For effort, interruption, and annoyance, ratings of 1 or 2 were favorable. We report valid $n$, median, interquartile range (IQR), and favorable count rather than treating the scale as a continuous measure. Open responses were grouped by useful effects, limitations, and requested refinements. Because independent coders were not documented, these groups summarize responses rather than claim a complete thematic analysis.
 
-The primary intervention outcome is the proportion of complete binary-labeled eligible sessions reported as drift, compared by randomized assignment. Secondary outcomes include duration after assignment, immediate ending, prompt response and frequency, label completion, delivery failure, suppression, perceived timing, usefulness, annoyance, ease of use, and willingness to continue. Phase 1 versus Phase 2 changes remain descriptive.
+\section{Results}
 
-After Phase 1, participants complete eight five-point Likert items about task declaration, end-of-session reflection, perceived support for task alignment, added effort, ease of use, privacy comfort, and willingness to continue. After Phase 2, ten Likert items assess ease of use and what the occasional model-assisted check-in added, if anything: perceived timing, reconsideration of intention, return to or continuation of the intended task, wording, frequency, interruption, annoyance, version preference, and willingness to continue. Participants first report whether they remember receiving a check-in; prompt-specific items are recorded as not applicable otherwise. These measures assess perceived impact, acceptability, and burden, not clinical benefit or objective attention.
+\subsection{Phase 1 Dataset and Model Comparisons}
 
-\subsection{Data Processing and Quality Checks}
-The preprocessing pipeline validates exact schemas, participant identifiers, duplicate sessions, invalid overlap, cutoff completeness, and non-binary outcomes. Original exports are never modified. Binary analyses include only explicit \textit{Aligned} ($0$) and \textit{No, I moved away from it} ($1$); \textit{Not sure} and missing outcomes remain separate.
+The Phase 1 dataset had broad coverage across the six task types and repeated observations for every participant. Its 634 labeled sessions provided 358 aligned and 276 moved-away outcomes. The chronological holdout retained later sessions from known participants rather than randomly mixing a participant's early and late records. This makes the result more demanding than a random session split, while still not constituting an unseen-participant test.
 
-Session, task-site, activity-window, and intervention records are joined by \texttt{session\_id}. Categorical encoders, scalers, participant histories, and aligned-session reference distributions are fitted within training data and applied unchanged to validation or test data. Quality reporting includes recruited/completed participants, recorded and usable sessions, sessions per participant, class distribution, label completion, cutoff coverage, missing windows, rejected files, intervention eligibility, assignment balance, suppression, delivery failure, and attrition.
+Context-only baselines performed modestly on the chronological holdout. Intended duration yielded ROC--AUC .551, task site .576, task type .620, and combined task context .631. Activity-only logistic regression increased ROC--AUC to .931. Adding context, elapsed-time features, or participant calibration produced ROC--AUC values from .932 to .936. The differences among these richer models were small, reinforcing the value of a compact model and cautioning against claims that any one context variable independently establishes alignment.
 
-\subsection{Analysis Plan}
-For RQ1, performance is summarized across predefined splits with participant-resampled 95\% confidence intervals where feasible. Comparisons ask whether task-plus-activity improves over time, duration, site, task-only, and activity-only alternatives. For RQ2, ablation compares the participant-calibrated model with the otherwise equivalent population model. A result is not interpreted as new-user generalization unless participant-held-out performance supports that claim.
+For the separately packaged Phase 2 model, the 193-session chronological holdout yielded ROC--AUC .938, accuracy .891, precision .959, recall .795, and F1 .870 at threshold .7363. The confusion matrix contained 102 true negatives, 3 false positives, 18 false negatives, and 70 true positives. Seventy-three of 193 sessions (37.8\%) crossed the threshold. Figure~\ref{fig:modelresults} presents the baseline progression and operational scorecard.
 
-For RQ3, analysis is restricted to randomized eligible sessions with binary post-session labels and follows assigned condition. For each participant represented in both assignments, drift proportions are calculated separately for prompt and silent control. The prespecified simple comparison is a paired participant-level estimate with a participant-bootstrap 95\% confidence interval and a paired test where appropriate. Assignment-specific missing-label and delivery-failure rates are reported. If eligible counts support it, a mixed-effects logistic regression with participant random intercept and assignment as the main fixed effect is a sensitivity analysis.
+\begin{figure}[htbp]
+\centering
+\resizebox{0.99\textwidth}{!}{%
+\begin{tikzpicture}[font=\fontsize{8.2}{9.5}\selectfont]
+\node[anchor=west,font=\headingfont\bfseries\fontsize{9.5}{11}\selectfont] at (0,5.4) {(a) Chronological-holdout ROC--AUC by feature family};
+\begin{scope}[xshift=5.2cm,x=18cm,y=.55cm]
+  \draw[draw=dsRule] (0,0)--(.5,0);
+  \foreach \x/\lab in {0/.50,.1/.60,.2/.70,.3/.80,.4/.90,.5/1.00}{\draw[draw=dsRule!70] (\x,0)--(\x,4.75);\node[below] at (\x,0){\lab};}
+  \foreach \y/\name/\v/\score/\col in {4.35/Intended duration/.051/.551/dsRule,3.75/Task site/.076/.576/dsRule,3.15/Task type/.120/.620/dsGold,2.55/Activity only/.431/.931/dsBlue,1.95/Context + activity/.432/.932/dsGreen,1.35/Context + activity + time/.436/.936/dsGreen,.75/Participant-calibrated/.436/.936/dsNavy}{
+    \node[anchor=east] at (-.02,\y+.18) {\name};
+    \fill[\col!78] (0,\y) rectangle (\v,\y+.36);
+    \node[anchor=west,font=\bfseries] at (\v+.008,\y+.18) {\score};
+  }
+\end{scope}
 
-Secondary outcomes are analyzed descriptively or with paired participant-level comparisons. Likert items are reported individually using response distributions, medians, and interquartile ranges rather than being combined into an unvalidated impact score. Not-applicable responses and the number of participants who do not remember receiving a check-in are reported separately. No individual mechanism is declared effective from a Phase 1--Phase 2 before--after difference alone. Results will be described as short-term and preliminary; a seven-day intervention cannot establish durable behavior change. No results, significance values, or effect sizes will be inserted until the real consented dataset has been analyzed.
+\node[anchor=west,font=\headingfont\bfseries\fontsize{9.5}{11}\selectfont] at (0,-.70) {(b) Packaged Phase 2 model at the frozen threshold};
+\foreach \x/\metric/\value/\col in {0/Accuracy/.891/dsBlue,3.05/Precision/.959/dsGreen,6.10/Recall/.795/dsGold,9.15/F1/.870/dsNavy,12.20/ROC--AUC/.938/dsGreen}{
+  \node[rounded corners=3pt,draw=\col,fill=\col!10,minimum width=2.75cm,minimum height=1.25cm,align=center] at (\x+1.375,-1.65) {\headingfont\bfseries \metric\\[2pt]\fontsize{12}{13}\selectfont \value};
+}
+\node[rounded corners=3pt,draw=dsRule,fill=white,minimum width=6.1cm,minimum height=1.25cm,align=center] at (3.1,-3.30) {\headingfont\bfseries CONFUSION MATRIX\\[2pt]TN 102 \quad FP 3 \quad FN 18 \quad TP 70};
+\node[rounded corners=3pt,draw=dsGold,fill=dsPaleGold,minimum width=6.1cm,minimum height=1.25cm,align=center] at (10.35,-3.30) {\headingfont\bfseries DECISION BURDEN\\[2pt]73 / 193 sessions above threshold (37.8\%)};
+\end{tikzpicture}
+}
+\caption{Retrospective completed-session model results. Panel (a) shows how activity features separate the outcomes more strongly than context-only baselines. Panel (b) reports the separately packaged Phase 2 model at its stored threshold. These are completed-session results, not direct validation of five- or ten-minute windows.}
+\label{fig:modelresults}
+\end{figure}
 
-\subsection{Reproducibility and Reporting Commitments}
-Before recruitment, the study materials will specify task types, task-site setup, session boundaries, pending reflection, outcome wording, binary-label mapping, checkpoint selection, exclusions, and confirmatory/exploratory outcomes. Before Phase 2, the extension records a versioned model artifact, preprocessing specification, checkpoint policy, threshold, prompt cap, and randomization procedure. Reporting traces participants and sessions from recorded Phase 1 data through the RQ1/RQ2 sets and from evaluated Phase 2 sessions through the RQ3 set, including short sessions, missing labels/windows, threshold eligibility, cap suppression, assignment, and delivery failure.
+The completed-session results answer RQ2 within their stated scope. The low false-positive count at the frozen threshold is encouraging for cue burden, but the 18 false negatives show that a conservative threshold can miss moved-away sessions. More importantly, full-session feature proportions may differ from the proportions visible in an earlier interval. The live schedule is implemented and tested, but window-level outcome audits are still required to quantify early decision quality.
 
-Code, schemas, isolated non-participant test fixtures, and analysis scripts may be released after review, but raw participant exports will not be placed in the public repository. A de-identified derived dataset will be shared only if consent, ethics approval, and disclosure-risk review permit it. Otherwise, reproducibility will rely on field-level documentation, deterministic preprocessing, fixed random seeds, environment information, and aggregate or disclosure-safe outputs.
+\subsection{Implementation Verification}
 
-\subsection{Anticipated Validity Boundaries}
-The primary construct is a participant's post-session judgment of alignment, not an objective measurement of attention. Labels may vary across people and may be influenced by recall, social desirability, repeated prompting, or the intervention itself. Reporting label-completion and non-binary outcomes by assignment is therefore part of the main validity assessment rather than a housekeeping detail.
+All 11 extension test files passed, comprising 35 tests, and the TypeScript/Vite production build completed successfully. All seven Python model tests also passed. Browser and Python probabilities agreed for the serialized full-session test vectors to floating-point tolerance. The duration-policy tests confirmed checkpoints at minutes 5, 10, 15, and 20 for a 20-minute session and at ten-minute steps for longer sessions. Serial tests confirmed three button events and device commands for readiness, duration, start, time, reflection, completion, alert on, and alert off.
 
-The RQ3 causal estimate applies only to sessions meeting the frozen model's eligibility rule and not suppressed by the cap. It estimates the effect of showing the prompt within that eligible set, not the value of model targeting versus fixed-time prompting and not the effect of prompting every task or user. Randomization protects the prompt-versus-silent comparison, while fixed phase order prevents causal interpretation of overall Phase 1--Phase 2 change. Six hundred sessions remain clustered within only 19--25 participants, participant-relative histories are sparse, 10-minute evaluation selects longer sessions, and hostname/activity signals cannot establish semantic task relevance. A seven- to ten-day intervention supports only short-term feasibility and preliminary efficacy.
+The checks also verified privacy-sensitive behavior. Exported records are restricted to documented fields; uncertain and action-only outcomes are not silently converted to aligned labels; page paths, query strings, and key values are not exported; and local deletion removes linked activity windows. These results support RQ1 as an implemented system property, while participant comfort with those properties is reported separately.
 
-\bibliographystyle{ACM-Reference-Format}
+\subsection{Post-Study Interview Findings}
+
+All 12 participants gave favorable ratings for Phase 1 ease of use, session-boundary clarity, outcome-question clarity, and comfort with recorded information. Eleven of 12 rated the added effort favorably low. For Phase 2, all 12 rated ease and privacy comfort favorably and all 12 rated effort favorably low. Among the 11 participants who remembered the cue, 10 rated its timing favorably, all 11 rated the moment of reconsideration, support for reflection, and support for returning favorably, 10 rated interruption of useful activity favorably low, and all 11 rated annoyance favorably low. Eleven of 12 preferred Phase 2 to Phase 1.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.99\textwidth}{!}{%
+\begin{tikzpicture}[font=\fontsize{8.2}{9.5}\selectfont]
+\node[anchor=west,font=\headingfont\bfseries\fontsize{9.5}{11}\selectfont] at (0,6.3) {Favorable interview ratings};
+\node[anchor=east] at (5.0,5.88) {Phase 1 ease};
+\node[anchor=east] at (5.0,5.28) {Phase 1 privacy comfort};
+\node[anchor=east] at (5.0,4.68) {Phase 1 low effort};
+\node[anchor=east] at (5.0,3.88) {Phase 2 ease};
+\node[anchor=east] at (5.0,3.28) {Phase 2 privacy comfort};
+\node[anchor=east] at (5.0,2.68) {Appropriate timing};
+\node[anchor=east] at (5.0,2.08) {Supported reflection};
+\node[anchor=east] at (5.0,1.48) {Supported return};
+\node[anchor=east] at (5.0,.88) {Low interruption};
+\node[anchor=east] at (5.0,.28) {Low annoyance};
+\node[anchor=east] at (5.0,-.32) {Preferred Phase 2};
+\foreach \y/\pct/\frac/\col in {
+5.7/1.00/12 of 12/dsBlue,
+5.1/1.00/12 of 12/dsBlue,
+4.5/.917/11 of 12/dsBlue,
+3.7/1.00/12 of 12/dsGreen,
+3.1/1.00/12 of 12/dsGreen,
+2.5/.909/10 of 11/dsGold,
+1.9/1.00/11 of 11/dsGreen,
+1.3/1.00/11 of 11/dsGreen,
+.7/.909/10 of 11/dsGold,
+.1/1.00/11 of 11/dsGreen,
+-.5/.917/11 of 12/dsNavy}{
+  \fill[dsRule!20] (5.15,\y) rectangle (14.15,\y+.36);
+  \fill[\col!82] (5.15,\y) rectangle ({5.15+9*\pct},\y+.36);
+  \node[anchor=west,font=\bfseries] at (14.35,\y+.18) {\frac};
+}
+\draw[draw=dsRule] (5.15,-.75)--(14.15,-.75);
+\foreach \x/\lab in {5.15/0\%,7.4/25\%,9.65/50\%,11.9/75\%,14.15/100\%}{\draw (\x,-.75)--++(0,-.08);\node[below] at (\x,-.83){\lab};}
+\node[rounded corners=2pt,draw=dsRule,fill=white,text width=13.6cm,align=left,inner sep=5pt] at (7.4,-1.55) {\textbf{Scoring note.} Favorable = 4--5 for positive statements and 1--2 for effort, interruption, and annoyance. Cue-specific items exclude the participant who did not remember receiving a cue.};
+\end{tikzpicture}
+}
+\caption{Item-level favorable ratings from the completed post-study interviews. Fractions show favorable responses over valid responses; the bar length shows the same proportion.}
+\label{fig:interview}
+\end{figure}
+
+Item medians were consistent with the favorable counts. Phase 1 ease had a median of 4.0; session clarity 4.5; outcome-question clarity and privacy comfort 5.0; and effort 2.0. Phase 2 ease and privacy comfort each had a median of 5.0, while effort had a median of 2.0. Among cue-specific items, timing had a median of 4.0; useful reconsideration, reflection, and return each had a median of 5.0; and interruption and annoyance each had a median of 2.0. Preference for Phase 2 had a median of 5.0.
+
+Open responses clarify what the ratings meant to participants. Seven responses were grouped as goal reorientation and four as reflective awareness; the remaining participant did not remember cue exposure. Participants described pausing, comparing the current page with the declared task, closing unrelated tabs, or deliberately continuing when a detour still served the task. The physical cue was valued because it remained noticeable when the browser was not visually foregrounded, and several participants emphasized that it prompted a choice without blocking the page.
+
+Critical responses were equally informative. Five participants described an occasional false cue, one described a cue as early, and one said timing was useful overall but not exact. Four did not remember a clearly false cue, and one did not remember exposure. Requested refinements included volume control, a temporary mute option, clearer connection and delivery feedback, longer card visibility, confirmation after choosing to continue, and showing the declared task context. These comments explain why low annoyance should not be treated as evidence of perfect timing.
+
+\section{Discussion}
+
+\subsection{From Website Control to Task-Relative Reflection}
+
+DriftSense's main conceptual move is to place the task, rather than the website, at the center of digital-wellbeing support. This matters because mixed-use environments make domain labels brittle. The same approved hostname appeared across different task types in the dataset, and activity away from the approved set could be necessary background work. Requiring explicit task initiation and a later alignment answer makes the system legible: the user can see what was declared, what was measured, and what ultimately supplied the label.
+
+The baseline progression supports this framing without proving semantics. Intended duration, task site, and task type alone showed limited discrimination, while aggregate activity substantially separated the two reported outcomes. Yet activity remained predictive rather than definitive. The model estimates whether a pattern resembles sessions later reported as moved away; it does not transform away time, idling, or tab switching into objective drift. This distinction is especially important when a cue is delivered during a live task.
+
+\subsection{Why a Tangible Cue}
+
+The ESP32 interface gives model timing a physical expression. Browser prompts compete with the same visual environment in which drift occurs and can be hidden behind windows or tabs. A brief audible cue and visible countdown can remain noticeable without covering content. Physical controls also make the interaction state explicit: start, finish, and final reflection are actions rather than inferred boundaries.
+
+Participants' reports support this role. They commonly described the beep as brief, noticeable, and useful for returning to the task, including when the browser was not in front. Requests for volume control, muting, and connection feedback also show that a physical device introduces social and practical concerns. A sound suitable at a private desk may be unsuitable in a meeting or shared room. The next version should retain the physical cue while making volume and confirmation clearer.
+
+\subsection{Interpreting the Two Evidence Streams}
+
+The model and interview results are complementary but not interchangeable. The chronological holdout quantifies whether completed-session features distinguish later self-reports. It does not establish accuracy at minute 5 or minute 10. The interviews show how the deployed system was experienced by 12 participants. They do not independently verify each delivery time, nor do they prove that a cue caused a behavioral change. The paper's central claim is consequently an implemented and evaluated pathway from private sensing to tangible reflection, not a causal reduction in drift.
+
+This separation strengthens the contribution. The completed data show that content-free session patterns carry useful retrospective signal; the deployed product shows that the decisions can drive a time-limited physical interaction; and the interviews identify both acceptance and concrete refinements. A future controlled study can build on these verified components without repeating the completed interviews.
+
+\subsection{Relation to Prior Systems}
+
+Like Purpose Mode, DriftSense preserves access and recognizes that browsing context can affect perceived goal alignment \citep{lee2025purpose}. Unlike Purpose Mode, it does not alter the content interface; it evaluates a participant-started task session and places reflection outside the page. Like \textit{one sec}, it uses a small interruption to create a decision point \citep{gruning2023onesec}. Its cue occurs during an unfolding task rather than before opening an application. Like StayFocused, it uses reflection instead of simple blocking \citep{li2024stayfocused}; however, its timing comes from content-free activity summaries and a duration-dependent policy rather than only attempted exit or completion.
+
+The design also differs from tools that optimize screen-time reduction. DriftSense can treat a long session as aligned and a short session as drifted because the outcome refers to the participant's declared task. It can therefore support study, coding, research, communication, and planned leisure without ranking one category as better than another. Its deliberate limitation is that content-free sensing cannot explain why a pattern occurred; the participant's self-report remains necessary.
+
+\subsection{Limitations}
+
+The study has several limitations. First, the Phase 1 sample contains repeated sessions from 19 participants. The chronological holdout uses later records from known participants and cannot establish generalization to unseen users. Second, the operational model was trained and evaluated retrospectively on completed-session activity proportions. Although the 5/10-minute schedule is implemented, its early-window discrimination, calibration, and false-cue burden were not separately estimated from checkpoint outcomes.
+
+Third, 31 sessions lacked a usable binary outcome and were excluded. Twenty numeric labels were reconciled against explicit answers. The rule was prespecified and transparent, but missingness and response error remain possible. Fourth, the interview sample is small, retrospective, and exposed to the phases in a fixed order. Recall, novelty, and social-desirability effects may influence the favorable ratings. One participant did not remember a cue, and the workbook is not a replacement for delivery logs.
+
+Fifth, an audible cue can be inaccessible, unnoticed, or socially awkward. The prototype supports a short bounded beep, but participant requests show the need for configurable volume, silent modes, and clearer connection state. Finally, privacy minimization constrains model knowledge by design. Because DriftSense excludes page text and outside-set destination identity, it cannot determine semantic relevance. That limitation is also part of its contribution: the system asks for human interpretation rather than silently expanding surveillance.
+
+\section{Conclusion}
+
+DriftSense demonstrates a complete path from participant-declared browser tasks to model-timed tangible reflection. Phase 1 collected 665 sessions from 19 participants, preserved explicit self-report as the task-drift label, and produced a compact model with strong completed-session discrimination. Phase 2 converted that model into successive five- or ten-minute decisions and an ESP32 interface combining a countdown display, a brief beep, and three physical controls. Interviews with 12 participants indicated high usability and privacy comfort; the 11 who remembered the cue generally described it as useful and minimally annoying while also identifying occasional false or mistimed cues.
+
+The resulting contribution is neither a website classifier nor a productivity score. It connects structured task context, content-free sensing, explicit outcome measurement, local prediction, and a physical point of reflection. Its next evaluation step is a controlled, window-level study of early prediction and behavioral effects, not broader or more invasive sensing.
+
+\section{Implications for Theory, Application, or Policy}
+
+DriftSense suggests that digital-wellbeing systems should represent alignment as a relationship between a declared task, an unfolding activity pattern, and a later human judgment. For theory, this separates behavioral evidence from its meaning and avoids equating duration with harm. For application, the results favor sparse, optional cues, participant-approved task sites, explicit session boundaries, and hardware controls that remain visible beyond the browser window. Configurable sound and clear delivery feedback should be treated as accessibility features, not optional polish. For research governance, data minimization should be specified by field: systems can retain timing and aggregate activity while excluding page content, destination histories, and key values. Evaluations should report completed-session accuracy, early-window accuracy, delivery reliability, and intervention effects separately so that an implemented cue is not mistaken for causal evidence.
+
+\section*{Ethics Statement}
+
+The session and interview findings are reported using anonymous participant identifiers and the consent procedure documented in the study materials. No participant names, page content, messages, source code, search queries, or destination sites outside the participant-approved task-site set are reported. Participation was voluntary, and the system supported local inspection, export, and deletion of records.
+
+\section*{Data and Materials Availability}
+
+The extension source, schemas, tests, analysis code, model documentation, and aggregate results are maintained with the project. Participant-level exports and interview records should be shared only when consent, institutional approval, and disclosure-risk review permit it. Any released aggregate or de-identified evidence should include field definitions, exclusion and reconciliation rules, model versions, and reproducible commands.
+
+\bibliographystyle{plainnat}
 \bibliography{references}
 
 \end{document}
